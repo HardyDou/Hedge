@@ -49,3 +49,7 @@ app.*.map.json
 
 # Rust build
 rust/target/
+
+# iOS build artifacts
+ios/Frameworks/
+build/

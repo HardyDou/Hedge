@@ -1,0 +1,16 @@
+name: rust_lib_note_password
+description: Rust library for NotePassword
+version: 0.0.1
+homepage: https://github.com/hardydou/note-password
+
+environment:
+  sdk: '>=2.12.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^1.0.0
