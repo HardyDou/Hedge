@@ -1,0 +1,149 @@
+{
+  "appTitle": "Password Vault",
+  "unlock": "UNLOCK",
+  "enterMasterPassword": "Enter Master Password",
+  "incorrectPassword": "Incorrect master password",
+  "myVault": "My Passwords",
+  "addPassword": "ADD PASSWORD",
+  "newEntry": "New Entry",
+  "title": "Title",
+  "username": "Username",
+  "password": "Password",
+  "url": "URL",
+  "notes": "Notes",
+  "save": "SAVE",
+  "cancel": "CANCEL",
+  "add": "ADD",
+  "delete": "DELETE",
+  "editEntry": "Edit Entry",
+  "deleteEntry": "Delete Entry?",
+  "deleteWarning": "This action cannot be undone.",
+  "search": "Search...",
+  "noPasswords": "No passwords yet. Tap + to add.",
+  "copied": "{label} copied to clipboard",
+  "@copied": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  },
+  "useBiometrics": "Use Biometrics",
+  "welcome": "Welcome",
+  "createVault": "CREATE VAULT",
+  "onboardingSub": "Create a strong master password to encrypt your personal vault.",
+  "storageLocation": "STORAGE LOCATION",
+  "defaultLocal": "Default (Local Only)",
+  "syncTip": "Tip: Choose a folder in iCloud Drive or Xiaomi/Huawei Cloud to sync across devices.",
+  "recoveryWarning": "IMPORTANT: If you forget this password, your data cannot be recovered. We do not store it on any server.",
+  "attachments": "ATTACHMENTS",
+  "addFile": "Add Certificate/File",
+  "settings": "Settings",
+  "appearance": "Appearance",
+  "themeMode": "Theme Mode",
+  "language": "Language",
+  "security": "Security",
+  "vaultPath": "Vault Path",
+  "system": "System",
+  "dark": "Dark",
+  "light": "Light",
+  "passwordsDoNotMatch": "Passwords do not match",
+  "passwordTooShort": "Password must be at least 8 characters",
+  "import": "Import",
+  "export": "Export",
+  "confirmDelete": "Delete Entry?",
+  "cancelCaps": "CANCEL",
+  "deleteCaps": "DELETE",
+  "saveCaps": "SAVE",
+  "systemDefault": "System Default",
+  "autoLockTimeout": "Auto-Lock Timeout",
+  "seconds": "{count}s",
+  "@seconds": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "importPrompt": "Would you like to import your existing passwords now?",
+  "importNow": "IMPORT NOW",
+  "skip": "SKIP",
+  "forgotPassword": "Forgot Password?",
+  "resetWithBiometrics": "Reset with Biometrics",
+  "createNewVault": "Create New Vault",
+  "resetWarning": "Resetting will delete all your stored passwords. This action cannot be undone.",
+  "confirmReset": "I understand, reset now",
+  "biometricResetReason": "Authenticate to reset your vault",
+  "vaultResetSuccess": "Vault has been reset. Please create a new master password.",
+  "noBiometricsAvailable": "No biometrics available. You can only create a new vault.",
+  "oldVaultBackup": "Old vault has been backed up as vault_backup.db",
+  "credentials": "Credentials",
+  "notSet": "Not set",
+  "copyAll": "COPY ALL",
+  "allDetailsCopied": "All details copied to clipboard",
+  "show": "Show",
+  "hide": "Hide",
+  "enlarge": "Enlarge",
+  "copy": "Copy",
+  "couldNotOpenFile": "Could not open file",
+  "aboutDescription": "A minimalist cross-platform password manager.",
+  "resetPassword": "Reset Password",
+  "enterCurrentPassword": "Enter current password",
+  "enterNewPassword": "Enter new password",
+  "confirmNewPassword": "Confirm new password",
+  "passwordResetSuccess": "Password reset successfully",
+  "passwordResetFailed": "Failed to reset password",
+  "passwordsDoNotMatch": "Passwords do not match",
+  "incorrectCurrentPassword": "Incorrect current password",
+  "importDescription": "Import passwords from CSV",
+  "data": "DATA",
+  "importHint": "CSV format: Title/Username/Password/Notes",
+  "basicInfo": "Basic Info",
+  "titleHint": "e.g., Gmail, Netflix",
+  "usernameHint": "Username or email",
+  "passwordHint": "Password",
+  "notesHint": "Additional notes...",
+  "noAttachments": "No attachments",
+  "vertical": "Vertical",
+  "horizontal": "Horizontal",
+  "copied": "Copied",
+  "copyPassword": "Copy Password",
+  "importSuccess": "Successfully imported {count} items",
+  "@importSuccess": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "importFailed": "Failed to import {count} items",
+  "@importFailed": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "importFormatHint": "Supports CSV with headers. Recommended: Chrome, 1Password, Bitwarden export with column headers.",
+  "importNoHeaderHint": "CSV without headers: Title, URL, Username, Password, Notes order",
+  "confirm": "Confirm",
+  "cancel": "Cancel",
+  "deleteSelected": "Delete Selected",
+  "deleteSelectedConfirm": "Delete {count} items?",
+  "@deleteSelectedConfirm": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "selectItems": "Select items to delete",
+  "selected": "{count} selected",
+  "@selected": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  }
+}
