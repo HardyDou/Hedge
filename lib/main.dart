@@ -18,34 +18,25 @@ import 'package:note_password/src/rust/frb_generated.dart';
 import 'package:note_password/l10n/generated/app_localizations.dart';
 import 'package:note_password/presentation/pages/add_item_page.dart';
 
-class SlideFromLeftRoute<T> extends CupertinoPageRoute<T> {
-  SlideFromLeftRoute({required super.builder});
-
-  @override
-  Duration get transitionDuration => const Duration(milliseconds: 300);
-
-  @override
-  Widget buildTransitions(BuildContext context, Animation<double> animation, Animation<double> secondaryAnimation, Widget child) {
-    return SlideTransition(
-      position: Tween<Offset>(
-        begin: const Offset(-1.0, 0.0),
-        end: Offset.zero,
-      ).animate(CurvedAnimation(
-        parent: animation,
-        curve: Curves.easeInOut,
-      )),
-      child: child,
-    );
-  }
-
-  @override
-  bool get maintainState => true;
-
-  @override
-  Color? get barrierColor => null;
-
-  @override
-  String? get barrierLabel => null;
+class SlideFromLeftRoute<T> extends PageRouteBuilder<T> {
+  SlideFromLeftRoute({required WidgetBuilder builder})
+      : super(
+          pageBuilder: (context, animation, secondaryAnimation) => builder(context),
+          transitionDuration: const Duration(milliseconds: 300),
+          reverseTransitionDuration: const Duration(milliseconds: 300),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            return SlideTransition(
+              position: Tween<Offset>(
+                begin: const Offset(-1.0, 0.0),
+                end: Offset.zero,
+              ).animate(CurvedAnimation(
+                parent: animation,
+                curve: Curves.easeInOut,
+              )),
+              child: child,
+            );
+          },
+        );
 }
 
 Future<void> main() async {
