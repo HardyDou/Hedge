@@ -175,4 +175,83 @@ void main() {
       expect(SyncStatus.values.contains(SyncStatus.offline), true);
     });
   });
+
+  group('iCloud Sync Edge Cases', () {
+    late MockSyncService syncService;
+
+    setUp(() {
+      syncService = MockSyncService();
+    });
+
+    tearDown(() async {
+      await syncService.stopWatching();
+    });
+
+    test('rapid file changes are handled', () async {
+      await syncService.startWatching('/test/vault.db');
+      
+      final events = <FileChangeEvent>[];
+      final subscription = syncService.onFileChanged.listen((event) {
+        events.add(event);
+      });
+      
+      // Simulate rapid changes
+      syncService.simulateFileChange(ChangeType.modified);
+      await Future.delayed(const Duration(milliseconds: 10));
+      syncService.simulateFileChange(ChangeType.modified);
+      await Future.delayed(const Duration(milliseconds: 10));
+      syncService.simulateFileChange(ChangeType.modified);
+      
+      await Future.delayed(const Duration(milliseconds: 50));
+      
+      expect(events.length, 3);
+      
+      await subscription.cancel();
+    });
+
+    test('file deleted event is handled', () async {
+      await syncService.startWatching('/test/vault.db');
+      
+      final futureEvent = syncService.onFileChanged.first;
+      syncService.simulateFileChange(ChangeType.deleted);
+      
+      final event = await futureEvent;
+      expect(event.type, ChangeType.deleted);
+    });
+
+    test('file created event is handled', () async {
+      await syncService.startWatching('/test/vault.db');
+      
+      final futureEvent = syncService.onFileChanged.first;
+      syncService.simulateFileChange(ChangeType.created);
+      
+      final event = await futureEvent;
+      expect(event.type, ChangeType.created);
+    });
+
+    test('conflict backup has unique timestamps', () async {
+      await syncService.createConflictBackup('/test/vault.db');
+      await Future.delayed(const Duration(milliseconds: 1100));
+      await syncService.createConflictBackup('/test/vault.db');
+      
+      expect(syncService.backups.length, 2);
+      expect(syncService.backups[0] != syncService.backups[1], true);
+    });
+
+    test('stop watching multiple times is safe', () async {
+      await syncService.startWatching('/test/vault.db');
+      await syncService.stopWatching();
+      await syncService.stopWatching(); // Should not throw
+      
+      expect(syncService.isWatching, false);
+    });
+
+    test('start watching multiple times is idempotent', () async {
+      await syncService.startWatching('/test/vault.db');
+      await syncService.startWatching('/test/vault.db');
+      await syncService.startWatching('/test/vault.db');
+      
+      expect(syncService.isWatching, true);
+    });
+  });
 }
