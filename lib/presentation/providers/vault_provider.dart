@@ -85,7 +85,9 @@ class VaultNotifier extends StateNotifier<VaultState> {
     try {
       // Always ensure we have a path set automatically
       final path = await _getDefaultVaultPath();
+      print('[checkInitialStatus] path: $path');
       final exists = await File(path).exists();
+      print('[checkInitialStatus] file exists: $exists');
       
       // Get file modification time if exists
       if (exists) {
@@ -94,8 +96,10 @@ class VaultNotifier extends StateNotifier<VaultState> {
       }
       
       final bioEnabled = await _storage.read(key: 'bio_enabled') == 'true';
+      print('[checkInitialStatus] bioEnabled: $bioEnabled');
       final timeoutStr = await _storage.read(key: 'auto_lock_timeout');
       final timeout = timeoutStr != null ? int.tryParse(timeoutStr) ?? 5 : 5;
+      print('[checkInitialStatus] timeout: $timeout');
       
       state = state.copyWith(
         hasVaultFile: exists, 
@@ -104,7 +108,9 @@ class VaultNotifier extends StateNotifier<VaultState> {
         autoLockTimeout: timeout,
         isLoading: false
       );
+      print('[checkInitialStatus] state: hasVaultFile=${state.hasVaultFile}, isAuthenticated=${state.isAuthenticated}');
     } catch (e) {
+      print('[checkInitialStatus] ERROR: $e');
       state = state.copyWith(isLoading: false, error: e.toString());
     }
   }
