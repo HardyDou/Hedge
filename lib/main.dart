@@ -106,6 +106,11 @@ class _AuthGuardState extends ConsumerState<AuthGuard> {
   Widget build(BuildContext context) {
     final vaultState = ref.watch(vaultProvider);
 
+    print('[AuthGuard] isLoading: ${vaultState.isLoading}');
+    print('[AuthGuard] hasVaultFile: ${vaultState.hasVaultFile}');
+    print('[AuthGuard] isAuthenticated: ${vaultState.isAuthenticated}');
+    print('[AuthGuard] vault: ${vaultState.vault != null}');
+
     if (vaultState.isLoading && vaultState.vault == null) {
       return const CupertinoPageScaffold(
         child: Center(child: CupertinoActivityIndicator()),
