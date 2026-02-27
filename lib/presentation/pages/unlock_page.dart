@@ -75,7 +75,7 @@ class _UnlockPageState extends ConsumerState<UnlockPage> {
                     Navigator.pop(context);
                     final success = await ref.read(vaultProvider.notifier).resetVaultWithBiometrics();
                     if (success && context.mounted) {
-                      _showSuccessDialog(context, l10n.vaultResetSuccess);
+                      _showSuccessDialog(context, l10n.vaultResetSuccess, navigateToOnboarding: true);
                     }
                   },
                   child: Row(
