@@ -3,7 +3,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:note_password/l10n/generated/app_localizations.dart';
-import 'package:note_password/src/rust/api/model.dart';
+import 'package:note_password/src/dart/vault.dart';
 import '../providers/vault_provider.dart';
 import 'dart:io';
 
@@ -59,7 +59,6 @@ class _AddItemPageState extends ConsumerState<AddItemPage> {
     }
 
     final newItem = VaultItem(
-      id: "",
       title: _titleController.text,
       username: _usernameController.text.isEmpty ? null : _usernameController.text,
       password: _passwordController.text.isEmpty ? null : _passwordController.text,
@@ -67,7 +66,7 @@ class _AddItemPageState extends ConsumerState<AddItemPage> {
       notes: _notesController.text.isEmpty ? null : _notesController.text,
       category: null,
       attachments: _attachments,
-      updatedAt: DateTime.now().millisecondsSinceEpoch ~/ 1000,
+      updatedAt: DateTime.now(),
     );
     
     await ref.read(vaultProvider.notifier).addItemWithDetails(newItem);

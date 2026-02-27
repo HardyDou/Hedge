@@ -253,3 +253,45 @@ Flutter 架构的核心在于：
 ```bash
 /Users/hardy/fvm/versions/stable/bin/flutter build macos
 ```
+
+---
+
+## 10. 技术重构经验总结 (Lessons Learned)
+
+### 2026-02-27: Rust → Dart 迁移
+
+#### 背景
+由于 flutter_rust_bridge 在 iOS 真机上的链接问题，将加密核心从 Rust 迁移到纯 Dart 实现。
+
+#### 遇到的问题及原因
+
+| 问题 | 原因 | 解决方案 |
+|------|------|----------|
+| **新增/修改只作用于第一条** | Dart 版本的 `updateItem` 实现有 bug，使用 `indexWhere` 后直接修改列表导致引用问题 | 使用 `map` 创建新列表 |
+| **新增时重复添加** | `addItemWithDetails` 先添加空 item 再更新，导致重复 | 直接添加完整 item |
+| **加密解密不稳定** | 手写的 SHA256 实现错误 | 使用 cryptography 库的 PBKDF2 |
+| **setupVault 使用 null 密码** | `state.currentPassword` 在 setup 时为 null | 使用传入的 masterPassword 参数 |
+
+#### 经验教训
+
+1. **数据模型必须完全兼容**
+   - 迁移前后数据结构、字段名、类型必须一致
+   - 特别是 UUID、时间戳等关键字段
+
+2. **充分测试**
+   - 单元测试必须覆盖所有 CRUD 操作
+   - 集成测试验证端到端流程
+
+3. **渐进式迁移**
+   - 不要一次性重写整个后端
+   - 先保持接口兼容，逐步替换实现
+
+4. **保留旧版本数据导出能力**
+   - 重大版本变更前提供数据导出
+   - 避免用户数据丢失
+
+#### 当前状态
+- ✅ 加密服务已用 Dart 重写
+- ✅ 使用 `encrypt` + `cryptography` 包
+- ✅ PBKDF2 (100000 iterations) + AES-256-GCM
+- 🔧 测试中

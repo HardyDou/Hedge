@@ -13,8 +13,6 @@ import 'package:note_password/presentation/pages/onboarding_page.dart';
 import 'package:note_password/presentation/providers/locale_provider.dart';
 import 'package:note_password/presentation/providers/theme_provider.dart';
 import 'package:note_password/presentation/providers/vault_provider.dart';
-import 'package:note_password/src/rust/api/model.dart';
-import 'package:note_password/src/rust/frb_generated.dart';
 import 'package:note_password/l10n/generated/app_localizations.dart';
 import 'package:note_password/presentation/pages/add_item_page.dart';
 
@@ -41,7 +39,6 @@ class SlideFromLeftRoute<T> extends PageRouteBuilder<T> {
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await RustLib.init();
   runApp(const ProviderScope(child: NotePasswordApp()));
 }
 
@@ -160,6 +157,7 @@ class _HomePageState extends ConsumerState<HomePage> {
 
     return Scaffold(
       appBar: AppBar(
+        systemOverlayStyle: isDark ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark,
         title: Text(
           l10n.myVault.toUpperCase(),
           style: const TextStyle(fontWeight: FontWeight.w900, letterSpacing: 2),
@@ -384,7 +382,7 @@ class _HomePageState extends ConsumerState<HomePage> {
 class _iOSListItem extends StatelessWidget {
   final String title;
   final String? subtitle;
-  final int? updatedAt;
+  final DateTime? updatedAt;
   final String displayChar;
   final String? domain;
   final bool isDark;
@@ -408,9 +406,9 @@ class _iOSListItem extends StatelessWidget {
     this.onSelect,
   });
 
-  String _formatDate(int? timestamp) {
-    if (timestamp == null) return '';
-    final date = DateTime.fromMillisecondsSinceEpoch(timestamp * 1000);
+  String _formatDate(DateTime? date) {
+    if (date == null) return '';
+    return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
     final now = DateTime.now();
     final diff = now.difference(date);
     

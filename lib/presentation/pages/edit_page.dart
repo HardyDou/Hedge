@@ -4,7 +4,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:note_password/l10n/generated/app_localizations.dart';
-import 'package:note_password/src/rust/api/model.dart';
+import 'package:note_password/src/dart/vault.dart';
 import '../providers/vault_provider.dart';
 
 class EditPage extends ConsumerStatefulWidget {
@@ -71,7 +71,7 @@ class _EditPageState extends ConsumerState<EditPage> {
       notes: _notesController.text.isEmpty ? null : _notesController.text,
       category: widget.item.category,
       attachments: _attachments,
-      updatedAt: DateTime.now().millisecondsSinceEpoch ~/ 1000,
+          updatedAt: DateTime.now(),
     );
 
     await ref.read(vaultProvider.notifier).updateItem(updatedItem);

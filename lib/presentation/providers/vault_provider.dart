@@ -1,8 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:local_auth/local_auth.dart';
-import 'package:note_password/src/rust/api/model.dart';
-import 'package:note_password/src/rust/api/vault.dart' as rust_vault;
+import 'package:note_password/src/dart/vault.dart';
 import 'package:note_password/platform/sync_service_factory.dart';
 import 'package:note_password/services/sync_service.dart';
 import 'package:path_provider/path_provider.dart';
@@ -131,7 +130,7 @@ class VaultNotifier extends StateNotifier<VaultState> {
   Future<bool> setupVault(String masterPassword) async {
     state = state.copyWith(isLoading: true, error: null);
     try {
-      final vault = await rust_vault.createEmptyVault();
+      final vault = VaultService.createEmptyVault();
       final path = state.vaultPath ?? await _getDefaultVaultPath();
       
       // Ensure the parent directory exists (especially critical on iOS/Android)
@@ -140,11 +139,7 @@ class VaultNotifier extends StateNotifier<VaultState> {
         await file.parent.create(recursive: true);
       }
 
-      await rust_vault.saveVault(
-        path: path,
-        masterPassword: masterPassword,
-        vault: vault,
-      );
+      await VaultService.saveVault(path, masterPassword, vault);
 
       await _storage.write(key: 'master_password', value: masterPassword);
       await _storage.write(key: 'bio_enabled', value: 'true');
@@ -173,10 +168,7 @@ class VaultNotifier extends StateNotifier<VaultState> {
     state = state.copyWith(isLoading: true, error: null);
     try {
       final path = state.vaultPath ?? await _getDefaultVaultPath();
-      final vault = await rust_vault.loadVault(
-        path: path,
-        masterPassword: masterPassword,
-      );
+      final vault = await VaultService.loadVault(path, masterPassword);
 
       await _storage.write(key: 'master_password', value: masterPassword);
       await _storage.write(key: 'vault_path', value: path);
@@ -299,11 +291,7 @@ class VaultNotifier extends StateNotifier<VaultState> {
       final path = state.vaultPath ?? await _getDefaultVaultPath();
       final vault = state.vault!;
       
-      await rust_vault.saveVault(
-        path: path,
-        masterPassword: newPassword,
-        vault: vault,
-      );
+      await VaultService.saveVault(state.vaultPath!, state.currentPassword!, vault);
 
       await _storage.write(key: 'master_password', value: newPassword);
       
@@ -361,7 +349,7 @@ class VaultNotifier extends StateNotifier<VaultState> {
     
     state = state.copyWith(isLoading: true);
     try {
-      final newVault = await rust_vault.addItem(vault: state.vault!, title: title);
+      final newVault = VaultService.addItem(state.vault!, title);
       await _saveAndRefresh(newVault);
     } catch (e) {
       state = state.copyWith(isLoading: false, error: e.toString());
@@ -373,30 +361,9 @@ class VaultNotifier extends StateNotifier<VaultState> {
     
     state = state.copyWith(isLoading: true);
     try {
-      // Since Rust's addItem only takes title, we manually add to the list
-      // Or we can add an 'addItemFull' to Rust.
-      // Let's just use the existing update logic after adding.
-      final newVaultWithTitle = await rust_vault.addItem(vault: state.vault!, title: item.title);
-      final lastItem = newVaultWithTitle.items.last;
-      
-      final fullItem = VaultItem(
-        id: lastItem.id,
-        title: item.title,
-        username: item.username,
-        password: item.password,
-        url: item.url,
-        notes: item.notes,
-        category: item.category,
-        attachments: item.attachments,
-        updatedAt: item.updatedAt,
-      );
-
-      final finalVault = await rust_vault.updateItem(
-        vault: newVaultWithTitle,
-        updatedItem: fullItem,
-      );
-      
-      await _saveAndRefresh(finalVault);
+      // 直接添加完整的 item，而不是先添加再更新
+      final newVault = VaultService.addItemWithDetails(state.vault!, item);
+      await _saveAndRefresh(newVault);
     } catch (e) {
       state = state.copyWith(isLoading: false, error: e.toString());
     }
@@ -407,10 +374,7 @@ class VaultNotifier extends StateNotifier<VaultState> {
     
     state = state.copyWith(isLoading: true);
     try {
-      final newVault = await rust_vault.updateItem(
-        vault: state.vault!, 
-        updatedItem: updatedItem
-      );
+      final newVault = VaultService.updateItem(state.vault!, updatedItem);
       await _saveAndRefresh(newVault);
     } catch (e) {
       state = state.copyWith(isLoading: false, error: e.toString());
@@ -422,7 +386,7 @@ class VaultNotifier extends StateNotifier<VaultState> {
     
     state = state.copyWith(isLoading: true);
     try {
-      final newVault = await rust_vault.deleteItem(vault: state.vault!, id: id);
+      final newVault = VaultService.deleteItem(state.vault!, id);
       await _saveAndRefresh(newVault);
     } catch (e) {
       state = state.copyWith(isLoading: false, error: e.toString());
@@ -431,11 +395,7 @@ class VaultNotifier extends StateNotifier<VaultState> {
 
   Future<void> _saveAndRefresh(Vault newVault) async {
     final path = state.vaultPath ?? await _getDefaultVaultPath();
-    await rust_vault.saveVault(
-      path: path,
-      masterPassword: state.currentPassword!,
-      vault: newVault,
-    );
+    await VaultService.saveVault(path, state.currentPassword!, newVault);
     // Update last known modification time
     final file = File(path);
     if (await file.exists()) {
@@ -477,10 +437,7 @@ class VaultNotifier extends StateNotifier<VaultState> {
       
       // Reload vault from file
       try {
-        final vault = await rust_vault.loadVault(
-          path: path,
-          masterPassword: masterPassword,
-        );
+        final vault = await VaultService.loadVault(state.vaultPath!, state.currentPassword!);
         state = state.copyWith(vault: vault);
         _lastKnownModification = currentMod;
       } catch (e) {
@@ -530,7 +487,7 @@ class VaultNotifier extends StateNotifier<VaultState> {
     try {
       var currentVault = state.vault!;
       for (final id in state.selectedIds) {
-        currentVault = await rust_vault.deleteItem(vault: currentVault, id: id);
+        currentVault = VaultService.deleteItem(currentVault, id);
       }
       await _saveAndRefresh(currentVault);
       state = state.copyWith(isSelectionMode: false, selectedIds: {});
@@ -622,7 +579,6 @@ class VaultNotifier extends StateNotifier<VaultState> {
           }
 
           final item = VaultItem(
-            id: "",
             title: title,
             username: username,
             password: password,
@@ -630,10 +586,10 @@ class VaultNotifier extends StateNotifier<VaultState> {
             notes: notes,
             category: null,
             attachments: [],
-            updatedAt: DateTime.now().millisecondsSinceEpoch ~/ 1000,
+            updatedAt: DateTime.now(),
           );
 
-          final newVaultWithTitle = await rust_vault.addItem(vault: currentVault, title: item.title);
+          final newVaultWithTitle = VaultService.addItem(currentVault, item.title);
           final lastItem = newVaultWithTitle.items.last;
           
           final fullItem = VaultItem(
@@ -642,16 +598,10 @@ class VaultNotifier extends StateNotifier<VaultState> {
             username: item.username,
             password: item.password,
             url: item.url,
-            notes: item.notes,
-            category: item.category,
-            attachments: item.attachments,
-            updatedAt: item.updatedAt,
+                notes: item.notes,
           );
 
-          currentVault = await rust_vault.updateItem(
-            vault: newVaultWithTitle,
-            updatedItem: fullItem,
-          );
+          currentVault = VaultService.updateItem(newVaultWithTitle, fullItem);
           successCount++;
         } catch (e) {
           failedCount++;
