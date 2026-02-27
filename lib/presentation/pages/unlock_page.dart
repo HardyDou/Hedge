@@ -131,7 +131,7 @@ class _UnlockPageState extends ConsumerState<UnlockPage> {
                     Navigator.pop(context);
                     await ref.read(vaultProvider.notifier).resetVaultCompletely();
                     if (context.mounted) {
-                      _showSuccessDialog(context, l10n.vaultResetSuccess);
+                      _showSuccessDialog(context, l10n.vaultResetSuccess, navigateToOnboarding: true);
                     }
                   }
                 },
@@ -150,14 +150,19 @@ class _UnlockPageState extends ConsumerState<UnlockPage> {
     );
   }
 
-  void _showSuccessDialog(BuildContext context, String message) {
+  void _showSuccessDialog(BuildContext context, String message, {bool navigateToOnboarding = false}) {
     showCupertinoDialog(
       context: context,
-      builder: (context) => CupertinoAlertDialog(
+      builder: (dialogContext) => CupertinoAlertDialog(
         content: Text(message),
         actions: [
           CupertinoDialogAction(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () {
+              Navigator.pop(dialogContext);
+              if (navigateToOnboarding) {
+                Navigator.of(context).popUntil((route) => route.isFirst);
+              }
+            },
             child: const Text('OK'),
           ),
         ],
