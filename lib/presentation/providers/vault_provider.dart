@@ -325,7 +325,7 @@ class VaultNotifier extends StateNotifier<VaultState> {
         vaultPath: path,
         autoLockTimeout: 5,
       );
-      
+      print('[resetVaultCompletely] State updated: hasVaultFile=${state.hasVaultFile}');
       checkInitialStatus();
     } catch (e) {
       print('[resetVaultCompletely] ERROR: $e');
