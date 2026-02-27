@@ -2,12 +2,12 @@
 
 ## 1. 为什么 PRD 中已有的功能未被完整实现？
 
-在 NotePassword 的第一阶段研发中，虽然 PRD 明确要求了“数据导入”、“搜索”等功能，但在实际开发过程中出现了遗漏。
+在 NotePassword 的第一阶段研发中，虽然 PRD 明确要求了"数据导入"、"搜索"等功能，但在实际开发过程中出现了遗漏。
 
 ### 经验总结：
-*   **研发冲刺（Sprint）目标过窄**：作为 Agent，在执行“继续”或“下一步”指令时，往往倾向于优先构建“最小闭环”（MVP中的MVP），即增删改查的基础链路。这导致了 PRD 中定义的其他 P0 级功能（如导入、搜索）被推迟到了“未来”。
+*   **研发冲刺（Sprint）目标过窄**：作为 Agent，在执行"继续"或"下一步"指令时，往往倾向于优先构建"最小闭环"（MVP中的MVP），即增删改查的基础链路。这导致了 PRD 中定义的其他 P0 级功能（如导入、搜索）被推迟到了"未来"。
 *   **缺乏 Checklist 强约束**：在开发过程中，没有将 PRD 拆解为一份可追踪的 Task List 并逐项对比。
-*   **状态管理惯性**：在实现 UI 时，容易陷入“先跑通界面”的思维，而忽略了复杂的交互（如完整录入表单、国际化配置）。
+*   **状态管理惯性**：在实现 UI 时，容易陷入"先跑通界面"的思维，而忽略了复杂的交互（如完整录入表单、国际化配置）。
 
 ## 2. 改进对策
 *   **任务开始前强制对齐 PRD**：在每个阶段性任务开始前，必须重新扫描 PRD 的 `Functional Requirements` 章节，并在 `TodoWrite` 工具中显式列出所有涉及的功能点。
@@ -31,7 +31,117 @@
 
 ---
 
-## 4. 本次会话开发记录 (Session Log 2026-02-26/2026-02-27)
+## 4. macOS 桌面端开发经验 (2026-02-27)
+
+### 4.1 macOS 系统菜单 "Settings" 变灰无法点击
+
+#### 问题描述
+Flutter macOS 应用中，系统菜单里的 "Settings..." (⌘,) 是灰色不可点击。
+
+#### 根因分析
+1.  **MainMenu.xib**: Flutter 默认模板包含 `MainMenu.xib`，其中定义了 "Preferences..." 菜单项，但**没有绑定任何 Action 或 Target**。系统默认禁用了没有 Action 的菜单项。
+2.  **Flutter AppDelegate**: 我们的 `AppDelegate` 试图通过代码修改菜单，但在 `applicationDidFinishLaunching` 中设置菜单可能**被 Flutter 的初始化流程覆盖**。
+3.  **Responder Chain**: macOS 菜单项的启用状态取决于 Responder Chain 是否能响应其 Action。
+
+#### 尝试过的方案 (均失败)
+*   **方案 A**: 在 `applicationDidFinishLaunching` 中立即重建整个菜单 (完全代码构建)。
+    *   结果：失败。Flutter 可能在之后重置了菜单，或者 XIB 加载优先级更高。
+*   **方案 B**: 使用 `NSMenuItemValidation` 协议强制 `validateMenuItem` 返回 `true`。
+    *   结果：失败。菜单项依然灰显。
+*   **方案 C**: 手动查找并替换菜单项 (`patchAppMenu`)。
+    *   结果：部分成功，但不稳定。
+
+#### 最终解决方案
+采用**修补 (Patch) 策略**：在应用启动后，通过 `DispatchQueue.main.async` 延迟执行修补逻辑，找到 `MainMenu.xib` 加载的现有 "Preferences..." 菜单项，**直接修改其属性**而非替换。
+
+```swift
+// AppDelegate.swift
+override func applicationDidFinishLaunching(_ notification: Notification) {
+    super.applicationDidFinishLaunching(notification)
+    
+    // 1. 设置 MethodChannel
+    if let controller = NSApplication.shared.windows.first?.contentViewController as? FlutterViewController {
+        methodChannel = FlutterMethodChannel(name: "app.menu", binaryMessenger: controller.engine.binaryMessenger)
+    }
+    
+    // 2. 延迟修补菜单项
+    DispatchQueue.main.async { [weak self] in
+        self?.setupPreferencesMenuItem()
+    }
+}
+
+private func setupPreferencesMenuItem() {
+    // 查找 App Menu 中的 Preferences 项 (Cmd+,)
+    guard let appMenu = NSApp.mainMenu?.items.first?.submenu else { return }
+    
+    if let prefsItem = appMenu.items.first(where: { $0.keyEquivalent == "," }) {
+        // 核心：显式设置 Target 和 Action
+        prefsItem.target = self
+        prefsItem.action = #selector(showPreferencesWindow(_:))
+        prefsItem.isEnabled = true
+    }
+}
+
+@IBAction func showPreferencesWindow(_ sender: Any?) {
+    methodChannel?.invokeMethod("openSettings", arguments: nil)
+}
+```
+
+#### 关键经验
+*   **不要完全重建菜单**：尊重 XIB 加载的菜单，只修改需要的项。
+*   **使用标准 Selector**：`showPreferencesWindow:` 是 macOS 标准的选择器。
+*   **显式 Target**：必须设置 `target = self`。
+*   **延迟执行**：使用 `DispatchQueue.main.async` 确保在系统初始化完成后执行。
+
+### 4.2 桌面端图标不显示 (favicon)
+
+#### 问题描述
+桌面端密码列表中，网站图标的位置显示的是首字母 fallback，而非网站的 favicon。
+
+#### 根因分析
+**macOS App Sandbox 网络权限未开启**。
+移动端默认有网络权限，但 macOS 需要在 Entitlements 文件中显式声明。
+
+#### 解决方案
+在 `macos/Runner/DebugProfile.entitlements` 和 `Release.entitlements` 中添加：
+```xml
+<key>com.apple.security.network.client</key>
+<true/>
+```
+
+#### 关键经验
+*   ** Entitlements 是 macOS 开发的第一道坎**：没有 `network.client`，应用无法访问互联网。
+*   **热重载无效**：Entitlements 修改后必须**重新编译** (Stop & Run)。
+
+### 4.3 Android 构建失败 (Kotlin Result 类型推断)
+
+#### 问题描述
+Android 构建失败，报错：`Cannot infer type for type parameter 'T'.`
+
+#### 根因分析
+代码中使用了 `Result(null)`，但由于导入了 Flutter 的 `MethodChannel.Result`，编译器无法推断 Kotlin 内置的 `kotlin.Result` 类型。
+
+#### 解决方案
+修改函数签名，避免类型推断歧义：
+```kotlin
+// 错误
+private fun stopWatching(result: Result = Result(null))
+
+// 正确
+private fun stopWatching(result: Result?) {
+    // ...
+    result?.success(null)
+}
+```
+
+### 4.4 桌面端布局调整
+
+*   **侧边栏宽度**：从 350px 调整为 280px，更符合"黄金比例"审美。
+*   **图标获取逻辑**：与移动端保持一致，使用 `CachedNetworkImage` 加载 `https://domain/favicon.ico`。
+
+---
+
+## 5. 本次会话开发记录 (Session Log 2026-02-26/2026-02-27)
 
 ### 4.1 代码修复
 *   **detail_page.dart**: 修复语法错误 (缺失 `)`, 错误的 `IconButton` 嵌套)
