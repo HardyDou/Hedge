@@ -236,12 +236,13 @@ class _HomePageState extends ConsumerState<HomePage> {
                 ],
               ),
       ),
-      child: Stack(
-        children: [
-          Column(
-            children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+      child: SafeArea(
+        child: Stack(
+          children: [
+            Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
                 child: Container(
                   height: 36,
                   decoration: BoxDecoration(
@@ -394,6 +395,7 @@ class _HomePageState extends ConsumerState<HomePage> {
             ),
           ),
         ],
+      ),
       ),
     );
   }
