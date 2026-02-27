@@ -306,17 +306,14 @@ class VaultNotifier extends StateNotifier<VaultState> {
     state = state.copyWith(isLoading: true, error: null);
     try {
       final path = state.vaultPath ?? await _getDefaultVaultPath();
-      print('[resetVaultCompletely] path: $path');
       final vaultFile = File(path);
       
       if (await vaultFile.exists()) {
-        print('[resetVaultCompletely] deleting file');
         final backupPath = '${vaultFile.parent.path}/vault_backup.db';
         await vaultFile.copy(backupPath);
         await vaultFile.delete();
       }
       
-      print('[resetVaultCompletely] clearing storage');
       await _storage.deleteAll();
       
       state = VaultState(
@@ -325,10 +322,8 @@ class VaultNotifier extends StateNotifier<VaultState> {
         vaultPath: path,
         autoLockTimeout: 5,
       );
-      print('[resetVaultCompletely] State updated: hasVaultFile=${state.hasVaultFile}');
       checkInitialStatus();
     } catch (e) {
-      print('[resetVaultCompletely] ERROR: $e');
       state = state.copyWith(isLoading: false, error: "Reset failed: $e");
     }
   }
@@ -416,8 +411,6 @@ class VaultNotifier extends StateNotifier<VaultState> {
     
       // Listen for file changes
       _syncSubscription = _syncService.onFileChanged.listen((event) async {
-        print('[iCloud Sync] File changed event received: ${event.type}');
-        
         if (!state.isAuthenticated || state.currentPassword == null) return;
       
       // Check if this is our own change (by comparing modification time)
