@@ -259,92 +259,13 @@ class SettingsPage extends ConsumerWidget {
 
   void _showResetPasswordDialog(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
-    final currentPasswordController = TextEditingController();
-    final newPasswordController = TextEditingController();
-    final confirmPasswordController = TextEditingController();
-
-    showCupertinoDialog(
-      context: context,
-      builder: (dialogContext) => CupertinoAlertDialog(
-        title: Text(l10n.resetPassword),
-        content: Column(
-          children: [
-            const SizedBox(height: 16),
-            CupertinoTextField(
-              controller: currentPasswordController,
-              placeholder: l10n.enterCurrentPassword,
-              obscureText: true,
-              padding: const EdgeInsets.all(12),
-            ),
-            const SizedBox(height: 12),
-            CupertinoTextField(
-              controller: newPasswordController,
-              placeholder: l10n.enterNewPassword,
-              obscureText: true,
-              padding: const EdgeInsets.all(12),
-            ),
-            const SizedBox(height: 12),
-            CupertinoTextField(
-              controller: confirmPasswordController,
-              placeholder: l10n.confirmNewPassword,
-              obscureText: true,
-              padding: const EdgeInsets.all(12),
-            ),
-          ],
-        ),
-        actions: [
-          CupertinoDialogAction(
-            isDestructiveAction: true,
-            onPressed: () => Navigator.pop(dialogContext),
-            child: Text(l10n.cancel),
-          ),
-          CupertinoDialogAction(
-            isDefaultAction: true,
-            onPressed: () async {
-              if (newPasswordController.text.isEmpty || 
-                  currentPasswordController.text.isEmpty ||
-                  confirmPasswordController.text.isEmpty) {
-                return;
-              }
-              
-              if (newPasswordController.text != confirmPasswordController.text) {
-                _showErrorToast(context, l10n.passwordsDoNotMatch);
-                return;
-              }
-              
-              Navigator.pop(dialogContext);
-              
-              final success = await ref.read(vaultProvider.notifier).resetMasterPassword(
-                currentPasswordController.text,
-                newPasswordController.text,
-              );
-              
-              if (context.mounted) {
-                if (success) {
-                  _showSuccessToast(context, l10n.passwordResetSuccess);
-                } else {
-                  final error = ref.read(vaultProvider).error;
-                  String errorMessage;
-                  switch (error) {
-                    case 'incorrect_current_password':
-                      errorMessage = l10n.incorrectCurrentPassword;
-                      break;
-                    case 'vault_not_unlocked':
-                      errorMessage = 'Vault not unlocked';
-                      break;
-                    case 'reset_password_failed':
-                      errorMessage = l10n.passwordResetFailed;
-                      break;
-                    default:
-                      errorMessage = error ?? l10n.passwordResetFailed;
-                  }
-                  _showErrorToast(context, errorMessage);
-                }
-              }
-            },
-            child: Text(l10n.save),
-          ),
-        ],
+    final brightness = CupertinoTheme.of(context).brightness;
+    final isDark = brightness == Brightness.dark;
+    
+    Navigator.of(context).push(
+      CupertinoPageRoute(
+        fullscreenDialog: true,
+        builder: (context) => _ResetPasswordPage(isDark: isDark, l10n: l10n),
       ),
     );
   }
@@ -732,6 +653,244 @@ class _iOSSliderTile extends StatelessWidget {
             margin: const EdgeInsets.only(left: 16),
             color: isDark ? CupertinoColors.white.withOpacity(0.1) : CupertinoColors.black.withOpacity(0.1),
           ),
+      ],
+    );
+  }
+}
+
+class _ResetPasswordPage extends ConsumerStatefulWidget {
+  final bool isDark;
+  final AppLocalizations l10n;
+
+  const _ResetPasswordPage({required this.isDark, required this.l10n});
+
+  @override
+  ConsumerState<_ResetPasswordPage> createState() => _ResetPasswordPageState();
+}
+
+class _ResetPasswordPageState extends ConsumerState<_ResetPasswordPage> {
+  final _currentPasswordController = TextEditingController();
+  final _newPasswordController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
+  bool _isLoading = false;
+
+  @override
+  void dispose() {
+    _currentPasswordController.dispose();
+    _newPasswordController.dispose();
+    _confirmPasswordController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _handleReset() async {
+    if (_newPasswordController.text.isEmpty || 
+        _currentPasswordController.text.isEmpty ||
+        _confirmPasswordController.text.isEmpty) {
+      _showError(widget.l10n.passwordsDoNotMatch);
+      return;
+    }
+    
+    if (_newPasswordController.text != _confirmPasswordController.text) {
+      _showError(widget.l10n.passwordsDoNotMatch);
+      return;
+    }
+    
+    setState(() => _isLoading = true);
+    
+    final success = await ref.read(vaultProvider.notifier).resetMasterPassword(
+      _currentPasswordController.text,
+      _newPasswordController.text,
+    );
+    
+    if (!mounted) return;
+    
+    setState(() => _isLoading = false);
+    
+    if (success) {
+      _showSuccess(widget.l10n.passwordResetSuccess);
+      Navigator.pop(context);
+    } else {
+      final error = ref.read(vaultProvider).error;
+      String errorMessage;
+      switch (error) {
+        case 'incorrect_current_password':
+          errorMessage = widget.l10n.incorrectCurrentPassword;
+          break;
+        case 'vault_not_unlocked':
+          errorMessage = 'Vault not unlocked';
+          break;
+        case 'reset_password_failed':
+          errorMessage = widget.l10n.passwordResetFailed;
+          break;
+        default:
+          errorMessage = error ?? widget.l10n.passwordResetFailed;
+      }
+      _showError(errorMessage);
+    }
+  }
+
+  void _showError(String message) {
+    showCupertinoDialog(
+      context: context,
+      builder: (ctx) => CupertinoAlertDialog(
+        content: Text(message),
+        actions: [
+          CupertinoDialogAction(
+            child: const Text("OK"),
+            onPressed: () => Navigator.pop(ctx),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showSuccess(String message) {
+    showCupertinoDialog(
+      context: context,
+      builder: (ctx) => CupertinoAlertDialog(
+        content: Text(message),
+        actions: [
+          CupertinoDialogAction(
+            child: const Text("OK"),
+            onPressed: () => Navigator.pop(ctx),
+          ),
+        ],
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = widget.isDark;
+    final l10n = widget.l10n;
+    
+    return CupertinoPageScaffold(
+      backgroundColor: isDark ? CupertinoColors.black : const Color(0xFFF2F2F7),
+      navigationBar: CupertinoNavigationBar(
+        middle: Text(l10n.resetPassword),
+        backgroundColor: isDark ? const Color(0xFF1C1C1E) : CupertinoColors.white,
+        leading: CupertinoButton(
+          padding: EdgeInsets.zero,
+          child: Text(l10n.cancel),
+          onPressed: () => Navigator.pop(context),
+        ),
+        trailing: _isLoading
+            ? const CupertinoActivityIndicator()
+            : CupertinoButton(
+                padding: EdgeInsets.zero,
+                onPressed: _handleReset,
+                child: Text(
+                  l10n.save,
+                  style: const TextStyle(fontWeight: FontWeight.w600),
+                ),
+              ),
+      ),
+      child: SafeArea(
+        child: ListView(
+          children: [
+            const SizedBox(height: 32),
+            _buildSection(
+              header: l10n.resetPassword.toUpperCase(),
+              children: [
+                _buildPasswordField(
+                  controller: _currentPasswordController,
+                  placeholder: l10n.enterCurrentPassword,
+                  isDark: isDark,
+                ),
+                _buildPasswordField(
+                  controller: _newPasswordController,
+                  placeholder: l10n.enterNewPassword,
+                  isDark: isDark,
+                ),
+                _buildPasswordField(
+                  controller: _confirmPasswordController,
+                  placeholder: l10n.confirmNewPassword,
+                  isDark: isDark,
+                  showDivider: false,
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPasswordField({
+    required TextEditingController controller,
+    required String placeholder,
+    required bool isDark,
+    bool showDivider = true,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        border: showDivider
+            ? Border(
+                bottom: BorderSide(
+                  color: isDark ? CupertinoColors.white.withOpacity(0.1) : CupertinoColors.black.withOpacity(0.06),
+                  width: 0.5,
+                ),
+              )
+            : null,
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      child: Row(
+        children: [
+          Icon(
+            CupertinoIcons.lock,
+            color: isDark ? CupertinoColors.white.withOpacity(0.6) : CupertinoColors.black.withOpacity(0.45),
+            size: 20,
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: CupertinoTextField(
+              controller: controller,
+              obscureText: true,
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              placeholder: placeholder,
+              placeholderStyle: TextStyle(
+                color: isDark ? CupertinoColors.white.withOpacity(0.3) : CupertinoColors.black.withOpacity(0.3),
+              ),
+              style: TextStyle(
+                color: isDark ? CupertinoColors.white : CupertinoColors.black,
+              ),
+              decoration: const BoxDecoration(),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSection({
+    required String header,
+    required List<Widget> children,
+  }) {
+    final brightness = CupertinoTheme.of(context).brightness;
+    final isDark = brightness == Brightness.dark;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(32, 0, 16, 8),
+          child: Text(
+            header,
+            style: TextStyle(
+              color: isDark ? CupertinoColors.white.withOpacity(0.6) : CupertinoColors.black.withOpacity(0.54),
+              fontSize: 13,
+              fontWeight: FontWeight.w500,
+              letterSpacing: 0.5,
+            ),
+          ),
+        ),
+        Container(
+          margin: const EdgeInsets.symmetric(horizontal: 16),
+          decoration: BoxDecoration(
+            color: isDark ? const Color(0xFF1C1C1E) : CupertinoColors.white,
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Column(children: children),
+        ),
       ],
     );
   }
