@@ -8,6 +8,84 @@ import 'package:note_password/presentation/providers/theme_provider.dart';
 import 'package:note_password/presentation/providers/vault_provider.dart';
 import 'dart:io';
 
+class _CustomNavBar extends StatelessWidget {
+  final String title;
+  final bool isDark;
+  final VoidCallback onBack;
+  final Widget child;
+
+  const _CustomNavBar({
+    required this.title,
+    required this.isDark,
+    required this.onBack,
+    required this.child,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      children: [
+        child,
+        Positioned(
+          top: 0,
+          left: 0,
+          right: 0,
+          child: Container(
+            height: MediaQuery.of(context).padding.top + 44,
+            padding: EdgeInsets.only(top: MediaQuery.of(context).padding.top),
+            decoration: BoxDecoration(
+              color: isDark ? const Color(0xFF1C1C1E) : CupertinoColors.white,
+              border: Border(
+                bottom: BorderSide(
+                  color: isDark ? CupertinoColors.white.withOpacity(0.1) : CupertinoColors.black.withOpacity(0.1),
+                  width: 0.5,
+                ),
+              ),
+            ),
+            child: Row(
+              children: [
+                CupertinoButton(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  onPressed: onBack,
+                  child: Row(
+                    children: [
+                      Icon(
+                        CupertinoIcons.back,
+                        color: CupertinoColors.activeBlue,
+                        size: 22,
+                      ),
+                      const SizedBox(width: 2),
+                      Text(
+                        'Back',
+                        style: TextStyle(
+                          color: CupertinoColors.activeBlue,
+                          fontSize: 17,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Expanded(
+                  child: Text(
+                    title,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 17,
+                      fontWeight: FontWeight.w600,
+                      color: isDark ? CupertinoColors.white : CupertinoColors.black,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 70),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
 class SettingsPage extends ConsumerWidget {
   const SettingsPage({super.key});
 
@@ -21,15 +99,16 @@ class SettingsPage extends ConsumerWidget {
     final isDark = brightness == Brightness.dark;
 
     return CupertinoPageScaffold(
-      backgroundColor: isDark ? CupertinoColors.black : const Color(0xFFF2F2F7),
-      navigationBar: CupertinoNavigationBar(
-        middle: Text(l10n.settings),
-        backgroundColor: isDark ? const Color(0xFF1C1C1E) : CupertinoColors.white,
-      ),
-      child: SafeArea(
-        child: ListView(
-          children: [
-            const SizedBox(height: 32),
+      child: _CustomNavBar(
+        title: l10n.settings,
+        isDark: isDark,
+        onBack: () => Navigator.pop(context),
+        child: SafeArea(
+          top: false, // This SafeArea will only handle bottom padding
+          child: ListView(
+            padding: EdgeInsets.only(top: MediaQuery.of(context).padding.top + 44 + 32), // Add padding for custom nav bar + initial SizedBox
+            children: [
+              // Removed initial SizedBox(height: 32) since it's now part of the padding
             _buildiOSSection(
               context: context,
               header: l10n.appearance.toUpperCase(),
@@ -116,6 +195,7 @@ class SettingsPage extends ConsumerWidget {
             ),
             const SizedBox(height: 48),
           ],
+        ),
         ),
       ),
     );
