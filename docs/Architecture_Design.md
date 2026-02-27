@@ -161,6 +161,185 @@ note-password/
 
 ---
 
+## 5. 分层架构设计 (Layered Architecture)
+
+### 5.1 整体架构图
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│                           应用层 (App Layer)                             │
+├─────────────────────────────┬───────────────────────────────────────────┤
+│      移动端 (Mobile)        │           桌面端 (Desktop)               │
+│   Cupertino Pages           │      Flutter Desktop Pages               │
+│   - 页面跳转导航            │      - 两栏布局                          │
+│   - 移动端特有组件          │      - 可拖拽分割线                      │
+│                             │      - 设置弹窗                          │
+├─────────────────────────────┴───────────────────────────────────────────┤
+│                     页面工厂 (PageFactory)                             │
+│         根据平台动态选择移动端/桌面端页面实现                           │
+├─────────────────────────────────────────────────────────────────────────┤
+│                         共享层 (Shared Layer)                          │
+│   - Providers (状态管理)                                               │
+│   - Services (业务逻辑)                                               │
+│   - Models (数据模型)                                                 │
+│   - Core (核心工具)                                                   │
+├─────────────────────────────────────────────────────────────────────────┤
+│                       平台适配层 (Platform Layer)                       │
+│   - PlatformUtils (平台检测)                                          │
+│   - 平台特定服务 (iCloud, SAF, 生物识别)                              │
+└─────────────────────────────────────────────────────────────────────────┘
+```
+
+### 5.2 逻辑层 (Business Logic Layer)
+
+**职责:** 负责所有业务逻辑，不涉及任何 UI 代码
+
+| 组件 | 路径 | 描述 |
+|------|------|------|
+| **VaultProvider** | `presentation/providers/vault_provider.dart` | 密码库状态管理 |
+| **ThemeProvider** | `presentation/providers/theme_provider.dart` | 主题状态管理 |
+| **LocaleProvider** | `presentation/providers/locale_provider.dart` | 语言状态管理 |
+| **CryptoService** | `src/dart/crypto.dart` | 加密/解密服务 |
+| **Vault** | `src/dart/vault.dart` | 密码库数据模型 |
+| **SyncService** | `services/sync_service.dart` | 同步服务 |
+
+**技术选型:**
+*   **状态管理:** Riverpod (Flutter 官方推荐)
+*   **加密:** `cryptography` + `encrypt` 库
+*   **数据格式:** 加密 JSON 文件
+
+### 5.3 移动端技术设计 (Mobile)
+
+#### 5.3.1 技术栈
+| 技术 | 选择 | 理由 |
+|------|------|------|
+| **UI 框架** | Flutter Cupertino | 100% iOS 原生体验 |
+| **导航** | CupertinoPageRoute | iOS 风格页面过渡 |
+| **状态管理** | Riverpod | 声明式状态管理 |
+| **动画** | CupertinoPageTransition | iOS 原生动画 |
+
+#### 5.3.2 目录结构
+```
+lib/presentation/pages/mobile/
+├── home_page.dart              # 密码列表页
+├── detail_page.dart             # 密码详情页
+├── settings_page.dart          # 设置页
+├── unlock_page.dart            # 解锁页
+├── onboarding_page.dart        # 首次引导页
+├── add_item_page.dart         # 添加密码页
+├── edit_page.dart             # 编辑密码页
+└── large_password_page.dart   # 密码大图页
+```
+
+#### 5.3.3 导航模式
+```
+┌──────────┐     ┌──────────┐     ┌──────────┐
+│  首页     │ ──▶ │  详情页   │ ──▶ │  编辑页   │
+│ (列表)   │     │ (独立页面)│     │ (独立页面)│
+└──────────┘     └──────────┘     └──────────┘
+     │                 │
+     ▼                 ▼
+┌──────────┐     ┌──────────┐
+│ 设置页   │     │ 添加页   │
+│ (独立页面)│     │ (独立页面)│
+└──────────┘     └──────────┘
+```
+
+### 5.4 桌面端技术设计 (Desktop)
+
+#### 5.4.1 技术栈
+| 技术 | 选择 | 理由 |
+|------|------|------|
+| **UI 框架** | Flutter Desktop | 支持 macOS/Linux/Windows |
+| **布局** | Row + Flexible | 两栏可拖拽布局 |
+| **窗口管理** | window_manager | 窗口控制 |
+| **系统托盘** | tray_manager | 菜单栏图标 |
+| **全局快捷键** | hotkey_manager | 键盘快捷键 |
+
+#### 5.4.2 目录结构
+```
+lib/presentation/pages/desktop/
+├── desktop_home_page.dart      # 两栏主布局
+├── detail_panel.dart           # 详情面板
+├── settings_panel.dart         # 设置面板
+└── menu_bar_controller.dart   # 菜单栏控制
+```
+
+#### 5.4.3 两栏布局实现
+```dart
+Row(
+  children: [
+    // 左侧栏 - 密码列表
+    SizedBox(
+      width: _sidebarWidth,  // 可拖拽调整
+      child: SidebarView(),
+    ),
+    // 可拖拽分割线
+    MouseRegion(
+      cursor: SystemMouseCursors.resizeColumn,
+      child: GestureDetector(
+        onHorizontalDragUpdate: _handleDrag,
+        child: Container(width: 1, color: dividerColor),
+      ),
+    ),
+    // 右侧栏 - 详情/设置
+    Expanded(
+      child: _buildDetailView(),
+    ),
+  ],
+)
+```
+
+#### 5.4.4 核心特性实现
+
+| 特性 | 实现方式 |
+|------|----------|
+| **可拖拽分割线** | `GestureDetector` + `onHorizontalDragUpdate` 监听拖拽事件 |
+| **设置弹窗** | `showCupertinoDialog` 模态弹窗 |
+| **实时搜索** | `TextEditingController` + `setState` 过滤列表 |
+| **空状态提示** | 条件渲染 `if (selectedItem == null)` |
+
+### 5.5 平台检测与页面工厂
+
+#### 5.5.1 平台检测工具
+```dart
+// lib/core/platform/platform_utils.dart
+enum AppPlatform { mobile, desktop, web }
+
+class PlatformUtils {
+  static AppPlatform get platform {
+    if (Platform.isMacOS || Platform.isWindows || Platform.isLinux) {
+      return AppPlatform.desktop;
+    }
+    return AppPlatform.mobile;
+  }
+  
+  static bool get isDesktop => platform == AppPlatform.desktop;
+  static bool get isMobile => platform == AppPlatform.mobile;
+}
+```
+
+#### 5.5.2 页面工厂
+```dart
+// lib/presentation/pages/page_factory.dart
+class PageFactory {
+  static Widget getHomePage() {
+    return PlatformUtils.isDesktop
+        ? DesktopHomePage()
+        : MobileHomePage();
+  }
+  
+  static Widget getDetailPage(VaultItem item) {
+    return PlatformUtils.isDesktop
+        ? DetailPanel(item: item)
+        : DetailPage(item: item);
+  }
+  
+  // ... 其他页面工厂方法
+}
+```
+
+---
+
 ## 7. 当前实现状态 (Implementation Status)
 
 ### 7.1 核心功能 ✅

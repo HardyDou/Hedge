@@ -1,7 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:note_password/l10n/generated/app_localizations.dart';
-import '../providers/vault_provider.dart';
+import '../../providers/vault_provider.dart';
 
 class UnlockPage extends ConsumerStatefulWidget {
   final bool isLockOverlay;

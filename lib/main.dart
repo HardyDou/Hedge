@@ -1,18 +1,22 @@
+import 'dart:io';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart' show ThemeMode;
 import 'package:flutter_app_lock/flutter_app_lock.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:note_password/presentation/pages/detail_page.dart';
-import 'package:note_password/presentation/pages/settings_page.dart';
-import 'package:note_password/presentation/pages/unlock_page.dart';
-import 'package:note_password/presentation/pages/onboarding_page.dart';
+import 'package:note_password/core/platform/platform_utils.dart';
 import 'package:note_password/presentation/providers/locale_provider.dart';
 import 'package:note_password/presentation/providers/theme_provider.dart';
 import 'package:note_password/presentation/providers/vault_provider.dart';
 import 'package:note_password/l10n/generated/app_localizations.dart';
-import 'package:note_password/presentation/pages/add_item_page.dart';
+
+import 'package:note_password/presentation/pages/mobile/detail_page.dart';
+import 'package:note_password/presentation/pages/mobile/settings_page.dart';
+import 'package:note_password/presentation/pages/mobile/unlock_page.dart';
+import 'package:note_password/presentation/pages/mobile/onboarding_page.dart';
+import 'package:note_password/presentation/pages/mobile/add_item_page.dart';
+import 'package:note_password/presentation/pages/desktop/desktop_home_page.dart';
 
 class SlideFromLeftRoute<T> extends PageRouteBuilder<T> {
   SlideFromLeftRoute({required WidgetBuilder builder})
@@ -141,7 +145,9 @@ class _AuthGuardState extends ConsumerState<AuthGuard> {
       return const UnlockPage();
     }
 
-    return const HomePage();
+    return PlatformUtils.isDesktop
+        ? const DesktopHomePage()
+        : const HomePage();
   }
 }
 

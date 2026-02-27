@@ -8,7 +8,7 @@ import 'package:open_file/open_file.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:note_password/l10n/generated/app_localizations.dart';
 import 'edit_page.dart';
-import '../providers/vault_provider.dart';
+import '../../providers/vault_provider.dart';
 import 'large_password_page.dart' show LargePasswordPage;
 
 class DetailPage extends ConsumerStatefulWidget {
