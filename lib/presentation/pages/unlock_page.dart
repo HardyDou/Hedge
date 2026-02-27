@@ -4,7 +4,14 @@ import 'package:note_password/l10n/generated/app_localizations.dart';
 import '../providers/vault_provider.dart';
 
 class UnlockPage extends ConsumerStatefulWidget {
-  const UnlockPage({super.key});
+  final bool isLockOverlay;
+  final VoidCallback? onUnlocked;
+
+  const UnlockPage({
+    super.key,
+    this.isLockOverlay = false,
+    this.onUnlocked,
+  });
 
   @override
   ConsumerState<UnlockPage> createState() => _UnlockPageState();
@@ -29,7 +36,11 @@ class _UnlockPageState extends ConsumerState<UnlockPage> {
           _passwordController.text,
         );
 
-    if (!success) {
+    if (success) {
+      if (widget.isLockOverlay) {
+        widget.onUnlocked?.call();
+      }
+    } else {
       _passwordController.clear();
     }
   }
@@ -280,8 +291,12 @@ class _UnlockPageState extends ConsumerState<UnlockPage> {
                     Padding(
                       padding: const EdgeInsets.only(top: 16),
                       child: CupertinoButton(
-                        onPressed: () =>
-                            ref.read(vaultProvider.notifier).unlockWithBiometrics(),
+                        onPressed: () async {
+                          final success = await ref.read(vaultProvider.notifier).unlockWithBiometrics();
+                          if (success && widget.isLockOverlay) {
+                            widget.onUnlocked?.call();
+                          }
+                        },
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [

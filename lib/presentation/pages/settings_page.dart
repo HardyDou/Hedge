@@ -1,6 +1,7 @@
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart' show ThemeMode, Divider;
+import 'package:flutter_app_lock/flutter_app_lock.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:note_password/l10n/generated/app_localizations.dart';
 import 'package:note_password/presentation/providers/locale_provider.dart';
@@ -338,6 +339,8 @@ class SettingsPage extends ConsumerWidget {
   void _showAutoLockPicker(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
     final currentTimeout = ref.read(vaultProvider).autoLockTimeout;
+    final notifier = ref.read(vaultProvider.notifier);
+    final appLock = AppLock.of(context);
     
     showCupertinoModalPopup(
       context: context,
@@ -346,7 +349,8 @@ class SettingsPage extends ConsumerWidget {
         actions: [
           CupertinoActionSheetAction(
             onPressed: () {
-              ref.read(vaultProvider.notifier).setAutoLockTimeout(0);
+              notifier.setAutoLockTimeout(0);
+              appLock?.setBackgroundLockLatency(Duration(seconds: 0));
               Navigator.pop(ctx);
             },
             child: Row(
@@ -362,7 +366,8 @@ class SettingsPage extends ConsumerWidget {
           ),
           CupertinoActionSheetAction(
             onPressed: () {
-              ref.read(vaultProvider.notifier).setAutoLockTimeout(1);
+              notifier.setAutoLockTimeout(1);
+              appLock?.setBackgroundLockLatency(Duration(seconds: 1));
               Navigator.pop(ctx);
             },
             child: Row(
@@ -378,7 +383,8 @@ class SettingsPage extends ConsumerWidget {
           ),
           CupertinoActionSheetAction(
             onPressed: () {
-              ref.read(vaultProvider.notifier).setAutoLockTimeout(5);
+              notifier.setAutoLockTimeout(5);
+              appLock?.setBackgroundLockLatency(Duration(seconds: 5));
               Navigator.pop(ctx);
             },
             child: Row(
@@ -394,7 +400,8 @@ class SettingsPage extends ConsumerWidget {
           ),
           CupertinoActionSheetAction(
             onPressed: () {
-              ref.read(vaultProvider.notifier).setAutoLockTimeout(10);
+              notifier.setAutoLockTimeout(10);
+              appLock?.setBackgroundLockLatency(Duration(seconds: 10));
               Navigator.pop(ctx);
             },
             child: Row(
@@ -410,7 +417,8 @@ class SettingsPage extends ConsumerWidget {
           ),
           CupertinoActionSheetAction(
             onPressed: () {
-              ref.read(vaultProvider.notifier).setAutoLockTimeout(30);
+              notifier.setAutoLockTimeout(30);
+              appLock?.setBackgroundLockLatency(Duration(seconds: 30));
               Navigator.pop(ctx);
             },
             child: Row(
@@ -426,7 +434,8 @@ class SettingsPage extends ConsumerWidget {
           ),
           CupertinoActionSheetAction(
             onPressed: () {
-              ref.read(vaultProvider.notifier).setAutoLockTimeout(60);
+              notifier.setAutoLockTimeout(60);
+              appLock?.setBackgroundLockLatency(Duration(seconds: 60));
               Navigator.pop(ctx);
             },
             child: Row(

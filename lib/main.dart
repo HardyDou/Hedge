@@ -1,8 +1,6 @@
-import 'package:file_picker/file_picker.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart' show ThemeMode;
-import 'package:flutter/services.dart';
-import 'dart:io';
+import 'package:flutter/material.dart' show Material, ThemeMode, Colors, TextDirection;
+import 'package:flutter_app_lock/flutter_app_lock.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -49,6 +47,7 @@ class NotePasswordApp extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final themeMode = ref.watch(themeProvider);
     final locale = ref.watch(localeProvider);
+    final vaultState = ref.watch(vaultProvider);
 
     return CupertinoApp(
       title: 'NotePassword',
@@ -71,6 +70,19 @@ class NotePasswordApp extends ConsumerWidget {
         Locale('en'),
         Locale('zh'),
       ],
+      builder: (context, child) => AppLock(
+        enabled: true,
+        initialBackgroundLockLatency: Duration(seconds: vaultState.autoLockTimeout),
+        builder: (context, arg) => child ?? const AuthGuard(),
+        lockScreenBuilder: (lockContext) => Builder(
+          builder: (builderContext) => UnlockPage(
+            isLockOverlay: true,
+            onUnlocked: () {
+              AppLock.of(builderContext)!.didUnlock();
+            },
+          ),
+        ),
+      ),
       home: const AuthGuard(),
     );
   }
