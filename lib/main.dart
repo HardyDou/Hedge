@@ -70,19 +70,22 @@ class NotePasswordApp extends ConsumerWidget {
         Locale('en'),
         Locale('zh'),
       ],
-      builder: (context, child) => AppLock(
-        initiallyEnabled: true,
-        initialBackgroundLockLatency: Duration(seconds: vaultState.autoLockTimeout),
-        builder: (context, arg) => child ?? const AuthGuard(),
-        lockScreenBuilder: (lockContext) => Builder(
-          builder: (builderContext) => UnlockPage(
-            isLockOverlay: true,
-            onUnlocked: () {
-              AppLock.of(builderContext)!.didUnlock();
-            },
+      builder: (context, child) {
+        final shouldEnableLock = vaultState.hasVaultFile && !vaultState.isLoading;
+        return AppLock(
+          initiallyEnabled: shouldEnableLock,
+          initialBackgroundLockLatency: Duration(seconds: vaultState.autoLockTimeout),
+          builder: (context, arg) => child ?? const AuthGuard(),
+          lockScreenBuilder: (lockContext) => Builder(
+            builder: (builderContext) => UnlockPage(
+              isLockOverlay: true,
+              onUnlocked: () {
+                AppLock.of(builderContext)!.didUnlock();
+              },
+            ),
           ),
-        ),
-      ),
+        );
+      },
       home: const AuthGuard(),
     );
   }

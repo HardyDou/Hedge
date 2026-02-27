@@ -78,7 +78,7 @@ class VaultNotifier extends StateNotifier<VaultState> {
   StreamSubscription? _syncSubscription;
   DateTime? _lastKnownModification;
 
-  VaultNotifier() : super(VaultState());
+  VaultNotifier() : super(VaultState(isLoading: true));
 
   Future<void> checkInitialStatus() async {
     state = state.copyWith(isLoading: true);
