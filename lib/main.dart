@@ -161,7 +161,7 @@ class _HomePageState extends ConsumerState<HomePage> {
           onPressed: () {
             Navigator.push(
               context,
-              CupertinoPageRoute(builder: (context) => const SettingsPage()),
+              SlideFromLeftRoute(builder: (context) => const SettingsPage()),
             );
           },
         ),
