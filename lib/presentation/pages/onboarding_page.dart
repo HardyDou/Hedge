@@ -17,6 +17,8 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
   final _confirmController = TextEditingController();
   bool _isPasswordVisible = false;
   String? _customPath;
+  bool _obscurePassword = true;
+  bool _obscureConfirm = true;
 
   @override
   void dispose() {
@@ -153,9 +155,7 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
                       const SizedBox(width: 12),
                       Expanded(
                         child: Text(
-                          isDark 
-                            ? "Your vault will be automatically synced with iCloud (Apple) or Cloud Backup (Android)."
-                            : "您的密码库将自动通过 iCloud 或 厂商云进行同步。",
+                          l10n.syncTip,
                           style: TextStyle(
                             color: isDark ? CupertinoColors.white.withOpacity(0.7) : CupertinoColors.black.withOpacity(0.87),
                             fontSize: 13,
@@ -170,13 +170,25 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
                 _buildField(
                   controller: _passwordController,
                   hint: l10n.enterMasterPassword,
-                  visible: _isPasswordVisible,
+                  obscure: _obscurePassword,
+                  isDark: isDark,
+                  toggleVisibility: () {
+                    setState(() {
+                      _obscurePassword = !_obscurePassword;
+                    });
+                  },
                 ),
                 const SizedBox(height: 16),
                 _buildField(
                   controller: _confirmController,
-                  hint: l10n.password, 
-                  visible: _isPasswordVisible,
+                  hint: l10n.enterMasterPassword,
+                  obscure: _obscureConfirm,
+                  isDark: isDark,
+                  toggleVisibility: () {
+                    setState(() {
+                      _obscureConfirm = !_obscureConfirm;
+                    });
+                  },
                 ),
                 const SizedBox(height: 32),
                 SizedBox(
@@ -211,13 +223,13 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
   Widget _buildField({
     required TextEditingController controller,
     required String hint,
-    required bool visible,
+    required bool obscure,
+    required bool isDark,
+    required VoidCallback toggleVisibility,
   }) {
-    final brightness = CupertinoTheme.of(context).brightness;
-    final isDark = brightness == Brightness.dark;
     return CupertinoTextField(
       controller: controller,
-      obscureText: !visible,
+      obscureText: obscure,
       padding: const EdgeInsets.all(16),
       style: TextStyle(color: isDark ? CupertinoColors.white : CupertinoColors.black),
       placeholder: hint,
@@ -225,6 +237,15 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
       decoration: BoxDecoration(
         color: (isDark ? CupertinoColors.white : CupertinoColors.black).withOpacity(0.05),
         borderRadius: BorderRadius.circular(12),
+      ),
+      suffix: CupertinoButton(
+        padding: const EdgeInsets.only(right: 8),
+        onPressed: toggleVisibility,
+        child: Icon(
+          obscure ? CupertinoIcons.eye : CupertinoIcons.eye_slash,
+          color: (isDark ? CupertinoColors.white : CupertinoColors.black).withOpacity(0.5),
+          size: 20,
+        ),
       ),
     );
   }
