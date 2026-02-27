@@ -1,5 +1,5 @@
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart' show Material, ThemeMode, Colors, TextDirection;
+import 'package:flutter/material.dart' show ThemeMode;
 import 'package:flutter_app_lock/flutter_app_lock.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -71,7 +71,7 @@ class NotePasswordApp extends ConsumerWidget {
         Locale('zh'),
       ],
       builder: (context, child) => AppLock(
-        enabled: true,
+        initiallyEnabled: true,
         initialBackgroundLockLatency: Duration(seconds: vaultState.autoLockTimeout),
         builder: (context, arg) => child ?? const AuthGuard(),
         lockScreenBuilder: (lockContext) => Builder(
@@ -105,11 +105,6 @@ class _AuthGuardState extends ConsumerState<AuthGuard> {
   @override
   Widget build(BuildContext context) {
     final vaultState = ref.watch(vaultProvider);
-
-    print('[AuthGuard] isLoading: ${vaultState.isLoading}');
-    print('[AuthGuard] hasVaultFile: ${vaultState.hasVaultFile}');
-    print('[AuthGuard] isAuthenticated: ${vaultState.isAuthenticated}');
-    print('[AuthGuard] vault: ${vaultState.vault != null}');
 
     if (vaultState.isLoading && vaultState.vault == null) {
       return const CupertinoPageScaffold(
@@ -167,13 +162,13 @@ class _HomePageState extends ConsumerState<HomePage> {
           l10n.myVault.toUpperCase(),
           style: const TextStyle(fontWeight: FontWeight.w900, letterSpacing: 2),
         ),
-        backgroundColor: CupertinoColors.systemBackground.withOpacity(0.0),
+        backgroundColor: CupertinoColors.systemBackground.withValues(alpha: 0.0),
         border: null,
         leading: CupertinoButton(
           padding: EdgeInsets.zero,
           child: Icon(
             CupertinoIcons.settings,
-            color: isDark ? CupertinoColors.white.withOpacity(0.6) : CupertinoColors.black.withOpacity(0.6),
+            color: isDark ? CupertinoColors.white.withValues(alpha: 0.6) : CupertinoColors.black.withValues(alpha: 0.6),
           ),
           onPressed: () {
             Navigator.push(
@@ -238,7 +233,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                     padding: EdgeInsets.zero,
                     child: Icon(
                       CupertinoIcons.trash,
-                      color: isDark ? CupertinoColors.white.withOpacity(0.6) : CupertinoColors.black.withOpacity(0.6),
+                      color: isDark ? CupertinoColors.white.withValues(alpha: 0.6) : CupertinoColors.black.withValues(alpha: 0.6),
                     ),
                     onPressed: () => ref.read(vaultProvider.notifier).toggleSelectionMode(),
                   ),
@@ -246,7 +241,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                     padding: EdgeInsets.zero,
                     child: Icon(
                       CupertinoIcons.lock_open,
-                      color: isDark ? CupertinoColors.white.withOpacity(0.6) : CupertinoColors.black.withOpacity(0.6),
+                      color: isDark ? CupertinoColors.white.withValues(alpha: 0.6) : CupertinoColors.black.withValues(alpha: 0.6),
                     ),
                     onPressed: () => ref.read(vaultProvider.notifier).lock(),
                   ),
@@ -264,8 +259,8 @@ class _HomePageState extends ConsumerState<HomePage> {
                   height: 36,
                   decoration: BoxDecoration(
                     color: isDark 
-                        ? CupertinoColors.white.withOpacity(0.08) 
-                        : CupertinoColors.black.withOpacity(0.05),
+                        ? CupertinoColors.white.withValues(alpha: 0.08) 
+                        : CupertinoColors.black.withValues(alpha: 0.05),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: CupertinoTextField(
@@ -277,14 +272,14 @@ class _HomePageState extends ConsumerState<HomePage> {
                     ),
                     placeholder: l10n.search,
                     placeholderStyle: TextStyle(
-                      color: isDark ? CupertinoColors.white.withOpacity(0.4) : CupertinoColors.black.withOpacity(0.4),
+                      color: isDark ? CupertinoColors.white.withValues(alpha: 0.4) : CupertinoColors.black.withValues(alpha: 0.4),
                       fontSize: 16,
                     ),
                     prefix: Padding(
                       padding: const EdgeInsets.only(left: 8),
                       child: Icon(
                         CupertinoIcons.search, 
-                        color: isDark ? CupertinoColors.white.withOpacity(0.4) : CupertinoColors.black.withOpacity(0.4),
+                        color: isDark ? CupertinoColors.white.withValues(alpha: 0.4) : CupertinoColors.black.withValues(alpha: 0.4),
                         size: 20,
                       ),
                     ),
@@ -306,13 +301,13 @@ class _HomePageState extends ConsumerState<HomePage> {
                               Icon(
                                 CupertinoIcons.lock,
                                 size: 56,
-                                color: (isDark ? CupertinoColors.white : CupertinoColors.black).withOpacity(0.15),
+                                color: (isDark ? CupertinoColors.white : CupertinoColors.black).withValues(alpha: 0.15),
                               ),
                               const SizedBox(height: 12),
                               Text(
                                 l10n.noPasswords,
                                 style: TextStyle(
-                                  color: (isDark ? CupertinoColors.white : CupertinoColors.black).withOpacity(0.3),
+                                  color: (isDark ? CupertinoColors.white : CupertinoColors.black).withValues(alpha: 0.3),
                                   fontSize: 15,
                                 ),
                               ),
@@ -397,7 +392,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                   shape: BoxShape.circle,
                   boxShadow: [
                     BoxShadow(
-                      color: CupertinoColors.black.withOpacity(0.2),
+                      color: CupertinoColors.black.withValues(alpha: 0.2),
                       blurRadius: 8,
                       offset: const Offset(0, 4),
                     ),
@@ -498,13 +493,13 @@ class _iOSListItem extends StatelessWidget {
               color: isSelected
                   ? CupertinoColors.activeBlue
                   : isDark 
-                      ? CupertinoColors.white.withOpacity(0.08)
-                      : CupertinoColors.black.withOpacity(0.06),
+                      ? CupertinoColors.white.withValues(alpha: 0.08)
+                      : CupertinoColors.black.withValues(alpha: 0.06),
               width: isSelected ? 2 : 0.5,
             ),
             boxShadow: isDark ? null : [
               BoxShadow(
-                color: CupertinoColors.black.withOpacity(0.04),
+                color: CupertinoColors.black.withValues(alpha: 0.04),
                 blurRadius: 8,
                 offset: const Offset(0, 2),
               ),
@@ -519,7 +514,7 @@ class _iOSListItem extends StatelessWidget {
                       : CupertinoIcons.circle,
                   color: isSelected 
                       ? CupertinoColors.activeBlue
-                      : isDark ? CupertinoColors.white.withOpacity(0.4) : CupertinoColors.black.withOpacity(0.4),
+                      : isDark ? CupertinoColors.white.withValues(alpha: 0.4) : CupertinoColors.black.withValues(alpha: 0.4),
                   size: 24,
                 ),
                 const SizedBox(width: 12),
@@ -547,7 +542,7 @@ class _iOSListItem extends StatelessWidget {
                       Text(
                         subtitle!,
                         style: TextStyle(
-                          color: isDark ? CupertinoColors.white.withOpacity(0.6) : CupertinoColors.black.withOpacity(0.6),
+                          color: isDark ? CupertinoColors.white.withValues(alpha: 0.6) : CupertinoColors.black.withValues(alpha: 0.6),
                           fontSize: 14,
                           letterSpacing: -0.2,
                         ),
@@ -559,7 +554,7 @@ class _iOSListItem extends StatelessWidget {
                       Text(
                         _formatDate(updatedAt),
                         style: TextStyle(
-                          color: isDark ? CupertinoColors.white.withOpacity(0.4) : CupertinoColors.black.withOpacity(0.4),
+                          color: isDark ? CupertinoColors.white.withValues(alpha: 0.4) : CupertinoColors.black.withValues(alpha: 0.4),
                           fontSize: 14,
                           letterSpacing: -0.2,
                         ),
@@ -572,7 +567,7 @@ class _iOSListItem extends StatelessWidget {
               ),
             Icon(
               CupertinoIcons.chevron_forward,
-              color: isDark ? CupertinoColors.white.withOpacity(0.25) : CupertinoColors.black.withOpacity(0.25),
+              color: isDark ? CupertinoColors.white.withValues(alpha: 0.25) : CupertinoColors.black.withValues(alpha: 0.25),
               size: 18,
             ),
             ],
@@ -613,7 +608,7 @@ class _iOSListItem extends StatelessWidget {
       width: 40,
       height: 40,
       decoration: BoxDecoration(
-        color: color.withOpacity(0.15),
+        color: color.withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Center(
