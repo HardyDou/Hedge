@@ -71,10 +71,10 @@ class NotePasswordApp extends ConsumerWidget {
         Locale('zh'),
       ],
       builder: (context, child) {
-        final shouldEnableLock = vaultState.hasVaultFile && !vaultState.isLoading;
-        
+        // We start disabled to avoid showing lock screen during loading
+        // AuthGuard will handle enabling it when ready
         return AppLock(
-          initiallyEnabled: shouldEnableLock,
+          initiallyEnabled: false,
           initialBackgroundLockLatency: Duration(seconds: vaultState.autoLockTimeout),
           builder: (context, arg) => child ?? const AuthGuard(),
           lockScreenBuilder: (lockContext) => Builder(
@@ -109,6 +109,23 @@ class _AuthGuardState extends ConsumerState<AuthGuard> {
   @override
   Widget build(BuildContext context) {
     final vaultState = ref.watch(vaultProvider);
+    
+    // Listen for state changes to enable/disable AppLock
+    ref.listen<VaultState>(vaultProvider, (previous, next) {
+      if (next.hasVaultFile && !next.isLoading) {
+        // AppLock won't auto-update if initially disabled, so we force enable it
+        if (previous == null || !previous.hasVaultFile || previous.isLoading) {
+          AppLock.of(context)?.setEnabled(true);
+        }
+        
+        // Update timeout if changed
+        if (previous?.autoLockTimeout != next.autoLockTimeout) {
+          AppLock.of(context)?.setBackgroundLockLatency(Duration(seconds: next.autoLockTimeout));
+        }
+      } else if (!next.hasVaultFile) {
+        AppLock.of(context)?.setEnabled(false);
+      }
+    });
 
     if (vaultState.isLoading && vaultState.vault == null) {
       return const CupertinoPageScaffold(
