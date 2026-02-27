@@ -1,6 +1,5 @@
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:note_password/l10n/generated/app_localizations.dart';
 import 'package:note_password/src/dart/vault.dart';
@@ -49,10 +48,16 @@ class _AddItemPageState extends ConsumerState<AddItemPage> {
 
   Future<void> _handleSave() async {
     if (_titleController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
+      showCupertinoDialog(
+        context: context,
+        builder: (context) => CupertinoAlertDialog(
           content: Text(AppLocalizations.of(context)!.titleHint),
-          backgroundColor: Colors.red,
+          actions: [
+            CupertinoDialogAction(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('OK'),
+            ),
+          ],
         ),
       );
       return;
@@ -76,124 +81,123 @@ class _AddItemPageState extends ConsumerState<AddItemPage> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final brightness = CupertinoTheme.of(context).brightness;
+    final isDark = brightness == Brightness.dark;
 
-    return Scaffold(
-      backgroundColor: isDark ? const Color(0xFF000000) : const Color(0xFFF2F2F7),
-      appBar: AppBar(
-        backgroundColor: isDark ? const Color(0xFF1C1C1E) : Colors.white,
-        foregroundColor: isDark ? Colors.white : Colors.black,
-        elevation: 0,
-        title: Text(l10n.newEntry),
-        actions: [
-          CupertinoButton(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            onPressed: _handleSave,
-            child: Text(
-              l10n.save,
-              style: TextStyle(
-                color: const Color(0xFF007AFF),
-                fontWeight: FontWeight.w600,
-              ),
+    return CupertinoPageScaffold(
+      backgroundColor: isDark ? CupertinoColors.black : const Color(0xFFF2F2F7),
+      navigationBar: CupertinoNavigationBar(
+        backgroundColor: isDark ? const Color(0xFF1C1C1E) : CupertinoColors.white,
+        middle: Text(l10n.newEntry),
+        trailing: CupertinoButton(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          onPressed: _handleSave,
+          child: Text(
+            l10n.save,
+            style: const TextStyle(
+              color: CupertinoColors.activeBlue,
+              fontWeight: FontWeight.w600,
             ),
           ),
-        ],
+        ),
       ),
-      body: ListView(
-        children: [
-          const SizedBox(height: 32),
-          _buildiOSSection(
-            context: context,
-            header: l10n.basicInfo.toUpperCase(),
-            children: [
-              _iOSTextField(
-                label: l10n.title,
-                controller: _titleController,
-                placeholder: l10n.titleHint,
-                icon: CupertinoIcons.textformat,
-                isDark: isDark,
-                autofocus: true,
-              ),
-              _iOSTextField(
-                label: l10n.username,
-                controller: _usernameController,
-                placeholder: l10n.usernameHint,
-                icon: CupertinoIcons.person,
-                isDark: isDark,
-              ),
-              _iOSTextField(
-                label: l10n.password,
-                controller: _passwordController,
-                placeholder: l10n.passwordHint,
-                icon: CupertinoIcons.lock,
-                isDark: isDark,
-                isPassword: true,
-                showPasswordToggle: true,
-              ),
-              _iOSTextField(
-                label: l10n.url,
-                controller: _urlController,
-                placeholder: 'https://',
-                icon: CupertinoIcons.link,
-                isDark: isDark,
-                showDivider: false,
-              ),
-            ],
-          ),
-          const SizedBox(height: 32),
-          _buildiOSSection(
-            context: context,
-            header: l10n.notes.toUpperCase(),
-            children: [
-              _iOSTextField(
-                label: l10n.notes,
-                controller: _notesController,
-                placeholder: l10n.notesHint,
-                icon: CupertinoIcons.doc_text,
-                isDark: isDark,
-                maxLines: 4,
-                showDivider: false,
-              ),
-            ],
-          ),
-          const SizedBox(height: 32),
-          _buildiOSSection(
-            context: context,
-            header: l10n.attachments.toUpperCase(),
-            children: [
-              if (_attachments.isEmpty)
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  child: Text(
-                    l10n.noAttachments,
-                    style: TextStyle(
-                      color: isDark ? Colors.white38 : Colors.black38,
-                      fontSize: 14,
-                    ),
-                  ),
-                )
-              else
-                ..._attachments.map((a) => _iOSAttachmentTile(
-                  name: a.name,
-                  onDelete: () {
-                    setState(() {
-                      _attachments.remove(a);
-                    });
-                  },
+      child: SafeArea(
+        child: ListView(
+          children: [
+            const SizedBox(height: 32),
+            _buildiOSSection(
+              context: context,
+              header: l10n.basicInfo.toUpperCase(),
+              children: [
+                _iOSTextField(
+                  label: l10n.title,
+                  controller: _titleController,
+                  placeholder: l10n.titleHint,
+                  icon: CupertinoIcons.textformat,
                   isDark: isDark,
-                  showDivider: _attachments.last != a,
-                )),
-              _iOSListTile(
-                title: l10n.addFile,
-                leading: CupertinoIcons.add_circled,
-                onTap: _pickAttachment,
-                isDark: isDark,
-                showDivider: false,
-              ),
-            ],
-          ),
-          const SizedBox(height: 48),
-        ],
+                  autofocus: true,
+                ),
+                _iOSTextField(
+                  label: l10n.username,
+                  controller: _usernameController,
+                  placeholder: l10n.usernameHint,
+                  icon: CupertinoIcons.person,
+                  isDark: isDark,
+                ),
+                _iOSTextField(
+                  label: l10n.password,
+                  controller: _passwordController,
+                  placeholder: l10n.passwordHint,
+                  icon: CupertinoIcons.lock,
+                  isDark: isDark,
+                  isPassword: true,
+                  showPasswordToggle: true,
+                ),
+                _iOSTextField(
+                  label: l10n.url,
+                  controller: _urlController,
+                  placeholder: 'https://',
+                  icon: CupertinoIcons.link,
+                  isDark: isDark,
+                  showDivider: false,
+                ),
+              ],
+            ),
+            const SizedBox(height: 32),
+            _buildiOSSection(
+              context: context,
+              header: l10n.notes.toUpperCase(),
+              children: [
+                _iOSTextField(
+                  label: l10n.notes,
+                  controller: _notesController,
+                  placeholder: l10n.notesHint,
+                  icon: CupertinoIcons.doc_text,
+                  isDark: isDark,
+                  maxLines: 4,
+                  showDivider: false,
+                ),
+              ],
+            ),
+            const SizedBox(height: 32),
+            _buildiOSSection(
+              context: context,
+              header: l10n.attachments.toUpperCase(),
+              children: [
+                if (_attachments.isEmpty)
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    child: Text(
+                      l10n.noAttachments,
+                      style: TextStyle(
+                        color: isDark ? CupertinoColors.white.withOpacity(0.4) : CupertinoColors.black.withOpacity(0.4),
+                        fontSize: 14,
+                      ),
+                    ),
+                  )
+                else
+                  ..._attachments.map((a) => _iOSAttachmentTile(
+                    name: a.name,
+                    onDelete: () {
+                      setState(() {
+                        _attachments.remove(a);
+                      });
+                    },
+                    isDark: isDark,
+                    showDivider: _attachments.last != a,
+                  )),
+                _iOSListTile(
+                  title: l10n.addFile,
+                  leading: CupertinoIcons.add_circled,
+                  onTap: _pickAttachment,
+                  isDark: isDark,
+                  showDivider: false,
+                ),
+              ],
+            ),
+            const SizedBox(height: 48),
+          ],
+        ),
       ),
     );
   }
@@ -203,7 +207,8 @@ class _AddItemPageState extends ConsumerState<AddItemPage> {
     required String header,
     required List<Widget> children,
   }) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final brightness = CupertinoTheme.of(context).brightness;
+    final isDark = brightness == Brightness.dark;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -212,7 +217,7 @@ class _AddItemPageState extends ConsumerState<AddItemPage> {
           child: Text(
             header,
             style: TextStyle(
-              color: isDark ? Colors.white54 : Colors.black54,
+              color: isDark ? CupertinoColors.white.withOpacity(0.6) : CupertinoColors.black.withOpacity(0.54),
               fontSize: 13,
               fontWeight: FontWeight.w500,
               letterSpacing: 0.5,
@@ -222,7 +227,7 @@ class _AddItemPageState extends ConsumerState<AddItemPage> {
         Container(
           margin: const EdgeInsets.symmetric(horizontal: 16),
           decoration: BoxDecoration(
-            color: isDark ? const Color(0xFF1C1C1E) : Colors.white,
+            color: isDark ? const Color(0xFF1C1C1E) : CupertinoColors.white,
             borderRadius: BorderRadius.circular(12),
           ),
           child: Column(children: children),
@@ -274,7 +279,7 @@ class _iOSTextFieldState extends State<_iOSTextField> {
         border: widget.showDivider
             ? Border(
                 bottom: BorderSide(
-                  color: isDark ? Colors.white10 : Colors.black.withValues(alpha: 0.06),
+                  color: isDark ? CupertinoColors.white.withOpacity(0.1) : CupertinoColors.black.withOpacity(0.06),
                   width: 0.5,
                 ),
               )
@@ -288,7 +293,7 @@ class _iOSTextFieldState extends State<_iOSTextField> {
             Text(
               widget.label,
               style: TextStyle(
-                color: isDark ? Colors.white38 : Colors.black38,
+                color: isDark ? CupertinoColors.white.withOpacity(0.4) : CupertinoColors.black.withOpacity(0.4),
                 fontSize: 12,
                 fontWeight: FontWeight.w500,
               ),
@@ -298,30 +303,27 @@ class _iOSTextFieldState extends State<_iOSTextField> {
               children: [
                 Icon(
                   widget.icon,
-                  color: isDark ? Colors.white54 : Colors.black45,
+                  color: isDark ? CupertinoColors.white.withOpacity(0.6) : CupertinoColors.black.withOpacity(0.45),
                   size: 18,
                 ),
                 const SizedBox(width: 12),
                 Expanded(
-                  child: TextField(
+                  child: CupertinoTextField(
                     controller: widget.controller,
                     obscureText: actualObscured,
                     maxLines: widget.isPassword ? 1 : widget.maxLines,
                     autofocus: widget.autofocus,
+                    padding: EdgeInsets.zero,
                     style: TextStyle(
-                      color: isDark ? Colors.white : Colors.black,
+                      color: isDark ? CupertinoColors.white : CupertinoColors.black,
                       fontSize: 16,
                     ),
-                    decoration: InputDecoration(
-                      hintText: widget.placeholder,
-                      hintStyle: TextStyle(
-                        color: isDark ? Colors.white24 : Colors.black26,
-                        fontSize: 16,
-                      ),
-                      border: InputBorder.none,
-                      isDense: true,
-                      contentPadding: EdgeInsets.zero,
+                    placeholder: widget.placeholder,
+                    placeholderStyle: TextStyle(
+                      color: isDark ? CupertinoColors.white.withOpacity(0.24) : CupertinoColors.black.withOpacity(0.26),
+                      fontSize: 16,
                     ),
+                    decoration: const BoxDecoration(),
                   ),
                 ),
                 if (widget.showPasswordToggle)
@@ -333,7 +335,7 @@ class _iOSTextFieldState extends State<_iOSTextField> {
                     },
                     child: Icon(
                       _isVisible ? CupertinoIcons.eye_slash : CupertinoIcons.eye,
-                      color: isDark ? Colors.white54 : Colors.black45,
+                      color: isDark ? CupertinoColors.white.withOpacity(0.6) : CupertinoColors.black.withOpacity(0.45),
                       size: 20,
                     ),
                   ),
@@ -374,7 +376,7 @@ class _iOSListTile extends StatelessWidget {
           border: showDivider
               ? Border(
                   bottom: BorderSide(
-                    color: isDark ? Colors.white10 : Colors.black.withValues(alpha: 0.06),
+                    color: isDark ? CupertinoColors.white.withOpacity(0.1) : CupertinoColors.black.withOpacity(0.06),
                     width: 0.5,
                   ),
                 )
@@ -383,7 +385,7 @@ class _iOSListTile extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         child: Row(
           children: [
-            Icon(leading, color: const Color(0xFF007AFF), size: 22),
+            Icon(leading, color: CupertinoColors.activeBlue, size: 22),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
@@ -392,7 +394,7 @@ class _iOSListTile extends StatelessWidget {
                   Text(
                     title,
                     style: TextStyle(
-                      color: isDark ? Colors.white : Colors.black,
+                      color: isDark ? CupertinoColors.white : CupertinoColors.black,
                       fontSize: 16,
                     ),
                   ),
@@ -401,7 +403,7 @@ class _iOSListTile extends StatelessWidget {
                     Text(
                       subtitle!,
                       style: TextStyle(
-                        color: isDark ? Colors.white54 : Colors.black45,
+                        color: isDark ? CupertinoColors.white.withOpacity(0.6) : CupertinoColors.black.withOpacity(0.45),
                         fontSize: 13,
                       ),
                     ),
@@ -413,8 +415,8 @@ class _iOSListTile extends StatelessWidget {
               trailing!
             else if (onTap != null)
               Icon(
-                CupertinoIcons.chevron_right,
-                color: isDark ? Colors.white24 : Colors.black26,
+                CupertinoIcons.chevron_forward,
+                color: isDark ? CupertinoColors.white.withOpacity(0.25) : CupertinoColors.black.withOpacity(0.25),
                 size: 16,
               ),
           ],
@@ -444,7 +446,7 @@ class _iOSAttachmentTile extends StatelessWidget {
         border: showDivider
             ? Border(
                 bottom: BorderSide(
-                  color: isDark ? Colors.white10 : Colors.black.withValues(alpha: 0.06),
+                  color: isDark ? CupertinoColors.white.withOpacity(0.1) : CupertinoColors.black.withOpacity(0.06),
                   width: 0.5,
                 ),
               )
@@ -455,7 +457,7 @@ class _iOSAttachmentTile extends StatelessWidget {
         children: [
           Icon(
             CupertinoIcons.doc,
-            color: isDark ? Colors.white54 : Colors.black45,
+            color: isDark ? CupertinoColors.white.withOpacity(0.6) : CupertinoColors.black.withOpacity(0.45),
             size: 22,
           ),
           const SizedBox(width: 12),
@@ -463,7 +465,7 @@ class _iOSAttachmentTile extends StatelessWidget {
             child: Text(
               name,
               style: TextStyle(
-                color: isDark ? Colors.white : Colors.black,
+                color: isDark ? CupertinoColors.white : CupertinoColors.black,
                 fontSize: 16,
               ),
               overflow: TextOverflow.ellipsis,
@@ -471,9 +473,9 @@ class _iOSAttachmentTile extends StatelessWidget {
           ),
           GestureDetector(
             onTap: onDelete,
-            child: Icon(
+            child: const Icon(
               CupertinoIcons.minus_circle_fill,
-              color: Colors.red.shade400,
+              color: CupertinoColors.destructiveRed,
               size: 22,
             ),
           ),

@@ -1,6 +1,6 @@
 import 'dart:io';
 import 'package:file_picker/file_picker.dart';
-import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:note_password/l10n/generated/app_localizations.dart';
 import '../providers/vault_provider.dart';
@@ -40,51 +40,38 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
     final l10n = AppLocalizations.of(context)!;
     if (_passwordController.text.isEmpty) return;
     if (_passwordController.text != _confirmController.text) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.passwordsDoNotMatch)), 
-      );
+      _showErrorDialog(l10n.passwordsDoNotMatch);
       return;
     }
 
     if (_passwordController.text.length < 8) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.passwordTooShort)),
-      );
+      _showErrorDialog(l10n.passwordTooShort);
       return;
     }
 
     final success = await ref.read(vaultProvider.notifier).setupVault(_passwordController.text);
     if (!success && mounted) {
       final error = ref.read(vaultProvider).error;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(error ?? "Setup failed")),
-      );
+      _showErrorDialog(error ?? "Setup failed");
     } else if (success && mounted) {
-      // Prompt for import
-      showDialog(
+      showCupertinoDialog(
         context: context,
         barrierDismissible: false,
-        builder: (context) => AlertDialog(
-          backgroundColor: Theme.of(context).brightness == Brightness.dark 
-              ? const Color(0xFF1A1A1A) 
-              : Colors.white,
-          title: Text(l10n.import, 
-              style: TextStyle(color: Theme.of(context).brightness == Brightness.dark 
-                  ? Colors.white 
-                  : Colors.black87)),
-          content: Text(l10n.importPrompt,
-              style: TextStyle(color: Theme.of(context).brightness == Brightness.dark 
-                  ? Colors.white70 
-                  : Colors.black54)),
+        builder: (context) => CupertinoAlertDialog(
+          title: Text(l10n.import),
+          content: Padding(
+            padding: const EdgeInsets.only(top: 8),
+            child: Text(l10n.importPrompt),
+          ),
           actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context), // Skip
-              child: Text(l10n.skip, 
-                  style: const TextStyle(color: Colors.grey)),
+            CupertinoDialogAction(
+              onPressed: () => Navigator.pop(context),
+              child: Text(l10n.skip),
             ),
-            ElevatedButton(
+            CupertinoDialogAction(
+              isDefaultAction: true,
               onPressed: () async {
-                Navigator.pop(context); // Close dialog
+                Navigator.pop(context);
                 FilePickerResult? result = await FilePicker.platform.pickFiles(
                   type: FileType.custom,
                   allowedExtensions: ['csv'],
@@ -95,10 +82,6 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
                   ref.read(vaultProvider.notifier).importFromCsv(content);
                 }
               },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Theme.of(context).primaryColor,
-                foregroundColor: Colors.white,
-              ),
               child: Text(l10n.importNow),
             ),
           ],
@@ -107,15 +90,31 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
     }
   }
 
+  void _showErrorDialog(String message) {
+    showCupertinoDialog(
+      context: context,
+      builder: (context) => CupertinoAlertDialog(
+        content: Text(message),
+        actions: [
+          CupertinoDialogAction(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final vaultState = ref.watch(vaultProvider);
     final l10n = AppLocalizations.of(context)!;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final brightness = CupertinoTheme.of(context).brightness;
+    final isDark = brightness == Brightness.dark;
 
-    return Scaffold(
-      backgroundColor: isDark ? Colors.black : Colors.white,
-      body: Center(
+    return CupertinoPageScaffold(
+      backgroundColor: isDark ? CupertinoColors.black : CupertinoColors.white,
+      child: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 400),
           child: SingleChildScrollView(
@@ -126,7 +125,7 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
                 Text(
                   l10n.welcome,
                   style: TextStyle(
-                    color: isDark ? Colors.white : Colors.black,
+                    color: isDark ? CupertinoColors.white : CupertinoColors.black,
                     fontSize: 40,
                     fontWeight: FontWeight.bold,
                   ),
@@ -135,23 +134,22 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
                 Text(
                   l10n.onboardingSub,
                   style: TextStyle(
-                    color: (isDark ? Colors.white : Colors.black).withOpacity(0.6),
+                    color: (isDark ? CupertinoColors.white : CupertinoColors.black).withOpacity(0.6),
                     fontSize: 16,
                   ),
                 ),
                 const SizedBox(height: 48),
                 
-                // Storage path is now automated
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: Colors.blue.withOpacity(0.1),
+                    color: CupertinoColors.activeBlue.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.blue.withOpacity(0.2)),
+                    border: Border.all(color: CupertinoColors.activeBlue.withOpacity(0.2)),
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.security, color: Colors.blueAccent),
+                      const Icon(CupertinoIcons.lock_shield, color: CupertinoColors.activeBlue),
                       const SizedBox(width: 12),
                       Expanded(
                         child: Text(
@@ -159,7 +157,7 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
                             ? "Your vault will be automatically synced with iCloud (Apple) or Cloud Backup (Android)."
                             : "您的密码库将自动通过 iCloud 或 厂商云进行同步。",
                           style: TextStyle(
-                            color: isDark ? Colors.white70 : Colors.black87,
+                            color: isDark ? CupertinoColors.white.withOpacity(0.7) : CupertinoColors.black.withOpacity(0.87),
                             fontSize: 13,
                           ),
                         ),
@@ -184,17 +182,12 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
                 SizedBox(
                   width: double.infinity,
                   height: 56,
-                  child: ElevatedButton(
+                  child: CupertinoButton(
+                    color: CupertinoColors.activeOrange,
+                    borderRadius: BorderRadius.circular(12),
                     onPressed: vaultState.isLoading ? null : _handleSetup,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.deepPurpleAccent,
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
                     child: vaultState.isLoading
-                        ? const CircularProgressIndicator(color: Colors.white)
+                        ? const CupertinoActivityIndicator(color: CupertinoColors.white)
                         : Text(l10n.createVault),
                   ),
                 ),
@@ -202,7 +195,7 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
                 Text(
                   l10n.recoveryWarning,
                   style: TextStyle(
-                    color: Colors.orangeAccent.withOpacity(0.8),
+                    color: CupertinoColors.systemOrange.withOpacity(0.8),
                     fontSize: 12,
                     fontStyle: FontStyle.italic,
                   ),
@@ -220,20 +213,18 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
     required String hint,
     required bool visible,
   }) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    return TextField(
+    final brightness = CupertinoTheme.of(context).brightness;
+    final isDark = brightness == Brightness.dark;
+    return CupertinoTextField(
       controller: controller,
       obscureText: !visible,
-      style: TextStyle(color: isDark ? Colors.white : Colors.black),
-      decoration: InputDecoration(
-        hintText: hint,
-        hintStyle: TextStyle(color: (isDark ? Colors.white : Colors.black).withOpacity(0.3)),
-        filled: true,
-        fillColor: (isDark ? Colors.white : Colors.black).withOpacity(0.05),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide.none,
-        ),
+      padding: const EdgeInsets.all(16),
+      style: TextStyle(color: isDark ? CupertinoColors.white : CupertinoColors.black),
+      placeholder: hint,
+      placeholderStyle: TextStyle(color: (isDark ? CupertinoColors.white : CupertinoColors.black).withOpacity(0.3)),
+      decoration: BoxDecoration(
+        color: (isDark ? CupertinoColors.white : CupertinoColors.black).withOpacity(0.05),
+        borderRadius: BorderRadius.circular(12),
       ),
     );
   }

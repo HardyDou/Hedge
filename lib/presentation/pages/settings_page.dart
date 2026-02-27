@@ -1,6 +1,6 @@
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' show ThemeMode;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:note_password/l10n/generated/app_localizations.dart';
 import 'package:note_password/presentation/providers/locale_provider.dart';
@@ -17,113 +17,110 @@ class SettingsPage extends ConsumerWidget {
     final currentLocale = ref.watch(localeProvider);
     final vaultState = ref.watch(vaultProvider);
     final l10n = AppLocalizations.of(context)!;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final brightness = CupertinoTheme.of(context).brightness;
+    final isDark = brightness == Brightness.dark;
 
-    return Scaffold(
-      backgroundColor: isDark ? const Color(0xFF000000) : const Color(0xFFF2F2F7),
-      appBar: AppBar(
-        title: Text(l10n.settings),
-        backgroundColor: isDark ? const Color(0xFF1C1C1E) : Colors.white,
-        foregroundColor: isDark ? Colors.white : Colors.black,
-        elevation: 0,
+    return CupertinoPageScaffold(
+      backgroundColor: isDark ? CupertinoColors.black : const Color(0xFFF2F2F7),
+      navigationBar: CupertinoNavigationBar(
+        middle: Text(l10n.settings),
+        backgroundColor: isDark ? const Color(0xFF1C1C1E) : CupertinoColors.white,
       ),
-      body: ListView(
-        children: [
-          const SizedBox(height: 32),
-          _buildiOSSection(
-            context: context,
-            header: l10n.appearance.toUpperCase(),
-            children: [
-              _iOSListTile(
-                title: l10n.themeMode,
-                subtitle: _getThemeName(themeMode, l10n),
-                leading: Icon(Icons.palette_outlined, color: _getAccentColor(isDark)),
-                onTap: () => _showThemePicker(context, ref),
-                isDark: isDark,
-              ),
-              _iOSListTile(
-                title: l10n.language,
-                subtitle: currentLocale == null 
-                    ? l10n.systemDefault 
-                    : (currentLocale.languageCode == 'zh' ? '简体中文' : 'English'),
-                leading: Icon(Icons.language_outlined, color: _getAccentColor(isDark)),
-                onTap: () => _showLanguagePicker(context, ref),
-                isDark: isDark,
-                showDivider: false,
-              ),
-            ],
-          ),
-          const SizedBox(height: 32),
-          _buildiOSSection(
-            context: context,
-            header: l10n.data,
-            children: [
-              _iOSListTile(
-                title: l10n.import,
-                subtitle: l10n.importHint,
-                leading: Icon(Icons.file_download_outlined, color: _getAccentColor(isDark)),
-                onTap: () => _handleImport(context, ref),
-                isDark: isDark,
-                showDivider: false,
-              ),
-            ],
-          ),
-          const SizedBox(height: 32),
-          _buildiOSSection(
-            context: context,
-            header: l10n.security.toUpperCase(),
-            children: [
-              _iOSSwitchTile(
-                title: l10n.useBiometrics,
-                leading: Icon(Icons.fingerprint, color: _getAccentColor(isDark)),
-                value: vaultState.isBiometricsEnabled,
-                onChanged: (val) => ref.read(vaultProvider.notifier).toggleBiometrics(val),
-                isDark: isDark,
-              ),
-              _iOSSliderTile(
-                title: l10n.autoLockTimeout,
-                value: vaultState.autoLockTimeout.toDouble(),
-                min: 1,
-                max: 10,
-                divisions: 9,
-                label: l10n.seconds(vaultState.autoLockTimeout),
-                onChanged: (value) => ref.read(vaultProvider.notifier).setAutoLockTimeout(value.toInt()),
-                leading: Icon(Icons.timer_outlined, color: _getAccentColor(isDark)),
-                isDark: isDark,
-              ),
-              _iOSListTile(
-                title: l10n.resetPassword,
-                subtitle: "",
-                leading: Icon(Icons.lock_reset, color: _getAccentColor(isDark)),
-                onTap: () => _showResetPasswordDialog(context, ref),
-                isDark: isDark,
-                showDivider: false,
-              ),
-            ],
-          ),
-          const SizedBox(height: 32),
-          _buildiOSSection(
-            context: context,
-            header: "ABOUT",
-            children: [
-              _iOSListTile(
-                title: l10n.appTitle,
-                subtitle: "Version 1.0.0",
-                leading: Icon(Icons.info_outline, color: _getAccentColor(isDark)),
-                onTap: () => _showAbout(context),
-                isDark: isDark,
-                showDivider: false,
-              ),
-            ],
-          ),
-          const SizedBox(height: 48),
-        ],
+      child: SafeArea(
+        child: ListView(
+          children: [
+            const SizedBox(height: 32),
+            _buildiOSSection(
+              context: context,
+              header: l10n.appearance.toUpperCase(),
+              children: [
+                _iOSListTile(
+                  title: l10n.themeMode,
+                  subtitle: _getThemeName(themeMode, l10n),
+                  leading: const Icon(CupertinoIcons.paintbrush, color: CupertinoColors.activeBlue),
+                  onTap: () => _showThemePicker(context, ref),
+                  isDark: isDark,
+                ),
+                _iOSListTile(
+                  title: l10n.language,
+                  subtitle: currentLocale == null 
+                      ? l10n.systemDefault 
+                      : (currentLocale.languageCode == 'zh' ? '简体中文' : 'English'),
+                  leading: const Icon(CupertinoIcons.globe, color: CupertinoColors.activeBlue),
+                  onTap: () => _showLanguagePicker(context, ref),
+                  isDark: isDark,
+                  showDivider: false,
+                ),
+              ],
+            ),
+            const SizedBox(height: 32),
+            _buildiOSSection(
+              context: context,
+              header: l10n.data,
+              children: [
+                _iOSListTile(
+                  title: l10n.import,
+                  subtitle: l10n.importHint,
+                  leading: const Icon(CupertinoIcons.arrow_down_doc, color: CupertinoColors.activeBlue),
+                  onTap: () => _handleImport(context, ref),
+                  isDark: isDark,
+                  showDivider: false,
+                ),
+              ],
+            ),
+            const SizedBox(height: 32),
+            _buildiOSSection(
+              context: context,
+              header: l10n.security.toUpperCase(),
+              children: [
+                _iOSSwitchTile(
+                  title: l10n.useBiometrics,
+                  leading: const Icon(CupertinoIcons.hand_draw, color: CupertinoColors.activeBlue),
+                  value: vaultState.isBiometricsEnabled,
+                  onChanged: (val) => ref.read(vaultProvider.notifier).toggleBiometrics(val),
+                  isDark: isDark,
+                ),
+                _iOSSliderTile(
+                  title: l10n.autoLockTimeout,
+                  value: vaultState.autoLockTimeout.toDouble(),
+                  min: 1,
+                  max: 10,
+                  divisions: 9,
+                  label: l10n.seconds(vaultState.autoLockTimeout),
+                  onChanged: (value) => ref.read(vaultProvider.notifier).setAutoLockTimeout(value.toInt()),
+                  leading: const Icon(CupertinoIcons.timer, color: CupertinoColors.activeBlue),
+                  isDark: isDark,
+                ),
+                _iOSListTile(
+                  title: l10n.resetPassword,
+                  subtitle: "",
+                  leading: const Icon(CupertinoIcons.lock_rotation, color: CupertinoColors.activeBlue),
+                  onTap: () => _showResetPasswordDialog(context, ref),
+                  isDark: isDark,
+                  showDivider: false,
+                ),
+              ],
+            ),
+            const SizedBox(height: 32),
+            _buildiOSSection(
+              context: context,
+              header: "ABOUT",
+              children: [
+                _iOSListTile(
+                  title: l10n.appTitle,
+                  subtitle: "Version 1.0.0",
+                  leading: const Icon(CupertinoIcons.info, color: CupertinoColors.activeBlue),
+                  onTap: () => _showAbout(context),
+                  isDark: isDark,
+                  showDivider: false,
+                ),
+              ],
+            ),
+            const SizedBox(height: 48),
+          ],
+        ),
       ),
     );
-  }
-
-  Color _getAccentColor(bool isDark) {
-    return const Color(0xFF007AFF);
   }
 
   Widget _buildiOSSection({
@@ -131,7 +128,8 @@ class SettingsPage extends ConsumerWidget {
     required String header,
     required List<Widget> children,
   }) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final brightness = CupertinoTheme.of(context).brightness;
+    final isDark = brightness == Brightness.dark;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -140,7 +138,7 @@ class SettingsPage extends ConsumerWidget {
           child: Text(
             header,
             style: TextStyle(
-              color: isDark ? Colors.white54 : Colors.black54,
+              color: isDark ? CupertinoColors.white.withOpacity(0.6) : CupertinoColors.black.withOpacity(0.54),
               fontSize: 13,
               fontWeight: FontWeight.w500,
               letterSpacing: 0.5,
@@ -150,7 +148,7 @@ class SettingsPage extends ConsumerWidget {
         Container(
           margin: const EdgeInsets.symmetric(horizontal: 16),
           decoration: BoxDecoration(
-            color: isDark ? const Color(0xFF1C1C1E) : Colors.white,
+            color: isDark ? const Color(0xFF1C1C1E) : CupertinoColors.white,
             borderRadius: BorderRadius.circular(10),
           ),
           child: Column(children: children),
@@ -173,32 +171,32 @@ class SettingsPage extends ConsumerWidget {
   void _handleImport(BuildContext context, WidgetRef ref) async {
     final l10n = AppLocalizations.of(context)!;
     
-    // Show format hint dialog
-    final confirmed = await showDialog<bool>(
+    final confirmed = await showCupertinoDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (context) => CupertinoAlertDialog(
         title: Text(l10n.import),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            const SizedBox(height: 8),
             Text(l10n.importFormatHint),
             const SizedBox(height: 12),
             Text(
               l10n.importNoHeaderHint,
-              style: TextStyle(
+              style: const TextStyle(
                 fontSize: 12,
-                color: Colors.grey[600],
+                color: CupertinoColors.systemGrey,
               ),
             ),
           ],
         ),
         actions: [
-          TextButton(
+          CupertinoDialogAction(
             onPressed: () => Navigator.pop(context, false),
             child: Text(l10n.cancel),
           ),
-          TextButton(
+          CupertinoDialogAction(
             onPressed: () => Navigator.pop(context, true),
             child: Text(l10n.confirm),
           ),
@@ -226,10 +224,16 @@ class SettingsPage extends ConsumerWidget {
           message = '${l10n.importSuccess(importResult.success)}\n${l10n.importFailed(importResult.failed)}';
         }
         
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
+        showCupertinoDialog(
+          context: context,
+          builder: (ctx) => CupertinoAlertDialog(
             content: Text(message),
-            backgroundColor: importResult.failed > 0 ? Colors.orange : Colors.green,
+            actions: [
+              CupertinoDialogAction(
+                onPressed: () => Navigator.pop(ctx),
+                child: const Text('OK'),
+              ),
+            ],
           ),
         );
       }
@@ -238,13 +242,13 @@ class SettingsPage extends ConsumerWidget {
 
   void _showAbout(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    showDialog(
+    showCupertinoDialog(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (context) => CupertinoAlertDialog(
         title: Text(l10n.appTitle),
         content: Text(l10n.aboutDescription),
         actions: [
-          TextButton(
+          CupertinoDialogAction(
             onPressed: () => Navigator.pop(context),
             child: const Text("OK"),
           ),
@@ -531,9 +535,9 @@ class _iOSListTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(10),
+        CupertinoButton(
+          padding: EdgeInsets.zero,
+          onPressed: onTap,
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             child: Row(
@@ -544,7 +548,7 @@ class _iOSListTile extends StatelessWidget {
                   child: IconTheme(
                     data: IconThemeData(
                       size: 22,
-                      color: isDark ? Colors.white70 : Colors.black54,
+                      color: isDark ? CupertinoColors.white.withOpacity(0.7) : CupertinoColors.black.withOpacity(0.54),
                     ),
                     child: leading,
                   ),
@@ -558,7 +562,7 @@ class _iOSListTile extends StatelessWidget {
                       Text(
                         title,
                         style: TextStyle(
-                          color: isDark ? Colors.white : Colors.black,
+                          color: isDark ? CupertinoColors.white : CupertinoColors.black,
                           fontSize: 16,
                         ),
                       ),
@@ -567,7 +571,7 @@ class _iOSListTile extends StatelessWidget {
                         Text(
                           subtitle,
                           style: TextStyle(
-                            color: isDark ? Colors.white54 : Colors.black45,
+                            color: isDark ? CupertinoColors.white.withOpacity(0.6) : CupertinoColors.black.withOpacity(0.45),
                             fontSize: 14,
                           ),
                         ),
@@ -576,8 +580,8 @@ class _iOSListTile extends StatelessWidget {
                   ),
                 ),
                 Icon(
-                  Icons.chevron_right,
-                  color: isDark ? Colors.white24 : Colors.black26,
+                  CupertinoIcons.chevron_forward,
+                  color: isDark ? CupertinoColors.white.withOpacity(0.25) : CupertinoColors.black.withOpacity(0.25),
                   size: 20,
                 ),
               ],
@@ -585,10 +589,10 @@ class _iOSListTile extends StatelessWidget {
           ),
         ),
         if (showDivider)
-          Divider(
+          Container(
             height: 0.5,
-            indent: 60,
-            color: isDark ? Colors.white.withOpacity(0.1) : Colors.black.withOpacity(0.1),
+            margin: const EdgeInsets.only(left: 60),
+            color: isDark ? CupertinoColors.white.withOpacity(0.1) : CupertinoColors.black.withOpacity(0.1),
           ),
       ],
     );
@@ -616,28 +620,36 @@ class _iOSSwitchTile extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Row(
         children: [
-          leading,
+          SizedBox(
+            width: 28,
+            height: 28,
+            child: IconTheme(
+              data: IconThemeData(
+                size: 22,
+                color: CupertinoColors.activeBlue,
+              ),
+              child: leading,
+            ),
+          ),
           const SizedBox(width: 12),
           Expanded(
             child: Text(
               title,
               style: TextStyle(
-                color: isDark ? Colors.white : Colors.black,
+                color: isDark ? CupertinoColors.white : CupertinoColors.black,
                 fontSize: 16,
               ),
             ),
           ),
-          Switch.adaptive(
+          CupertinoSwitch(
             value: value,
             onChanged: onChanged,
-            activeColor: _getAccentColor(isDark),
+            activeTrackColor: CupertinoColors.activeBlue,
           ),
         ],
       ),
     );
   }
-
-  Color _getAccentColor(bool isDark) => const Color(0xFF007AFF);
 }
 
 class _iOSSliderTile extends StatelessWidget {
@@ -673,13 +685,23 @@ class _iOSSliderTile extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           child: Row(
             children: [
-              leading,
+              SizedBox(
+                width: 28,
+                height: 28,
+                child: IconTheme(
+                  data: IconThemeData(
+                    size: 22,
+                    color: CupertinoColors.activeBlue,
+                  ),
+                  child: leading,
+                ),
+              ),
               const SizedBox(width: 12),
               Expanded(
                 child: Text(
                   title,
                   style: TextStyle(
-                    color: isDark ? Colors.white : Colors.black,
+                    color: isDark ? CupertinoColors.white : CupertinoColors.black,
                     fontSize: 16,
                   ),
                 ),
@@ -687,7 +709,7 @@ class _iOSSliderTile extends StatelessWidget {
               Text(
                 label,
                 style: TextStyle(
-                  color: isDark ? Colors.white54 : Colors.black45,
+                  color: isDark ? CupertinoColors.white.withOpacity(0.6) : CupertinoColors.black.withOpacity(0.45),
                   fontSize: 14,
                 ),
               ),
@@ -696,127 +718,21 @@ class _iOSSliderTile extends StatelessWidget {
         ),
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-          child: Slider(
+          child: CupertinoSlider(
             value: value,
             min: min,
             max: max,
             divisions: divisions,
-            label: label,
-            activeColor: _getAccentColor(isDark),
             onChanged: onChanged,
           ),
         ),
         if (showDivider)
-          Divider(
+          Container(
             height: 0.5,
-            indent: 16,
-            color: isDark ? Colors.white.withOpacity(0.1) : Colors.black.withOpacity(0.1),
+            margin: const EdgeInsets.only(left: 16),
+            color: isDark ? CupertinoColors.white.withOpacity(0.1) : CupertinoColors.black.withOpacity(0.1),
           ),
       ],
-    );
-  }
-
-  Color _getAccentColor(bool isDark) => const Color(0xFF007AFF);
-}
-
-class _iOSPickerTile extends StatelessWidget {
-  final String title;
-  final bool isSelected;
-  final VoidCallback onTap;
-  final bool isDark;
-  final bool showDivider;
-
-  const _iOSPickerTile({
-    required this.title,
-    required this.isSelected,
-    required this.onTap,
-    required this.isDark,
-    this.showDivider = true,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        InkWell(
-          onTap: onTap,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    title,
-                    style: TextStyle(
-                      color: isDark ? Colors.white : Colors.black,
-                      fontSize: 17,
-                    ),
-                  ),
-                ),
-                if (isSelected)
-                  Icon(
-                    Icons.check,
-                    color: _getAccentColor(isDark),
-                    size: 22,
-                  ),
-              ],
-            ),
-          ),
-        ),
-        if (showDivider)
-          Divider(
-            height: 0.5,
-            indent: 20,
-            color: isDark ? Colors.white.withOpacity(0.1) : Colors.black.withOpacity(0.1),
-          ),
-      ],
-    );
-  }
-
-  Color _getAccentColor(bool isDark) => const Color(0xFF007AFF);
-}
-
-class _iOSTextField extends StatelessWidget {
-  final TextEditingController controller;
-  final String placeholder;
-  final bool isDark;
-  final bool isPassword;
-
-  const _iOSTextField({
-    required this.controller,
-    required this.placeholder,
-    required this.isDark,
-    this.isPassword = false,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      decoration: BoxDecoration(
-        color: isDark 
-            ? Colors.white.withOpacity(0.08) 
-            : Colors.black.withOpacity(0.05),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: TextField(
-        controller: controller,
-        obscureText: isPassword,
-        style: TextStyle(
-          color: isDark ? Colors.white : Colors.black,
-          fontSize: 16,
-        ),
-        decoration: InputDecoration(
-          hintText: placeholder,
-          hintStyle: TextStyle(
-            color: isDark ? Colors.white38 : Colors.black38,
-            fontSize: 16,
-          ),
-          border: InputBorder.none,
-          isDense: true,
-          contentPadding: EdgeInsets.zero,
-        ),
-      ),
     );
   }
 }

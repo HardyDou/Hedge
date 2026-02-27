@@ -1,6 +1,6 @@
 import 'dart:io';
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' show SelectableText;
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:note_password/src/dart/vault.dart';
@@ -32,14 +32,22 @@ class _DetailPageState extends ConsumerState<DetailPage> {
   void _copyToClipboard(String text, String label) {
     Clipboard.setData(ClipboardData(text: text));
     final l10n = AppLocalizations.of(context)!;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(l10n.copied(label)),
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        margin: const EdgeInsets.all(16),
+    _showToast(context, l10n.copied(label));
+  }
+
+  void _showToast(BuildContext context, String message) {
+    showCupertinoDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (context) => CupertinoAlertDialog(
+        content: Text(message),
       ),
     );
+    Future.delayed(const Duration(seconds: 1), () {
+      if (mounted && Navigator.canPop(context)) {
+        Navigator.pop(context);
+      }
+    });
   }
 
   void _copyAll() {
@@ -58,14 +66,7 @@ class _DetailPageState extends ConsumerState<DetailPage> {
       buffer.writeln('${l10n.notes}:\n${_item.notes}');
     }
     Clipboard.setData(ClipboardData(text: buffer.toString().trim()));
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(l10n.allDetailsCopied),
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        margin: const EdgeInsets.all(16),
-      ),
-    );
+    _showToast(context, l10n.allDetailsCopied);
   }
 
   Future<void> _openAttachment(Attachment attachment) async {
@@ -76,32 +77,32 @@ class _DetailPageState extends ConsumerState<DetailPage> {
       await file.writeAsBytes(attachment.data);
       await OpenFile.open(file.path);
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.couldNotOpenFile)),
-      );
+      _showToast(context, l10n.couldNotOpenFile);
     }
   }
 
   Future<void> _handleDelete() async {
     final l10n = AppLocalizations.of(context)!;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final brightness = CupertinoTheme.of(context).brightness;
+    final isDark = brightness == Brightness.dark;
     
-    final confirmed = await showDialog<bool>(
+    final confirmed = await showCupertinoDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: isDark ? const Color(0xFF1C1C1E) : Colors.white,
-        title: Text(l10n.deleteEntry, style: TextStyle(color: isDark ? Colors.white : Colors.black)),
-        content: Text(l10n.deleteWarning, style: TextStyle(color: isDark ? Colors.white70 : Colors.black54)),
+      builder: (context) => CupertinoAlertDialog(
+        title: Text(l10n.deleteEntry),
+        content: Text(l10n.deleteWarning),
         actions: [
-          TextButton(
+          CupertinoDialogAction(
             onPressed: () => Navigator.pop(context, false),
             child: Text(l10n.cancel),
           ),
-          TextButton(
+          CupertinoDialogAction(
+            isDestructiveAction: true,
             onPressed: () => Navigator.pop(context, true),
-            child: Text(l10n.delete, style: const TextStyle(color: Colors.red)),
+            child: Text(l10n.delete),
           ),
-        ],      ),
+        ],
+      ),
     );
 
     if (confirmed == true) {
@@ -113,46 +114,49 @@ class _DetailPageState extends ConsumerState<DetailPage> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final brightness = CupertinoTheme.of(context).brightness;
+    final isDark = brightness == Brightness.dark;
     
-    return Scaffold(
-      backgroundColor: isDark ? const Color(0xFF000000) : const Color(0xFFF2F2F7),
-      appBar: AppBar(
-        backgroundColor: isDark ? const Color(0xFF1C1C1E) : Colors.white,
-        foregroundColor: isDark ? Colors.white : Colors.black,
-        elevation: 0,
-        title: Text(_item.title, maxLines: 1, overflow: TextOverflow.ellipsis),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.edit_outlined),
-            onPressed: () async {
-              final result = await Navigator.push<VaultItem>(
-                context,
-                CupertinoPageRoute(builder: (context) => EditPage(item: _item)),
-              );
-              if (result != null) {
-                setState(() => _item = result);
-              }
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.delete_outline, color: Colors.red),
-            onPressed: _handleDelete,
-          ),
-        ],
+    return CupertinoPageScaffold(
+      backgroundColor: isDark ? CupertinoColors.black : const Color(0xFFF2F2F7),
+      navigationBar: CupertinoNavigationBar(
+        backgroundColor: isDark ? const Color(0xFF1C1C1E) : CupertinoColors.white,
+        middle: Text(_item.title, maxLines: 1, overflow: TextOverflow.ellipsis),
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            CupertinoButton(
+              padding: EdgeInsets.zero,
+              child: const Icon(CupertinoIcons.pencil),
+              onPressed: () async {
+                final result = await Navigator.push<VaultItem>(
+                  context,
+                  CupertinoPageRoute(builder: (context) => EditPage(item: _item)),
+                );
+                if (result != null) {
+                  setState(() => _item = result);
+                }
+              },
+            ),
+            CupertinoButton(
+              padding: EdgeInsets.zero,
+              child: const Icon(CupertinoIcons.trash, color: CupertinoColors.destructiveRed),
+              onPressed: _handleDelete,
+            ),
+          ],
+        ),
       ),
-      body: SingleChildScrollView(
+      child: SingleChildScrollView(
         child: Column(
           children: [
             const SizedBox(height: 20),
             
-            // URL Section
             if (_item.url != null && _item.url!.isNotEmpty)
               _buildiOSSection(
                 context: context,
                 children: [
                   _buildListTile(
-                    icon: Icons.language,
+                    icon: CupertinoIcons.globe,
                     title: l10n.url,
                     value: _item.url!,
                     isDark: isDark,
@@ -163,13 +167,12 @@ class _DetailPageState extends ConsumerState<DetailPage> {
             
             const SizedBox(height: 20),
             
-            // Credentials Section
             _buildiOSSection(
               context: context,
               header: l10n.credentials.toUpperCase(),
               children: [
                 _buildListTile(
-                  icon: Icons.person_outline,
+                  icon: CupertinoIcons.person,
                   title: l10n.username,
                   value: _item.username ?? l10n.notSet,
                   isDark: isDark,
@@ -177,7 +180,7 @@ class _DetailPageState extends ConsumerState<DetailPage> {
                 ),
                 _buildDivider(isDark),
                 _buildPasswordTile(
-                  icon: Icons.lock_outline,
+                  icon: CupertinoIcons.lock,
                   title: l10n.password,
                   value: _item.password ?? l10n.notSet,
                   isDark: isDark,
@@ -191,7 +194,6 @@ class _DetailPageState extends ConsumerState<DetailPage> {
               ],
             ),
             
-            // Notes Section
             if (_item.notes != null && _item.notes!.isNotEmpty) ...[
               const SizedBox(height: 20),
               _buildiOSSection(
@@ -204,7 +206,7 @@ class _DetailPageState extends ConsumerState<DetailPage> {
                     child: SelectableText(
                       _item.notes!,
                       style: TextStyle(
-                        color: isDark ? Colors.white : Colors.black,
+                        color: isDark ? CupertinoColors.white : CupertinoColors.black,
                         fontSize: 15,
                       ),
                     ),
@@ -213,7 +215,6 @@ class _DetailPageState extends ConsumerState<DetailPage> {
               ),
             ],
             
-            // Attachments Section
             if (_item.attachments.isNotEmpty) ...[
               const SizedBox(height: 20),
               _buildiOSSection(
@@ -224,10 +225,10 @@ class _DetailPageState extends ConsumerState<DetailPage> {
                   final a = entry.value;
                   return Column(
                     children: [
-                      ListTile(
-                        leading: Icon(Icons.insert_drive_file_outlined, color: isDark ? Colors.white70 : Colors.black54),
-                        title: Text(a.name, style: TextStyle(color: isDark ? Colors.white : Colors.black)),
-                        trailing: Icon(Icons.chevron_right, color: isDark ? Colors.white24 : Colors.black12),
+                      CupertinoListTile(
+                        leading: Icon(CupertinoIcons.doc, color: isDark ? CupertinoColors.white.withOpacity(0.7) : CupertinoColors.black.withOpacity(0.54)),
+                        title: Text(a.name, style: TextStyle(color: isDark ? CupertinoColors.white : CupertinoColors.black)),
+                        trailing: const Icon(CupertinoIcons.chevron_forward, color: CupertinoColors.systemGrey3),
                         onTap: () => _openAttachment(a),
                       ),
                       if (index < _item.attachments.length - 1)
@@ -240,20 +241,21 @@ class _DetailPageState extends ConsumerState<DetailPage> {
             
             const SizedBox(height: 32),
             
-            // Copy All Button
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: SizedBox(
                 width: double.infinity,
-                child: ElevatedButton.icon(
+                child: CupertinoButton(
+                  color: isDark ? CupertinoColors.white : CupertinoColors.black,
+                  borderRadius: BorderRadius.circular(10),
                   onPressed: _copyAll,
-                  icon: const Icon(Icons.copy_all),
-                  label: Text(l10n.copyAll),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: isDark ? Colors.white : Colors.black,
-                    foregroundColor: isDark ? Colors.black : Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(CupertinoIcons.doc_on_doc, color: isDark ? CupertinoColors.black : CupertinoColors.white),
+                      const SizedBox(width: 8),
+                      Text(l10n.copyAll, style: TextStyle(color: isDark ? CupertinoColors.black : CupertinoColors.white)),
+                    ],
                   ),
                 ),
               ),
@@ -271,7 +273,8 @@ class _DetailPageState extends ConsumerState<DetailPage> {
     String? header,
     required List<Widget> children,
   }) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final brightness = CupertinoTheme.of(context).brightness;
+    final isDark = brightness == Brightness.dark;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -281,7 +284,7 @@ class _DetailPageState extends ConsumerState<DetailPage> {
             child: Text(
               header,
               style: TextStyle(
-                color: isDark ? Colors.white54 : Colors.black54,
+                color: isDark ? CupertinoColors.white.withOpacity(0.6) : CupertinoColors.black.withOpacity(0.54),
                 fontSize: 13,
                 fontWeight: FontWeight.w500,
               ),
@@ -290,7 +293,7 @@ class _DetailPageState extends ConsumerState<DetailPage> {
         Container(
           margin: const EdgeInsets.symmetric(horizontal: 16),
           decoration: BoxDecoration(
-            color: isDark ? const Color(0xFF1C1C1E) : Colors.white,
+            color: isDark ? const Color(0xFF1C1C1E) : CupertinoColors.white,
             borderRadius: BorderRadius.circular(10),
           ),
           child: Column(children: children),
@@ -303,7 +306,7 @@ class _DetailPageState extends ConsumerState<DetailPage> {
     return Container(
       height: 0.5,
       margin: const EdgeInsets.only(left: 52),
-      color: isDark ? Colors.white.withOpacity(0.1) : Colors.black.withOpacity(0.1),
+      color: isDark ? CupertinoColors.white.withOpacity(0.1) : CupertinoColors.black.withOpacity(0.1),
     );
   }
 
@@ -314,29 +317,36 @@ class _DetailPageState extends ConsumerState<DetailPage> {
     required bool isDark,
     VoidCallback? onCopy,
   }) {
-    return ListTile(
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-      leading: Icon(icon, color: isDark ? Colors.white70 : Colors.black54, size: 22),
-      title: Text(
-        title,
-        style: TextStyle(color: isDark ? Colors.white54 : Colors.black54, fontSize: 12),
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      child: Row(
+        children: [
+          Icon(icon, color: isDark ? CupertinoColors.white.withOpacity(0.7) : CupertinoColors.black.withOpacity(0.54), size: 22),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: TextStyle(color: isDark ? CupertinoColors.white.withOpacity(0.6) : CupertinoColors.black.withOpacity(0.54), fontSize: 12),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  value,
+                  style: TextStyle(color: isDark ? CupertinoColors.white : CupertinoColors.black, fontSize: 16),
+                ),
+              ],
+            ),
+          ),
+          if (onCopy != null)
+            CupertinoButton(
+              padding: EdgeInsets.zero,
+              child: const Icon(CupertinoIcons.doc_on_doc, color: CupertinoColors.activeBlue, size: 18),
+              onPressed: onCopy,
+            ),
+        ],
       ),
-      subtitle: Text(
-        value,
-        style: TextStyle(color: isDark ? Colors.white : Colors.black, fontSize: 16),
-      ),
-      trailing: onCopy != null
-          ? SizedBox(
-              width: 28,
-              height: 28,
-              child: IconButton(
-                padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(),
-                icon: const Icon(Icons.copy, color: Color(0xFF007AFF), size: 18),
-                onPressed: onCopy,
-              ),
-            )
-          : null,
     );
   }
 
@@ -353,67 +363,51 @@ class _DetailPageState extends ConsumerState<DetailPage> {
     final displayValue = isObscured ? '••••••••' : value;
     final isEmpty = value == 'Not set';
     
-    return ListTile(
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-      leading: Icon(icon, color: isDark ? Colors.white70 : Colors.black54, size: 22),
-      title: Text(
-        title,
-        style: TextStyle(color: isDark ? Colors.white54 : Colors.black54, fontSize: 12),
-      ),
-      subtitle: Text(
-        displayValue,
-        style: TextStyle(
-          color: isDark ? Colors.white : Colors.black,
-          fontSize: 16,
-          fontFamily: isObscured ? 'Courier' : null,
-        ),
-      ),
-      trailing: !isEmpty || onCopy != null
-          ? Row(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.center,
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      child: Row(
+        children: [
+          Icon(icon, color: isDark ? CupertinoColors.white.withOpacity(0.7) : CupertinoColors.black.withOpacity(0.54), size: 22),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                if (!isEmpty) ...[
-                  _CompactIconButton(
-                    icon: isObscured ? Icons.visibility : Icons.visibility_off,
-                    onPressed: onToggleObscure,
+                Text(
+                  title,
+                  style: TextStyle(color: isDark ? CupertinoColors.white.withOpacity(0.6) : CupertinoColors.black.withOpacity(0.54), fontSize: 12),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  displayValue,
+                  style: TextStyle(
+                    color: isDark ? CupertinoColors.white : CupertinoColors.black,
+                    fontSize: 16,
+                    fontFamily: isObscured ? 'Courier' : null,
                   ),
-                  _CompactIconButton(
-                    icon: Icons.fullscreen,
-                    onPressed: onEnlarge,
-                  ),
-                ],
-                if (onCopy != null)
-                  _CompactIconButton(
-                    icon: Icons.copy,
-                    onPressed: onCopy,
-                  ),
+                ),
               ],
-            )
-          : null,
-    );
-  }
-}
-
-class _CompactIconButton extends StatelessWidget {
-  final IconData icon;
-  final VoidCallback? onPressed;
-
-  const _CompactIconButton({
-    required this.icon,
-    this.onPressed,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: 28,
-      height: 28,
-      child: IconButton(
-        padding: EdgeInsets.zero,
-        constraints: const BoxConstraints(),
-        icon: Icon(icon, color: const Color(0xFF007AFF), size: 18),
-        onPressed: onPressed,
+            ),
+          ),
+          if (!isEmpty) ...[
+            CupertinoButton(
+              padding: EdgeInsets.zero,
+              child: Icon(isObscured ? CupertinoIcons.eye : CupertinoIcons.eye_slash, color: CupertinoColors.activeBlue, size: 18),
+              onPressed: onToggleObscure,
+            ),
+            CupertinoButton(
+              padding: EdgeInsets.zero,
+              child: const Icon(CupertinoIcons.arrow_up_left_square, color: CupertinoColors.activeBlue, size: 18),
+              onPressed: onEnlarge,
+            ),
+          ],
+          if (onCopy != null)
+            CupertinoButton(
+              padding: EdgeInsets.zero,
+              child: const Icon(CupertinoIcons.doc_on_doc, color: CupertinoColors.activeBlue, size: 18),
+              onPressed: onCopy,
+            ),
+        ],
       ),
     );
   }
