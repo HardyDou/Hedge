@@ -1,6 +1,6 @@
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart' show ThemeMode;
+import 'package:flutter/material.dart' show ThemeMode, Divider;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:note_password/l10n/generated/app_localizations.dart';
 import 'package:note_password/presentation/providers/locale_provider.dart';
@@ -80,15 +80,13 @@ class SettingsPage extends ConsumerWidget {
                   onChanged: (val) => ref.read(vaultProvider.notifier).toggleBiometrics(val),
                   isDark: isDark,
                 ),
-                _iOSSliderTile(
+                _iOSListTile(
                   title: l10n.autoLockTimeout,
-                  value: vaultState.autoLockTimeout.toDouble(),
-                  min: 1,
-                  max: 10,
-                  divisions: 9,
-                  label: l10n.seconds(vaultState.autoLockTimeout),
-                  onChanged: (value) => ref.read(vaultProvider.notifier).setAutoLockTimeout(value.toInt()),
+                  subtitle: vaultState.autoLockTimeout == 0 
+                      ? "Off" 
+                      : l10n.seconds(vaultState.autoLockTimeout),
                   leading: const Icon(CupertinoIcons.timer, color: CupertinoColors.activeBlue),
+                  onTap: () => _showAutoLockPicker(context, ref),
                   isDark: isDark,
                 ),
                 _iOSListTile(
@@ -257,16 +255,129 @@ class SettingsPage extends ConsumerWidget {
     );
   }
 
+  void _showAutoLockPicker(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
+    final currentTimeout = ref.read(vaultProvider).autoLockTimeout;
+    
+    showCupertinoModalPopup(
+      context: context,
+      builder: (ctx) => CupertinoActionSheet(
+        title: Text(l10n.autoLockTimeout),
+        actions: [
+          CupertinoActionSheetAction(
+            onPressed: () {
+              ref.read(vaultProvider.notifier).setAutoLockTimeout(0);
+              Navigator.pop(ctx);
+            },
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Text("Off"),
+                if (currentTimeout == 0) ...[
+                  const SizedBox(width: 8),
+                  const Icon(CupertinoIcons.checkmark_alt, size: 18),
+                ],
+              ],
+            ),
+          ),
+          CupertinoActionSheetAction(
+            onPressed: () {
+              ref.read(vaultProvider.notifier).setAutoLockTimeout(1);
+              Navigator.pop(ctx);
+            },
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(l10n.seconds(1)),
+                if (currentTimeout == 1) ...[
+                  const SizedBox(width: 8),
+                  const Icon(CupertinoIcons.checkmark_alt, size: 18),
+                ],
+              ],
+            ),
+          ),
+          CupertinoActionSheetAction(
+            onPressed: () {
+              ref.read(vaultProvider.notifier).setAutoLockTimeout(5);
+              Navigator.pop(ctx);
+            },
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(l10n.seconds(5)),
+                if (currentTimeout == 5) ...[
+                  const SizedBox(width: 8),
+                  const Icon(CupertinoIcons.checkmark_alt, size: 18),
+                ],
+              ],
+            ),
+          ),
+          CupertinoActionSheetAction(
+            onPressed: () {
+              ref.read(vaultProvider.notifier).setAutoLockTimeout(10);
+              Navigator.pop(ctx);
+            },
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(l10n.seconds(10)),
+                if (currentTimeout == 10) ...[
+                  const SizedBox(width: 8),
+                  const Icon(CupertinoIcons.checkmark_alt, size: 18),
+                ],
+              ],
+            ),
+          ),
+          CupertinoActionSheetAction(
+            onPressed: () {
+              ref.read(vaultProvider.notifier).setAutoLockTimeout(30);
+              Navigator.pop(ctx);
+            },
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(l10n.seconds(30)),
+                if (currentTimeout == 30) ...[
+                  const SizedBox(width: 8),
+                  const Icon(CupertinoIcons.checkmark_alt, size: 18),
+                ],
+              ],
+            ),
+          ),
+          CupertinoActionSheetAction(
+            onPressed: () {
+              ref.read(vaultProvider.notifier).setAutoLockTimeout(60);
+              Navigator.pop(ctx);
+            },
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(l10n.seconds(60)),
+                if (currentTimeout == 60) ...[
+                  const SizedBox(width: 8),
+                  const Icon(CupertinoIcons.checkmark_alt, size: 18),
+                ],
+              ],
+            ),
+          ),
+        ],
+        cancelButton: CupertinoActionSheetAction(
+          onPressed: () => Navigator.pop(ctx),
+          isDestructiveAction: true,
+          child: Text(l10n.cancel),
+        ),
+      ),
+    );
+  }
+
   void _showResetPasswordDialog(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
     final brightness = CupertinoTheme.of(context).brightness;
     final isDark = brightness == Brightness.dark;
     
-    Navigator.of(context).push(
-      CupertinoPageRoute(
-        fullscreenDialog: true,
-        builder: (context) => _ResetPasswordPage(isDark: isDark, l10n: l10n),
-      ),
+    showCupertinoModalPopup(
+      context: context,
+      builder: (ctx) => _ResetPasswordSheet(isDark: isDark, l10n: l10n),
     );
   }
 
@@ -658,17 +769,17 @@ class _iOSSliderTile extends StatelessWidget {
   }
 }
 
-class _ResetPasswordPage extends ConsumerStatefulWidget {
+class _ResetPasswordSheet extends ConsumerStatefulWidget {
   final bool isDark;
   final AppLocalizations l10n;
 
-  const _ResetPasswordPage({required this.isDark, required this.l10n});
+  const _ResetPasswordSheet({required this.isDark, required this.l10n});
 
   @override
-  ConsumerState<_ResetPasswordPage> createState() => _ResetPasswordPageState();
+  ConsumerState<_ResetPasswordSheet> createState() => _ResetPasswordSheetState();
 }
 
-class _ResetPasswordPageState extends ConsumerState<_ResetPasswordPage> {
+class _ResetPasswordSheetState extends ConsumerState<_ResetPasswordSheet> {
   final _currentPasswordController = TextEditingController();
   final _newPasswordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
@@ -707,8 +818,8 @@ class _ResetPasswordPageState extends ConsumerState<_ResetPasswordPage> {
     setState(() => _isLoading = false);
     
     if (success) {
-      _showSuccess(widget.l10n.passwordResetSuccess);
       Navigator.pop(context);
+      _showSuccess(widget.l10n.passwordResetSuccess);
     } else {
       final error = ref.read(vaultProvider).error;
       String errorMessage;
@@ -763,135 +874,102 @@ class _ResetPasswordPageState extends ConsumerState<_ResetPasswordPage> {
   Widget build(BuildContext context) {
     final isDark = widget.isDark;
     final l10n = widget.l10n;
+    final mediaQuery = MediaQuery.of(context);
     
-    return CupertinoPageScaffold(
-      backgroundColor: isDark ? CupertinoColors.black : const Color(0xFFF2F2F7),
-      navigationBar: CupertinoNavigationBar(
-        middle: Text(l10n.resetPassword),
-        backgroundColor: isDark ? const Color(0xFF1C1C1E) : CupertinoColors.white,
-        leading: CupertinoButton(
-          padding: EdgeInsets.zero,
-          child: Text(l10n.cancel),
-          onPressed: () => Navigator.pop(context),
-        ),
-        trailing: _isLoading
-            ? const CupertinoActivityIndicator()
-            : CupertinoButton(
-                padding: EdgeInsets.zero,
-                onPressed: _handleReset,
-                child: Text(
-                  l10n.save,
-                  style: const TextStyle(fontWeight: FontWeight.w600),
-                ),
-              ),
+    return Container(
+      padding: EdgeInsets.only(bottom: mediaQuery.viewInsets.bottom),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1C1C1E) : CupertinoColors.white,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
       ),
       child: SafeArea(
-        child: ListView(
+        top: false,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            const SizedBox(height: 32),
-            _buildSection(
-              header: l10n.resetPassword.toUpperCase(),
-              children: [
-                _buildPasswordField(
-                  controller: _currentPasswordController,
-                  placeholder: l10n.enterCurrentPassword,
-                  isDark: isDark,
-                ),
-                _buildPasswordField(
-                  controller: _newPasswordController,
-                  placeholder: l10n.enterNewPassword,
-                  isDark: isDark,
-                ),
-                _buildPasswordField(
-                  controller: _confirmPasswordController,
-                  placeholder: l10n.confirmNewPassword,
-                  isDark: isDark,
-                  showDivider: false,
-                ),
-              ],
+            Container(
+              width: 36,
+              height: 5,
+              margin: const EdgeInsets.only(top: 8),
+              decoration: BoxDecoration(
+                color: CupertinoColors.systemGrey3,
+                borderRadius: BorderRadius.circular(2.5),
+              ),
             ),
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  CupertinoButton(
+                    padding: EdgeInsets.zero,
+                    child: Text(l10n.cancel),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                  Text(
+                    l10n.resetPassword,
+                    style: const TextStyle(
+                      fontSize: 17,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  _isLoading
+                      ? const CupertinoActivityIndicator()
+                      : CupertinoButton(
+                          padding: EdgeInsets.zero,
+                          onPressed: _handleReset,
+                          child: Text(
+                            l10n.save,
+                            style: const TextStyle(fontWeight: FontWeight.w600),
+                          ),
+                        ),
+                ],
+              ),
+            ),
+            const Divider(height: 1),
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                children: [
+                  CupertinoTextField(
+                    controller: _currentPasswordController,
+                    obscureText: true,
+                    placeholder: l10n.enterCurrentPassword,
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: isDark ? CupertinoColors.black : CupertinoColors.systemGrey6,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  CupertinoTextField(
+                    controller: _newPasswordController,
+                    obscureText: true,
+                    placeholder: l10n.enterNewPassword,
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: isDark ? CupertinoColors.black : CupertinoColors.systemGrey6,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  CupertinoTextField(
+                    controller: _confirmPasswordController,
+                    obscureText: true,
+                    placeholder: l10n.confirmNewPassword,
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: isDark ? CupertinoColors.black : CupertinoColors.systemGrey6,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
           ],
         ),
       ),
-    );
-  }
-
-  Widget _buildPasswordField({
-    required TextEditingController controller,
-    required String placeholder,
-    required bool isDark,
-    bool showDivider = true,
-  }) {
-    return Container(
-      decoration: BoxDecoration(
-        border: showDivider
-            ? Border(
-                bottom: BorderSide(
-                  color: isDark ? CupertinoColors.white.withOpacity(0.1) : CupertinoColors.black.withOpacity(0.06),
-                  width: 0.5,
-                ),
-              )
-            : null,
-      ),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      child: Row(
-        children: [
-          Icon(
-            CupertinoIcons.lock,
-            color: isDark ? CupertinoColors.white.withOpacity(0.6) : CupertinoColors.black.withOpacity(0.45),
-            size: 20,
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: CupertinoTextField(
-              controller: controller,
-              obscureText: true,
-              padding: const EdgeInsets.symmetric(vertical: 8),
-              placeholder: placeholder,
-              placeholderStyle: TextStyle(
-                color: isDark ? CupertinoColors.white.withOpacity(0.3) : CupertinoColors.black.withOpacity(0.3),
-              ),
-              style: TextStyle(
-                color: isDark ? CupertinoColors.white : CupertinoColors.black,
-              ),
-              decoration: const BoxDecoration(),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSection({
-    required String header,
-    required List<Widget> children,
-  }) {
-    final brightness = CupertinoTheme.of(context).brightness;
-    final isDark = brightness == Brightness.dark;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(32, 0, 16, 8),
-          child: Text(
-            header,
-            style: TextStyle(
-              color: isDark ? CupertinoColors.white.withOpacity(0.6) : CupertinoColors.black.withOpacity(0.54),
-              fontSize: 13,
-              fontWeight: FontWeight.w500,
-              letterSpacing: 0.5,
-            ),
-          ),
-        ),
-        Container(
-          margin: const EdgeInsets.symmetric(horizontal: 16),
-          decoration: BoxDecoration(
-            color: isDark ? const Color(0xFF1C1C1E) : CupertinoColors.white,
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: Column(children: children),
-        ),
-      ],
     );
   }
 }
