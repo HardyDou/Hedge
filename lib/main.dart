@@ -49,12 +49,6 @@ class NotePasswordApp extends ConsumerWidget {
     final locale = ref.watch(localeProvider);
     final vaultState = ref.watch(vaultProvider);
 
-    ref.listen<VaultState>(vaultProvider, (previous, next) {
-      if (!next.isLoading && next.hasVaultFile && previous?.autoLockTimeout != next.autoLockTimeout) {
-        AppLock.of(context)?.setBackgroundLockLatency(Duration(seconds: next.autoLockTimeout));
-      }
-    });
-
     return CupertinoApp(
       title: 'NotePassword',
       debugShowCheckedModeBanner: false,
@@ -78,12 +72,6 @@ class NotePasswordApp extends ConsumerWidget {
       ],
       builder: (context, child) {
         final shouldEnableLock = vaultState.hasVaultFile && !vaultState.isLoading;
-        
-        ref.listen<VaultState>(vaultProvider, (previous, next) {
-          if (!next.isLoading && next.hasVaultFile && previous?.autoLockTimeout != next.autoLockTimeout) {
-            AppLock.of(context)?.setBackgroundLockLatency(Duration(seconds: next.autoLockTimeout));
-          }
-        });
         
         return AppLock(
           initiallyEnabled: shouldEnableLock,
