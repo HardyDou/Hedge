@@ -132,6 +132,7 @@ class VaultNotifier extends StateNotifier<VaultState> {
     try {
       final vault = VaultService.createEmptyVault();
       final path = state.vaultPath ?? await _getDefaultVaultPath();
+      print('[setupVault] path: $path');
       
       // Ensure the parent directory exists (especially critical on iOS/Android)
       final file = File(path);
@@ -140,13 +141,16 @@ class VaultNotifier extends StateNotifier<VaultState> {
       }
 
       await VaultService.saveVault(path, masterPassword, vault);
+      print('[setupVault] vault saved');
 
       await _storage.write(key: 'master_password', value: masterPassword);
       await _storage.write(key: 'bio_enabled', value: 'true');
       await _storage.write(key: 'vault_path', value: path);
+      print('[setupVault] storage written');
       
       // Start watching for file changes
       await _startSyncWatch(path, masterPassword);
+      print('[setupVault] sync started');
 
       state = state.copyWith(
         vault: vault,
@@ -157,8 +161,10 @@ class VaultNotifier extends StateNotifier<VaultState> {
         isBiometricsEnabled: true,
         vaultPath: path,
       );
+      print('[setupVault] state updated: isAuthenticated=${state.isAuthenticated}, hasVaultFile=${state.hasVaultFile}');
       return true;
     } catch (e) {
+      print('[setupVault] ERROR: $e');
       state = state.copyWith(isLoading: false, error: "Setup failed: $e");
       return false;
     }
