@@ -83,23 +83,17 @@ class VaultNotifier extends StateNotifier<VaultState> {
   Future<void> checkInitialStatus() async {
     state = state.copyWith(isLoading: true);
     try {
-      // Always ensure we have a path set automatically
       final path = await _getDefaultVaultPath();
-      print('[checkInitialStatus] path: $path');
       final exists = await File(path).exists();
-      print('[checkInitialStatus] file exists: $exists');
       
-      // Get file modification time if exists
       if (exists) {
         final file = File(path);
         _lastKnownModification = await file.lastModified();
       }
       
       final bioEnabled = await _storage.read(key: 'bio_enabled') == 'true';
-      print('[checkInitialStatus] bioEnabled: $bioEnabled');
       final timeoutStr = await _storage.read(key: 'auto_lock_timeout');
       final timeout = timeoutStr != null ? int.tryParse(timeoutStr) ?? 5 : 5;
-      print('[checkInitialStatus] timeout: $timeout');
       
       state = state.copyWith(
         hasVaultFile: exists, 
@@ -108,9 +102,7 @@ class VaultNotifier extends StateNotifier<VaultState> {
         autoLockTimeout: timeout,
         isLoading: false
       );
-      print('[checkInitialStatus] state: hasVaultFile=${state.hasVaultFile}, isAuthenticated=${state.isAuthenticated}');
     } catch (e) {
-      print('[checkInitialStatus] ERROR: $e');
       state = state.copyWith(isLoading: false, error: e.toString());
     }
   }
@@ -138,25 +130,19 @@ class VaultNotifier extends StateNotifier<VaultState> {
     try {
       final vault = VaultService.createEmptyVault();
       final path = state.vaultPath ?? await _getDefaultVaultPath();
-      print('[setupVault] path: $path');
       
-      // Ensure the parent directory exists (especially critical on iOS/Android)
       final file = File(path);
       if (!await file.parent.exists()) {
         await file.parent.create(recursive: true);
       }
 
       await VaultService.saveVault(path, masterPassword, vault);
-      print('[setupVault] vault saved');
 
       await _storage.write(key: 'master_password', value: masterPassword);
       await _storage.write(key: 'bio_enabled', value: 'true');
       await _storage.write(key: 'vault_path', value: path);
-      print('[setupVault] storage written');
       
-      // Start watching for file changes
       await _startSyncWatch(path, masterPassword);
-      print('[setupVault] sync started');
 
       state = state.copyWith(
         vault: vault,
@@ -167,10 +153,8 @@ class VaultNotifier extends StateNotifier<VaultState> {
         isBiometricsEnabled: true,
         vaultPath: path,
       );
-      print('[setupVault] state updated: isAuthenticated=${state.isAuthenticated}, hasVaultFile=${state.hasVaultFile}');
       return true;
     } catch (e) {
-      print('[setupVault] ERROR: $e');
       state = state.copyWith(isLoading: false, error: "Setup failed: $e");
       return false;
     }
@@ -322,14 +306,17 @@ class VaultNotifier extends StateNotifier<VaultState> {
     state = state.copyWith(isLoading: true, error: null);
     try {
       final path = state.vaultPath ?? await _getDefaultVaultPath();
+      print('[resetVaultCompletely] path: $path');
       final vaultFile = File(path);
       
       if (await vaultFile.exists()) {
+        print('[resetVaultCompletely] deleting file');
         final backupPath = '${vaultFile.parent.path}/vault_backup.db';
         await vaultFile.copy(backupPath);
         await vaultFile.delete();
       }
       
+      print('[resetVaultCompletely] clearing storage');
       await _storage.deleteAll();
       
       state = VaultState(
@@ -341,6 +328,7 @@ class VaultNotifier extends StateNotifier<VaultState> {
       
       checkInitialStatus();
     } catch (e) {
+      print('[resetVaultCompletely] ERROR: $e');
       state = state.copyWith(isLoading: false, error: "Reset failed: $e");
     }
   }
