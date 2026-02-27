@@ -25,7 +25,7 @@ class SyncServicePlugin : FlutterPlugin, MethodCallHandler {
 
     override fun onDetachedFromEngine(binding: FlutterPlugin.FlutterPluginBinding) {
         channel.setMethodCallHandler(null)
-        stopWatching()
+        stopWatching(null)
     }
 
     override fun onMethodCall(call: MethodCall, result: Result) {
@@ -90,14 +90,14 @@ class SyncServicePlugin : FlutterPlugin, MethodCallHandler {
         }
     }
 
-    private fun stopWatching(result: Result = Result(null)) {
+    private fun stopWatching(result: Result?) {
         try {
             fileObserver?.stopWatching()
             fileObserver = null
             isWatching = false
-            result.success(null)
+            result?.success(null)
         } catch (e: Exception) {
-            result.error("STOP_FAILED", e.message, null)
+            result?.error("STOP_FAILED", e.message, null)
         }
     }
 
