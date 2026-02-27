@@ -130,9 +130,6 @@ class _UnlockPageState extends ConsumerState<UnlockPage> {
                   if (confirmed == true && context.mounted) {
                     Navigator.pop(context);
                     await ref.read(vaultProvider.notifier).resetVaultCompletely();
-                    if (context.mounted) {
-                      _showSuccessDialog(context, l10n.vaultResetSuccess, navigateToOnboarding: true);
-                    }
                   }
                 },
                 child: Text(l10n.createNewVault),
