@@ -160,7 +160,7 @@ class _UnlockPageState extends ConsumerState<UnlockPage> {
             onPressed: () {
               Navigator.pop(dialogContext);
               if (navigateToOnboarding) {
-                Navigator.of(context).popUntil((route) => route.isFirst);
+                Navigator.of(dialogContext).popUntil((route) => route.isFirst);
               }
             },
             child: const Text('OK'),
