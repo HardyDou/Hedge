@@ -315,6 +315,7 @@ class VaultNotifier extends StateNotifier<VaultState> {
       if (await vaultFile.exists()) {
         final backupPath = '${vaultFile.parent.path}/vault_backup.db';
         await vaultFile.copy(backupPath);
+        await vaultFile.delete();
       }
       
       await _storage.deleteAll();
@@ -325,6 +326,8 @@ class VaultNotifier extends StateNotifier<VaultState> {
         vaultPath: path,
         autoLockTimeout: 5,
       );
+      
+      checkInitialStatus();
     } catch (e) {
       state = state.copyWith(isLoading: false, error: "Reset failed: $e");
     }
