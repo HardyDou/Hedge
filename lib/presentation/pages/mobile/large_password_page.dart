@@ -1,6 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
-import 'package:note_password/l10n/generated/app_localizations.dart';
+import 'package:hedge/l10n/generated/app_localizations.dart';
 
 class LargePasswordPage extends StatefulWidget {
   final String password;

@@ -3,19 +3,19 @@ import 'package:flutter_app_lock/flutter_app_lock.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:note_password/core/platform/platform_utils.dart';
-import 'package:note_password/presentation/providers/locale_provider.dart';
-import 'package:note_password/presentation/providers/theme_provider.dart';
-import 'package:note_password/presentation/providers/vault_provider.dart';
-import 'package:note_password/l10n/generated/app_localizations.dart';
+import 'package:hedge/core/platform/platform_utils.dart';
+import 'package:hedge/presentation/providers/locale_provider.dart';
+import 'package:hedge/presentation/providers/theme_provider.dart';
+import 'package:hedge/presentation/providers/vault_provider.dart';
+import 'package:hedge/l10n/generated/app_localizations.dart';
 
-import 'package:note_password/presentation/pages/mobile/detail_page.dart';
-import 'package:note_password/presentation/pages/mobile/settings_page.dart';
-import 'package:note_password/presentation/pages/shared/unlock_page.dart';
-import 'package:note_password/presentation/pages/shared/onboarding_page.dart';
-import 'package:note_password/presentation/pages/mobile/add_item_page.dart';
-import 'package:note_password/presentation/pages/desktop/desktop_home_page.dart';
-import 'package:note_password/presentation/widgets/alphabet_index_bar.dart';
+import 'package:hedge/presentation/pages/mobile/detail_page.dart';
+import 'package:hedge/presentation/pages/mobile/settings_page.dart';
+import 'package:hedge/presentation/pages/shared/unlock_page.dart';
+import 'package:hedge/presentation/pages/shared/onboarding_page.dart';
+import 'package:hedge/presentation/pages/mobile/add_item_page.dart';
+import 'package:hedge/presentation/pages/desktop/desktop_home_page.dart';
+import 'package:hedge/presentation/widgets/alphabet_index_bar.dart';
 
 class SlideFromLeftRoute<T> extends PageRouteBuilder<T> {
   SlideFromLeftRoute({required WidgetBuilder builder})

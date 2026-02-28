@@ -2,7 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter_app_lock/flutter_app_lock.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:local_auth/local_auth.dart';
-import 'package:note_password/l10n/generated/app_localizations.dart';
+import 'package:hedge/l10n/generated/app_localizations.dart';
 import '../../providers/vault_provider.dart';
 
 class UnlockPage extends ConsumerStatefulWidget {

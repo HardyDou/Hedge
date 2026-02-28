@@ -1,4 +1,4 @@
-package com.hardydou.note_password
+package com.hardydou.hedge
 
 import android.os.FileObserver
 import android.content.Context
@@ -18,7 +18,7 @@ class SyncServicePlugin : FlutterPlugin, MethodCallHandler {
     private var isWatching = false
 
     override fun onAttachedToEngine(binding: FlutterPlugin.FlutterPluginBinding) {
-        channel = MethodChannel(binding.binaryMessenger, "com.hardydou.notePassword/sync")
+        channel = MethodChannel(binding.binaryMessenger, "com.hardydou.hedge/sync")
         channel.setMethodCallHandler(this)
         context = binding.applicationContext
     }

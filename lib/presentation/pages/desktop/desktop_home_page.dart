@@ -2,14 +2,14 @@ import 'dart:io';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:note_password/presentation/providers/vault_provider.dart';
-import 'package:note_password/src/dart/vault.dart';
-import 'package:note_password/l10n/generated/app_localizations.dart';
+import 'package:hedge/presentation/providers/vault_provider.dart';
+import 'package:hedge/src/dart/vault.dart';
+import 'package:hedge/l10n/generated/app_localizations.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:note_password/presentation/pages/desktop/detail_panel.dart';
-import 'package:note_password/presentation/pages/desktop/settings_panel.dart';
-import 'package:note_password/presentation/pages/desktop/add_item_panel.dart';
-import 'package:note_password/presentation/pages/desktop/edit_panel.dart';
+import 'package:hedge/presentation/pages/desktop/detail_panel.dart';
+import 'package:hedge/presentation/pages/desktop/settings_panel.dart';
+import 'package:hedge/presentation/pages/desktop/add_item_panel.dart';
+import 'package:hedge/presentation/pages/desktop/edit_panel.dart';
 
 class DesktopHomePage extends ConsumerStatefulWidget {
   const DesktopHomePage({super.key});

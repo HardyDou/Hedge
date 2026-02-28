@@ -1,6 +1,6 @@
 import 'package:flutter/foundation.dart';
-import 'package:note_password/domain/services/importer/import_strategy.dart';
-import 'package:note_password/domain/services/importer/smart_csv_strategy.dart';
+import 'package:hedge/domain/services/importer/import_strategy.dart';
+import 'package:hedge/domain/services/importer/smart_csv_strategy.dart';
 
 class CsvImportService {
   final ImportStrategy _strategy;

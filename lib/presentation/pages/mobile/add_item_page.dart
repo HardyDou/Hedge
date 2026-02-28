@@ -1,8 +1,8 @@
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:note_password/l10n/generated/app_localizations.dart';
-import 'package:note_password/src/dart/vault.dart';
+import 'package:hedge/l10n/generated/app_localizations.dart';
+import 'package:hedge/src/dart/vault.dart';
 import '../../providers/vault_provider.dart';
 import 'dart:io';
 

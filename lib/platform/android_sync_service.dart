@@ -1,9 +1,9 @@
 import 'dart:async';
 import 'package:flutter/services.dart';
-import 'package:note_password/services/sync_service.dart';
+import 'package:hedge/services/sync_service.dart';
 
 class AndroidSyncService implements SyncService {
-  static const _channel = MethodChannel('com.hardydou.notePassword/sync');
+  static const _channel = MethodChannel('com.hardydou.hedge/sync');
   final _eventController = StreamController<FileChangeEvent>.broadcast();
   
   AndroidSyncService() {

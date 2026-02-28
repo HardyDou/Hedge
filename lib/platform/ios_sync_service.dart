@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 import 'package:flutter/services.dart';
-import 'package:note_password/services/sync_service.dart';
+import 'package:hedge/services/sync_service.dart';
 import 'package:path_provider/path_provider.dart';
 
 class IOSSyncService implements SyncService {
@@ -15,7 +15,7 @@ class IOSSyncService implements SyncService {
     _channel.setMethodCallHandler(_handleMethodCall);
   }
   
-  static const _channel = MethodChannel('com.hardydou.notePassword/sync');
+  static const _channel = MethodChannel('com.hardydou.hedge/sync');
   
   Future<dynamic> _handleMethodCall(MethodCall call) async {
     if (call.method == 'onFileChanged') {
