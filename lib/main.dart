@@ -314,6 +314,22 @@ class _HomePageState extends ConsumerState<HomePage> {
                         size: 20,
                       ),
                     ),
+                    suffix: _searchQuery.isNotEmpty
+                        ? GestureDetector(
+                            onTap: () {
+                              _searchController.clear();
+                              setState(() => _searchQuery = "");
+                            },
+                            child: Padding(
+                              padding: const EdgeInsets.only(right: 8),
+                              child: Icon(
+                                CupertinoIcons.clear_circled_solid, 
+                                color: isDark ? CupertinoColors.white.withValues(alpha: 0.4) : CupertinoColors.black.withValues(alpha: 0.4),
+                                size: 18,
+                              ),
+                            ),
+                          )
+                        : null,
                     decoration: null,
                     padding: const EdgeInsets.symmetric(vertical: 8),
                   ),
