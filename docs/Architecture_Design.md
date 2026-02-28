@@ -1,503 +1,396 @@
-# NotePassword 技术选型与架构设计 (Technical Architecture & Stack)
+# NotePassword 架构设计文档 (Architecture Design)
 
-## 1. 核心目标 (Core Objectives)
-*   **跨平台一致性:** 代码复用率 > 90% (iOS, Android, macOS, Linux)。
-*   **高性能:** 启动速度 < 1s，列表滚动满帧 (60/120fps)。
-*   **原生体验:** 
-    *   符合各平台的设计规范 (Human Interface Guidelines / Material Design)。
-    *   完美支持深色模式、无障碍、系统级字体渲染。
-*   **安全:** 内存安全，避免常见的缓冲区溢出漏洞。
+**系统名称**: NotePassword (密码本)
+**状态**: In Review
+**版本**: 2.1
+**日期**: 2026-02-28
 
 ---
 
-## 2. 技术栈选型 (Tech Stack)
+## 1. 系统概述 (System Overview)
 
-### 2.1 应用框架 (App Framework)
-**结论:** **Flutter**
+### 1.1 核心目标 (Goal)
+构建一款 **"Local-First" (本地优先)** 的跨平台密码管理器，提供类似 1Password 的原生体验，但**完全去除**厂商云服务依赖。
 
-**对比分析:**
-| 维度 | Flutter | React Native | Tauri (Rust + Web) | Swift/Kotlin (原生) |
-| :--- | :--- | :--- | :--- | :--- |
-| **渲染性能** | ⭐️⭐️⭐️⭐️⭐️ (Skia 自绘引擎，媲美原生) | ⭐️⭐️⭐️ (JS Bridge 通信开销) | ⭐️⭐️⭐️ (WebView 渲染，内存占用略高) | ⭐️⭐️⭐️⭐️⭐️ |
-| **UI 一致性** | ⭐️⭐️⭐️⭐️⭐️ (像素级一致) | ⭐️⭐️⭐️ (依赖原生组件，差异大) | ⭐️⭐️⭐️ (Web 技术，易统一样式) | ⭐️ (需维护两套 UI) |
-| **开发效率** | ⭐️⭐️⭐️⭐️ (单代码库，Hot Reload) | ⭐️⭐️⭐️⭐️ (JS 生态丰富) | ⭐️⭐️⭐️ (Rust 门槛高) | ⭐️⭐️ (工作量翻倍) |
-| **桌面端支持** | ⭐️⭐️⭐️⭐️ (已成熟，特别是 macOS/Linux) | ⭐️⭐️ (桌面端支持较弱/由社区维护) | ⭐️⭐️⭐️⭐️⭐️ (专为桌面优化) | ⭐️⭐️ (仅 macOS/Windows) |
-| **包体积** | 中等 (约 10-20MB) | 中等 | 极小 (< 5MB) | 小 |
-
-**选择理由:**
-*   **高性能渲染:** Flutter 的 Skia/Impeller 引擎直接调用 GPU，避开了 WebView 的性能瓶颈，确保了密码列表滚动的极致流畅。
-*   **跨平台霸主:** 目前唯一能同时在 Mobile (iOS/Android) 和 Desktop (macOS/Linux) 提供生产级支持的框架。
-*   **Dart 语言:** 强类型、空安全 (Null Safety)，适合编写高可靠性的安全应用。
-*   **FFI 支持:** Dart FFI 能高效调用 Rust/C++ 编写的底层加密库，兼顾性能与安全。
-
-### 2.2 核心加密层 (Core Crypto Layer)
-**结论:** **Dart (使用 `encrypt` 和 `cryptography` 库)**
-
-为了简化 iOS 上的构建流程，核心加密逻辑已从 Rust 迁移到纯 Dart 实现。
-
-*   **语言:** Dart (强类型、空安全)。
-*   **加密库:** `cryptography` (PBKDF2, AES-256-GCM) 和 `encrypt` (AES-256-GCM)。
-*   **密钥派生:** PBKDF2 (100,000 次迭代)。
-*   **内存保护:** Dart 的垃圾回收机制负责内存管理，敏感数据在不再使用时会被标记为可回收。尽管不如 Rust 的 `secrecy` 精确控制，但对于现代 Flutter 应用而言，这通常是可接受的折衷方案。
-
-### 2.3 数据存储 (Storage)
-**结论:** **抽象存储层 (Repository Pattern) + 默认 JSON 后端**
-
-鉴于 NotePassword 的“文件型数据库”特性，我们需要一个单文件数据库。为了兼顾开发效率与未来扩展性（如支持 >10k 条目），我们将定义一个通用的 `VaultStorage` Trait。
-
-*   **接口定义 (Rust Trait):**
-    ```rust
-    trait VaultStorage {
-        fn load(&self, key: &Secret<String>) -> Result<Vec<Item>>;
-        fn save(&self, items: &[Item], key: &Secret<String>) -> Result<()>;
-        fn merge(&self, other: &Self) -> Result<MergeResult>;
-    }
-    ```
-*   **默认实现 (MVP): 自定义加密 JSON/MessagePack**
-    *   **优点:** 格式透明，易于实现跨平台同步和冲突合并（Git-like merge）。
-    *   **实现:** Rust `serde` + `AES-GCM` 流式加密。
-    *   **限制:** 适用于 < 10,000 条目。若超过此数量，架构允许无缝切换至 SQLCipher 实现。
-*   **结构:** 
-    ```json
-    {
-      "meta": { "uuid": "...", "ver": 1, "algo": "Argon2id+XChaCha20" },
-      "data": "ENCRYPTED_BLOB_BASE64..." 
-    }
-    ```
-*   只有解密后才能读取内容，元数据（版本号、UUID、Salt）明文存储以便同步校验。
+### 1.2 技术约束 (Constraints)
+*   **无服务端:** 不搭建任何后端服务器，纯本地/云盘存储。
+*   **跨平台:** 需同时支持 iOS, Android, macOS, Linux。
+*   **安全:** 零知识架构 (Zero-Knowledge)，数据必须在本地加密后存储。
+*   **性能:** 冷启动 < 1秒 (移动端)，列表滚动 60fps。
 
 ---
 
-## 3. 架构设计 (Architecture)
+## 2. 高层架构 (High-Level Architecture)
 
-采用 **MVVM (Model-View-ViewModel)** 架构，结合 **Clean Architecture** 分层理念。**Dart Core 层作为单一可信源 (Single Source of Truth)**，管理所有状态，Dart UI 层主要负责 UI 渲染。
+### 2.1 架构模式 (Pattern)
+**MVVM (Model-View-ViewModel)** + **Clean Architecture** 分层理念。
 
-### 3.1 分层概览
-1.  **UI Layer (Flutter):**
-    *   负责渲染界面 (Widgets)。目前已完全迁移至 **Cupertino UI**。
-    *   处理用户交互 (Tap, Scroll)。
-    *   **性能优化:**
-        *   **异步渲染:** 所有来自 Rust 的耗时操作（如解密、搜索）必须在 `compute()` 或独立的 **Isolate** 中执行，绝不阻塞 UI 线程 (Jank-Free)。
-        *   **列表优化:** 强制使用 `ListView.builder` + `const` 构造函数。对于定高列表项，设置 `itemExtent` 以跳过布局计算。
-        *   **交互细节:** iOS 上支持 "Interactive Keyboard Dismissal" (拖动隐藏键盘)；Android 上适配 "Edge-to-Edge" 显示。
-    *   使用 `Riverpod` 或 `Bloc` 监听来自 Dart 的状态流。
-    *   **原则:** "Dumb View" —— UI 不包含任何业务逻辑，只负责展示状态。
-2.  **Logic Layer (Dart Core):**
-    *   **State Management:** 维护应用状态 (Locked/Unlocked, Items List, Sync Status)。
-    *   **Business Rules:** 密码强度校验、过期检查、自动锁定计时器。
-    *   **Vault Manager:** 读写文件、解析 JSON、处理冲突 (Merge Logic)。
-        *   **Android SAF 优化:** 避免每次启动递归扫描文件夹。首次授权后，缓存目标 Vault 文件的 `document_uri`，后续直接读写该 URI。
-    *   **Crypto Engine:** 加密/解密/密钥派生 (使用 Dart 加密库)。
-    *   **Shared Library (iOS Extension):** 核心逻辑必须编译为静态库 (`.a`) 或动态框架 (`.framework`)，以便主 App 和 **AutoFill Credential Provider Extension** 共享代码。注意 Extension 内存限制 (<120MB)，Dart Core 必须轻量化。
-3.  **Platform Services (Native/Flutter Plugin):**
-    *   **iOS:** 
-        *   `CloudKit` (Sync): 结合 `NSFilePresenter` 和 `NSMetadataQuery` (前台主动查询) 确保数据实时性。
-        *   `FaceID` (Auth): 使用 `LocalAuthentication` 结合 **Secure Enclave** 存储主密码的加密令牌，而非直接存储密码。
-        *   `AutoFill`: 实现 `ASCredentialProviderViewController`。
-    *   **Android:** 
-        *   `SAF` (Storage), `BiometricPrompt` (Auth).
-        *   `AutofillService`: 实现 Android 自动填充服务。
-    *   **Linux:** `SecretService` (Keyring), `Inotify` (File Watch)。
+核心原则：**"Dart Core as Single Source of Truth"** —— 所有业务逻辑、状态管理、加密操作均由 Dart 层统一管理，UI 层仅负责渲染。
 
-### 3.2 关键流程设计
+### 2.2 架构图 (Architecture Diagram)
 
-#### A. 启动流程 (Cold Start)
-1.  **Flutter UI:** 显示启动页。
-2.  **Dart Core:** 
-    *   读取配置文件。
-    *   检查是否存在主数据库文件。
-    *   若存在 -> 返回 `State: Locked`。
-    *   若不存在 -> 返回 `State: Onboarding`。
-3.  **Flutter UI:** 跳转至 `UnlockScreen` 或 `OnboardingScreen`。
+```mermaid
+graph TD
+    subgraph Presentation Layer
+        A[Flutter UI - Cupertino Widgets]
+        A --> A1[Mobile: Stack Navigation]
+        A --> A2[Desktop: Two-Column Layout]
+    end
 
-#### B. 解锁流程 (Unlock)
-1.  **UI:** 用户输入主密码 或 验证生物识别。
-2.  **Logic:** 调用 Dart `verify_master_password(pwd)`.
-3.  **Dart Core:** 
-    *   Argon2id 哈希计算。
-    *   尝试解密数据库头。
-    *   若成功 -> 将派生的 `SessionKey` 暂存内存 (Dart `SecretString`)。
-    *   解密索引数据 (Titles, UUIDs) 返回给 Dart。
-4.  **UI:** 展示密码列表。
+    subgraph Application Layer
+        B[Page Factory / Router]
+        B --> C[Providers - Riverpod]
+    end
 
-#### C. 同步流程 (Sync) - 以 iOS iCloud 为例
-1.  **Native (iOS):** `NSFilePresenter` 监听到 `cloud_vault.db` 发生变更。
-2.  **Channel:** 通知 Flutter "File Changed"。
-3.  **Flutter:** 调用 Dart `reload_and_merge()`。
-4.  **Dart Core:** 
-    *   读取新文件。
-    *   解密。
-    *   对比内存中的数据版本。
-    *   若有冲突 -> 生成冲突副本。
-    *   若无冲突 -> 更新内存数据。
-5.  **Flutter:** 刷新 UI 列表。
+    subgraph Domain Layer
+        D[Entities: VaultItem, User]
+        E[Use Cases: Unlock, Sync, CRUD]
+        F[Repository Interfaces]
+    end
+
+    subgraph Infrastructure Layer
+        G[Repositories: FileStorage Impl]
+        H[Crypto Service: Dart]
+        I[Platform Channels: Biometric, SAF]
+    end
+
+    A --> B
+    B --> C
+    C --> D
+    C --> E
+    C --> F
+    F --> G
+    G --> H
+    G --> I
+```
+
+### 2.3 数据流 (Data Flow)
+*   **单向数据流 (Unidirectional):** UI → Riverpod Providers → Use Cases → Repositories → Data Sources。
+*   **状态更新:** 通过 Riverpod 的 `StateNotifier` 或 `@riverpod` 注解自动通知 UI 重建。
 
 ---
 
-## 4. 目录结构规划 (Project Structure)
+## 3. 分层详情 (Layer Detail)
 
-```text
-note-password/
-├── android/            # Android 原生宿主
-├── ios/                # iOS 原生宿主
-├── linux/              # Linux 原生宿主
-├── lib/                # Flutter Dart 代码
-│   ├── main.dart
-│   ├── core/           # 核心工具 (DI, Log, Config)
-│   ├── data/           # 数据层 (Repository impl)
-│   ├── domain/         # 业务实体 (Models)
-│   ├── presentation/   # UI 层 (Pages, Widgets, Providers)
-│   └── bridge_generated.dart # Rust FFI 绑定 (已移除)
-├── native/             # Rust 核心库 (已移除)
-│   ├── src/
-│   │   ├── api.rs      # 暴露给 Flutter 的 API (已移除)
-│   │   ├── crypto.rs   # 加密逻辑 (已移除)
-│   │   ├── vault.rs    # 数据存储逻辑 (已移除)
-│   │   └── lib.rs
-│   └── Cargo.toml
-├── assets/             # 静态资源 (Fonts, Icons)
-└── pubspec.yaml
+### 3.1 Presentation Layer (UI Layer)
+
+#### 目录结构
+```
+lib/presentation/
+├── pages/
+│   ├── mobile/              # 移动端特定页面
+│   │   ├── home_page.dart
+│   │   ├── detail_page.dart
+│   │   └── settings_page.dart
+│   ├── desktop/             # 桌面端特定页面
+│   │   ├── desktop_home_page.dart
+│   │   ├── detail_panel.dart
+│   │   └── settings_dialog.dart
+│   └── shared/              # 共享页面
+│       ├── unlock_page.dart
+│       └── onboarding_page.dart
+├── widgets/                 # 可复用组件
+└── providers/              # Riverpod Providers
 ```
 
----
+#### 平台适配策略
+*   **Mobile:** 使用 `CupertinoPageScaffold` + 栈式导航 (Push/Pop)。
+*   **Desktop:** 使用 `Row` + `Expanded` 实现左右分栏，中间通过 `MouseRegion` 实现可拖拽分割线。
+*   **PlatformUtils:** 统一的平台检测工具类，用于动态选择渲染策略。
 
-## 5. 分层架构设计 (Layered Architecture)
+#### ListView 优化策略
+*   **必须使用** `ListView.builder` 构建长列表。
+*   **固定高度列表项:** 使用 `itemExtent` 跳过布局计算。
+*   **避免重建:** 使用 `const` 构造函数和 `StatelessWidget`。
 
-### 5.1 整体架构图
-```
-┌─────────────────────────────────────────────────────────────────────────┐
-│                           应用层 (App Layer)                             │
-├─────────────────────────────┬───────────────────────────────────────────┤
-│      移动端 (Mobile)        │           桌面端 (Desktop)               │
-│   Cupertino Pages           │      Flutter Desktop Pages               │
-│   - 页面跳转导航            │      - 两栏布局                          │
-│   - 移动端特有组件          │      - 可拖拽分割线                      │
-│                             │      - 设置弹窗                          │
-├─────────────────────────────┴───────────────────────────────────────────┤
-│                     页面工厂 (PageFactory)                             │
-│         根据平台动态选择移动端/桌面端页面实现                           │
-├─────────────────────────────────────────────────────────────────────────┤
-│                         共享层 (Shared Layer)                          │
-│   - Providers (状态管理)                                               │
-│   - Services (业务逻辑)                                               │
-│   - Models (数据模型)                                                 │
-│   - Core (核心工具)                                                   │
-├─────────────────────────────────────────────────────────────────────────┤
-│                       平台适配层 (Platform Layer)                       │
-│   - PlatformUtils (平台检测)                                          │
-│   - 平台特定服务 (iCloud, SAF, 生物识别)                              │
-└─────────────────────────────────────────────────────────────────────────┘
-```
+### 3.2 跨平台功能复用 (Feature Layer - 核心原则)
 
-### 5.2 逻辑层 (Business Logic Layer)
+> **⚠️ 核心原则:** "功能逻辑只写一次，UI 逻辑按平台适配"
 
-**职责:** 负责所有业务逻辑，不涉及任何 UI 代码
+#### 3.2.1 分层规则
 
-| 组件 | 路径 | 描述 |
-|------|------|------|
-| **VaultProvider** | `presentation/providers/vault_provider.dart` | 密码库状态管理 |
-| **ThemeProvider** | `presentation/providers/theme_provider.dart` | 主题状态管理 |
-| **LocaleProvider** | `presentation/providers/locale_provider.dart` | 语言状态管理 |
-| **CryptoService** | `src/dart/crypto.dart` | 加密/解密服务 |
-| **Vault** | `src/dart/vault.dart` | 密码库数据模型 |
-| **SyncService** | `services/sync_service.dart` | 同步服务 |
+| 层级 | 职责 | 是否跨平台复用 |
+| :--- | :--- | :--- |
+| **Domain/Use Cases** | 业务逻辑 (如：复制密码、加密数据) | ✅ **100% 复用** |
+| **Domain/Entities** | 数据模型 | ✅ **100% 复用** |
+| **Domain/Repositories** | 仓库接口 | ✅ **100% 复用** |
+| **Infrastructure** | 平台实现 (文件读写、加密库) | ⚠️ 按平台实现 |
+| **Presentation/Providers** | 状态管理 | ✅ **100% 复用** |
+| **Presentation/Pages** | 页面结构 | ❌ 按平台独立 |
+| **Presentation/Widgets** | UI 组件 | ⚠️ 部分复用 |
 
-**技术选型:**
-*   **状态管理:** Riverpod (Flutter 官方推荐)
-*   **加密:** `cryptography` + `encrypt` 库
-*   **数据格式:** 加密 JSON 文件
+#### 3.2.2 错误示例 (❌ 不要这样做)
 
-### 5.3 移动端技术设计 (Mobile)
-
-#### 5.3.1 技术栈
-| 技术 | 选择 | 理由 |
-|------|------|------|
-| **UI 框架** | Flutter Cupertino | 100% iOS 原生体验 |
-| **导航** | CupertinoPageRoute | iOS 风格页面过渡 |
-| **状态管理** | Riverpod | 声明式状态管理 |
-| **动画** | CupertinoPageTransition | iOS 原生动画 |
-
-#### 5.3.2 目录结构
-```
-lib/presentation/pages/mobile/
-├── home_page.dart              # 密码列表页
-├── detail_page.dart             # 密码详情页
-├── settings_page.dart          # 设置页
-├── unlock_page.dart            # 解锁页
-├── onboarding_page.dart        # 首次引导页
-├── add_item_page.dart         # 添加密码页
-├── edit_page.dart             # 编辑密码页
-└── large_password_page.dart   # 密码大图页
-```
-
-#### 5.3.3 导航模式
-```
-┌──────────┐     ┌──────────┐     ┌──────────┐
-│  首页     │ ──▶ │  详情页   │ ──▶ │  编辑页   │
-│ (列表)   │     │ (独立页面)│     │ (独立页面)│
-└──────────┘     └──────────┘     └──────────┘
-     │                 │
-     ▼                 ▼
-┌──────────┐     ┌──────────┐
-│ 设置页   │     │ 添加页   │
-│ (独立页面)│     │ (独立页面)│
-└──────────┘     └──────────┘
-```
-
-### 5.4 桌面端技术设计 (Desktop)
-
-#### 5.4.1 技术栈
-| 技术 | 选择 | 理由 |
-|------|------|------|
-| **UI 框架** | Flutter Desktop | 支持 macOS/Linux/Windows |
-| **布局** | Row + Flexible | 两栏可拖拽布局 |
-| **窗口管理** | window_manager | 窗口控制 |
-| **系统托盘** | tray_manager | 菜单栏图标 |
-| **全局快捷键** | hotkey_manager | 键盘快捷键 |
-
-#### 5.4.2 目录结构
-```
-lib/presentation/pages/desktop/
-├── desktop_home_page.dart      # 两栏主布局
-├── detail_panel.dart           # 详情面板
-├── settings_panel.dart         # 设置面板
-└── menu_bar_controller.dart   # 菜单栏控制
-```
-
-#### 5.4.3 两栏布局实现
 ```dart
-Row(
-  children: [
-    // 左侧栏 - 密码列表
-    SizedBox(
-      width: _sidebarWidth,  // 可拖拽调整
-      child: SidebarView(),
-    ),
-    // 可拖拽分割线
-    MouseRegion(
-      cursor: SystemMouseCursors.resizeColumn,
-      child: GestureDetector(
-        onHorizontalDragUpdate: _handleDrag,
-        child: Container(width: 1, color: dividerColor),
-      ),
-    ),
-    // 右侧栏 - 详情/设置
-    Expanded(
-      child: _buildDetailView(),
-    ),
-  ],
-)
-```
-
-#### 5.4.4 核心特性实现
-
-| 特性 | 实现方式 |
-|------|----------|
-| **可拖拽分割线** | `GestureDetector` + `onHorizontalDragUpdate` 监听拖拽事件 |
-| **设置弹窗** | `showCupertinoDialog` 模态弹窗 |
-| **实时搜索** | `TextEditingController` + `setState` 过滤列表 |
-| **空状态提示** | 条件渲染 `if (selectedItem == null)` |
-
-### 5.5 平台检测与页面工厂
-
-#### 5.5.1 平台检测工具
-```dart
-// lib/core/platform/platform_utils.dart
-enum AppPlatform { mobile, desktop, web }
-
-class PlatformUtils {
-  static AppPlatform get platform {
-    if (Platform.isMacOS || Platform.isWindows || Platform.isLinux) {
-      return AppPlatform.desktop;
-    }
-    return AppPlatform.mobile;
+// ❌ Mobile 端写一套
+class DetailPage extends StatelessWidget {
+  void copyPassword() {
+    Clipboard.setData(ClipboardData(text: item.password));
+    // Mobile 特有的 Toast
   }
-  
-  static bool get isDesktop => platform == AppPlatform.desktop;
-  static bool get isMobile => platform == AppPlatform.mobile;
+}
+
+// ❌ Desktop 端再写一套
+class DetailPanel extends StatelessWidget {
+  void copyPassword() {
+    Clipboard.setData(ClipboardData(text: item.password));
+    // Desktop 特有的通知
+  }
 }
 ```
 
-#### 5.5.2 页面工厂
+#### 3.2.3 正确示例 (✅ 应该这样做)
+
+**Step 1: 在 Domain Layer 定义 Use Case**
+
 ```dart
-// lib/presentation/pages/page_factory.dart
-class PageFactory {
-  static Widget getHomePage() {
-    return PlatformUtils.isDesktop
-        ? DesktopHomePage()
-        : MobileHomePage();
+// lib/domain/use_cases/copy_password_usecase.dart
+class CopyPasswordUseCase {
+  // 纯业务逻辑，无 UI 依赖
+  String execute(VaultItem item) {
+    return item.password; // 返回密码
   }
-  
-  static Widget getDetailPage(VaultItem item) {
-    return PlatformUtils.isDesktop
-        ? DetailPanel(item: item)
-        : DetailPage(item: item);
+}
+
+class CopyAllCredentialsUseCase {
+  // 组合用户名+密码+网址+备注
+  String execute(VaultItem item) {
+    return [
+      item.username,
+      item.password,
+      item.url,
+      item.notes,
+    ].where((s) => s != null).join('\n');
   }
-  
-  // ... 其他页面工厂方法
 }
 ```
 
----
+**Step 2: 在 Presentation Layer 调用 Use Case**
 
-## 7. 当前实现状态 (Implementation Status)
+```dart
+// lib/presentation/providers/vault_provider.dart
+class VaultNotifier extends StateNotifier<VaultState> {
+  final CopyPasswordUseCase _copyPasswordUseCase;
+  final CopyAllCredentialsUseCase _copyAllUseCase;
 
-### 7.1 核心功能 ✅
-*   主密码创建与解锁
-*   生物识别解锁 (FaceID/TouchID/指纹) - 已优化错误处理
-*   密码条目 CRUD
-*   密码搜索
-*   密码复制到剪贴板
-*   附件管理
+  void copyPassword(String itemId) {
+    final item = findItem(itemId);
+    final password = _copyPasswordUseCase.execute(item); // 复用逻辑
+    // ⚠️ 只有这里是平台特定的：Clipboard.setData
+    Clipboard.setData(ClipboardData(text: password));
+  }
 
-### 7.2 安全性 ✅
-*   AES-256-GCM 加密
-*   Argon2id 密钥派生
-*   自动锁屏 (0-60秒可调)
-*   忘记密码处理
-
-### 7.3 同步功能 ✅
-*   **iCloud 同步**: Timer 轮询检测文件变化，自动刷新密码库
-*   **冲突解决**: 检测到冲突时自动创建备份文件
-*   **Android 同步**: 文件监控支持
-
-### 7.4 UI/UX (Cupertino 风格) ✅
-*   列表页面：favicon + 首字母图标、紧凑布局
-*   详情页面：分组样式、密码显示/隐藏、放大弹窗
-*   设置页面：iOS 风格分组、底部弹窗选择
-*   主题：跟随系统/深色/浅色
-*   国际化：中/英文
-*   应用名称多语言：iOS/macOS/Android 均支持
-*   **导航动画**: 已改用 CupertinoPageRoute 实现 iOS 滑动效果，并优化了设置页面的过渡动画
-*   **Material → Cupertino 迁移**: 已完成所有 Material 组件到 Cupertino 组件的迁移。
-
-### 7.5 技术实现细节
-*   **密码放大显示**: 使用 `SystemChrome.setPreferredOrientations` 真正旋转屏幕，退出时先恢复竖屏再退出
-*   **密码显示**: 每个字符 + 位号上下结构显示，隔位换色
-*   **URL favicon**: 自动补全 `https://` 前缀，确保图标下载成功
-*   **应用名称**: 使用平台原生国际化机制 (InfoPlist.strings / strings.xml)
-*   **自动锁屏**: 使用 `WidgetsBindingObserver` 监听 `AppLifecycleState.paused`，立即检查超时并锁定
-
-### 7.6 待完成
-*   **真机崩溃调试**: iOS 真机上打开详情页后按 Home 再打开崩溃问题
-*   **密码历史记录**: 查看修改历史
-
----
-
-## 8. 已知问题 (Known Issues)
-
-| 问题 | 描述 | 影响 | 状态 |
-|------|------|------|------|
-| 真机崩溃 | 打开详情页→按 Home→重新打开 App→崩溃 | 严重 | 🔄 调试中 |
-| 代码签名 | 真机部署时签名验证失败 (0xe8008014) | 严重 | 🔄 待解决 |
-| Material 风格 | 仍使用 Material 组件，不符合 iOS 设计规范 | 中 | ✅ 已完成迁移 |
-
----
-
-## 9. 跨平台构建指南 (Build Guide)
-
-### 6.1 统一代码库策略
-
-Flutter 架构的核心在于：
-*   **One Codebase (`lib/`)**: 包含所有 UI 和业务逻辑 (Dart)。
-*   **One Core (`native/`)**: 包含所有加密和数据逻辑 (Rust) - **已移除，迁移至 Dart**。
-*   **Four Hosts (`android/`, `ios/`, `linux/`, `macos/`)**: 自动生成的"壳"项目，承载 Flutter/Dart 代码。
-
-### 6.2 构建流程
-
-无需为每个平台编写独立代码。只需在 `lib/` 中编写代码，然后运行不同的构建命令。
-
-#### iOS & macOS
-*   **要求**: Mac + Xcode
-*   **构建命令**:
-    *   `flutter build ios` -> 生成 `.ipa` (需要签名)
-    *   `flutter build macos` -> 生成 `.app`
-*   **Rust 集成**: `flutter_rust_bridge` 自动将 Rust 代码链接为静态库 (`.a`) - **已移除**。
-
-#### Android
-*   **要求**: Android Studio / SDK
-*   **构建命令**: `flutter build apk` 或 `flutter build appbundle`
-*   **Rust 集成**: `flutter_rust_bridge` 编译 Rust 为 `.so` (JNI libs)，打包进 APK - **已移除**。
-
-#### Linux
-*   **要求**: Linux 构建工具 (`build-essential`, `cmake`, `pkg-config`)
-*   **注意**: macOS 上无法直接构建 Linux，需使用 Linux 机器或 Docker/CI。
-*   **构建命令**: `flutter build linux`
-
-### 6.3 Flutter 版本管理
-
-使用 `fvm` 管理 Flutter 版本：
-```bash
-/Users/hardy/fvm/versions/stable/bin/flutter build macos
+  void copyAllCredentials(String itemId) {
+    final item = findItem(itemId);
+    final content = _copyAllUseCase.execute(item); // 复用逻辑
+    Clipboard.setData(ClipboardData(text: content));
+  }
+}
 ```
 
+**Step 3: Mobile UI 调用 Provider**
+
+```dart
+// lib/presentation/pages/mobile/detail_page.dart
+class MobileDetailPage extends ConsumerWidget {
+  @override
+  Widget build(BuildContext context, VaultNotifier notifier) {
+    return Column(
+      children: [
+        CupertinoButton(
+          child: Text('复制密码'),
+          onPressed: () => notifier.copyPassword(item.id),
+        ),
+        CupertinoButton(
+          child: Text('复制全部'),
+          onPressed: () => notifier.copyAllCredentials(item.id),
+        ),
+      ],
+    );
+  }
+}
+```
+
+**Step 4: Desktop UI 调用同一个 Provider**
+
+```dart
+// lib/presentation/pages/desktop/detail_panel.dart
+class DesktopDetailPanel extends ConsumerWidget {
+  @override
+  Widget build(BuildContext context, VaultNotifier notifier) {
+    return Column(
+      children: [
+        CupertinoButton(
+          child: Text('复制密码'),
+          onPressed: () => notifier.copyPassword(item.id), // 同一个方法！
+        ),
+        CupertinoButton(
+          child: Text('复制全部'),
+          onPressed: () => notifier.copyAllCredentials(item.id), // 同一个方法！
+        ),
+      ],
+    );
+  }
+}
+```
+
+#### 3.2.4 总结
+
+*   **Use Case:** 定义"做什么" (What)，不关心"怎么做" (How to display)。
+*   **Provider:** 协调 Use Case + 平台特定操作 (如 Clipboard)。
+*   **Page/Widget:** 负责"怎么显示" (How to display)。
+
+这样，"复制密码"的逻辑只写了一次，但 UI 可以根据平台定制 (Mobile 可以用 CupertinoButton，Desktop 也可以用，但布局不同)。
+
+### 3.3 Domain Layer (Core Business Logic)
+
+#### 核心实体 (Entities)
+```dart
+// VaultItem: 密码条目
+class VaultItem {
+  final String id;
+  final String title;
+  final String? username;
+  final String? password; // 加密存储
+  final String? url;
+  final String? notes;
+  final DateTime updatedAt;
+  final List<Attachment>? attachments;
+}
+
+// Vault: 密码库
+class Vault {
+  final String id;
+  final List<VaultItem> items;
+  final DateTime lastModified;
+}
+```
+
+#### Use Cases (业务用例)
+*   **UnlockVault:** 解锁密码库 (密钥派生 + 解密)。
+*   **LockVault:** 锁定密码库 (清理内存中的 Session Key)。
+*   **SyncData:** 同步数据 (检测冲突 + 合并)。
+*   **CRUD:** 密码条目的增删改查。
+
+#### Repository Interfaces (抽象接口)
+```dart
+abstract class VaultRepository {
+  Future<Vault> loadVault(String masterPassword);
+  Future<void> saveVault(Vault vault);
+  Future<void> deleteItem(String id);
+}
+```
+
+### 3.4 Infrastructure Layer (数据基础设施)
+
+#### 加密服务 (Crypto Service)
+*   **密钥派生:** Argon2id (Iterations: 3, Memory: 64MB, Parallelism: 4)
+*   **数据加密:** AES-256-GCM
+*   **实现:** 纯 Dart (`cryptography` + `encrypt` 包)
+
+#### Isolates 使用策略 (⚠️ 关键)
+> **强制要求:** 所有耗时的加密操作 (加密/解密/Hash) **必须**在 Background Isolates 中执行，禁止在 Main Thread 直接操作。
+
+```dart
+// ✅ 正确示例
+final encryptedData = await compute(_encryptData, params);
+
+// ❌ 错误示例 (阻塞 UI)
+final encryptedData = encryptData(params); // 不要这样做
+```
+
+#### 存储策略
+*   **iOS/macOS:** `Documents` 目录 (自动支持 iCloud Drive 同步)。
+*   **Android:** SAF (Storage Access Framework)，缓存 `document_uri` 避免重复扫描。
+*   **格式:** 单加密 JSON 文件 (`vault.json`)。
+
+#### 同步机制 (Sync)
+*   **iOS/macOS:** 使用 `Timer` 轮询 iCloud Drive 文件元数据 (Modification Time)，建议轮询间隔 **30秒**。
+*   **Android:** 依赖 SAF 文件流 + 云服务后台推送。
+*   **冲突解决:** **Keep Both** 策略。检测到版本冲突时，自动将远程版本保存为 `vault_conflict_{timestamp}.db`，并提示用户。
+
+#### Session Key 生命周期
+*   **解锁时生成:** Master Password → Argon2id → Session Key (存入内存)。
+*   **锁定时销毁:** 调用 `LockVault` 时立即清空内存中的 Session Key。
+*   **超时失效:** 支持自动锁屏超时 (0-60分钟)，超时后自动清理 Session Key。
+
 ---
 
-## 10. 技术重构经验总结 (Lessons Learned)
+## 4. 横切关注点 (Cross-Cutting Concerns)
 
-### 2026-02-27: Rust → Dart 迁移
+### 4.1 错误处理 (Error Handling)
+*   **策略:** 全局捕获异常 (Zone.handleUncaughtError)。
+*   **用户体验:** 显示用户友好的错误提示 (如"解密失败，请检查密码")，而非原始异常信息。
+*   **日志:** 仅记录错误码和上下文，**严禁**打印密码、密钥等敏感数据。
 
-#### 背景
-由于 flutter_rust_bridge 在 iOS 真机上的链接问题，将加密核心从 Rust 迁移到纯 Dart 实现。
+### 4.2 依赖注入 (Dependency Injection)
+*   **策略:** 使用 Riverpod 的 `Provider` 进行依赖管理。
+*   **优点:** 无需手动传递 `context`，测试友好。
 
-#### 遇到的问题及原因
+### 4.3 平台集成 (Platform Integration)
 
-| 问题 | 原因 | 解决方案 |
-|------|------|----------|
-| **新增/修改只作用于第一条** | Dart 版本的 `updateItem` 实现有 bug，使用 `indexWhere` 后直接修改列表导致引用问题 | 使用 `map` 创建新列表 |
-| **新增时重复添加** | `addItemWithDetails` 先添加空 item 再更新，导致重复 | 直接添加完整 item |
-| **加密解密不稳定** | 手写的 SHA256 实现错误 | 使用 cryptography 库的 PBKDF2 |
-| **setupVault 使用 null 密码** | `state.currentPassword` 在 setup 时为 null | 使用传入的 masterPassword 参数 |
+#### iOS 特有
+*   **Biometric:** 使用 `LocalAuthentication` 框架，支持 FaceID/TouchID。
+*   **AutoFill Extension:** P2 阶段实现，需预留 App Groups 架构。
+*   **Entitlements:** 需配置 `com.apple.security.network.client` (网络权限)。
 
-#### 经验教训
+#### Android 特有
+*   **Biometric:** 使用 `BiometricPrompt` API。
+*   **SAF:** 首次授权后缓存 `document_uri`，避免重复扫描。
+*   **Backup:** 配置 `android:allowBackup="false"` (敏感应用)。
 
-1. **数据模型必须完全兼容**
-   - 迁移前后数据结构、字段名、类型必须一致
-   - 特别是 UUID、时间戳等关键字段
+#### macOS 特有
+*   **Menu Bar:** 通过 `MethodChannel` 与 `AppDelegate` 交互，需使用 `DispatchQueue.main.async` 延迟 patch。
+*   **Entitlements:** 需配置 `com.apple.security.network.client`。
 
-2. **充分测试**
-   - 单元测试必须覆盖所有 CRUD 操作
-   - 集成测试验证端到端流程
+---
 
-3. **渐进式迁移**
-   - 不要一次性重写整个后端
-   - 先保持接口兼容，逐步替换实现
+## 5. 关键技术决策 (Key Technical Decisions - ADR Summary)
 
-4. **保留旧版本数据导出能力**
-   - 重大版本变更前提供数据导出
-   - 避免用户数据丢失
+### ADR-001: State Management
+*   **决策:** 选择 **Riverpod** 而非 GetX/Bloc。
+*   **理由:** 编译时安全、无 Context 依赖、测试友好、社区活跃。
 
-#### 当前状态
-- ✅ 加密服务已用 Dart 重写
-- ✅ 使用 `encrypt` + `cryptography` 包
-- ✅ PBKDF2 (100000 iterations) + AES-256-GCM
-- ✅ 已测试
+### ADR-002: Cryptography Implementation
+*   **决策:** 使用 **Pure Dart** 实现 (放弃 Rust FFI)。
+*   **理由:** 虽然 Rust 性能更优，但在 iOS 真机构建和签名上引入了过高的复杂度。Dart 的性能对于 <10k 条目的密码库已足够。
 
-### 2026-02-27: Material → Cupertino UI 迁移
+### ADR-003: UI Framework
+*   **决策:** 全面拥抱 **Cupertino** (移除 Material 组件)。
+*   **理由:** 提供像素级的 iOS/macOS 原生体验。
 
-#### 背景
-将应用程序的 UI 从 Material Design 迁移到 Apple 的 Cupertino Design，以提供更符合 iOS 平台规范和用户习惯的原生体验。
+### ADR-004: Storage Strategy
+*   **决策:** 使用 **单加密 JSON 文件** 存储 (放弃 SQLite/Isar)。
+*   **理由:** 避免引入数据库增加同步复杂度。只需同步一个文件。
 
-#### 遇到的问题及解决方案
+### ADR-005: Sync Strategy
+*   **决策:** 使用 **Timer 轮询** 而非 Push Notification。
+*   **理由:** 实现简单，依赖云服务的文件变更推送。未来可评估 Push Notification 方案。
 
-| 问题 | 解决方案 |
-|------|----------|
-| **组件替换** | 将 `Scaffold`, `AppBar`, `AlertDialog`, `TextField`, `ElevatedButton`, `TextButton`, `FloatingActionButton`, `Switch`, `Slider`, `ListTile`, `Icons.X` 等替换为对应的 `CupertinoPageScaffold`, `CupertinoNavigationBar`, `CupertinoAlertDialog`, `CupertinoTextField`, `CupertinoButton`, `CupertinoSwitch`, `CupertinoSlider`, `CupertinoListTile`, `CupertinoIcons.X`。 |
-| **自定义导航栏** | 对于 SettingsPage 等需要自定义导航栏行为的页面，创建 `_CustomNavBar` 小部件以提供统一的返回按钮和标题居中逻辑，并处理 SafeArea。 |
-| **页面动画** | 确保所有页面导航都使用 `CupertinoPageRoute` 以实现正确的 iOS 风格滑动动画。对于需要从左侧滑入的页面（如设置页面），则使用 `SlideFromLeftRoute`。 |
-| **header 遮挡内容** | 在 `CupertinoPageScaffold` 的 `child` 中，将 `ListView` 用 `SafeArea` 包裹，并为 `ListView` 添加 `padding: EdgeInsets.only(top: MediaQuery.of(context).padding.top + 44 + 32)` 以避免内容被自定义导航栏和状态栏遮挡。 |
-| **弹窗样式不协调** | 将 `showDialog` 替换为 `showCupertinoDialog` 和 `showCupertinoModalPopup`，并使用 `CupertinoAlertDialog` 和 `CupertinoActionSheet` 以保持视觉一致性。例如，自动锁屏超时设置从滑块改为 Action Sheet。 |
-| **Toast 提示** | 将 `ScaffoldMessenger.of(context).showSnackBar` 替换为 `showCupertinoDialog` 实现的简短 `CupertinoAlertDialog`，并在短时间后自动关闭，模拟 iOS 的 Toast 提示效果。 |
+### ADR-006: Background Processing
+*   **决策:** 加密/解密 **必须**在 `compute()` 或 Isolate 中执行。
+*   **理由:** 保证 UI 线程 60fps 流畅度。
 
-#### 经验教训
+### ADR-007: Feature Layer Separation
+*   **决策:** 业务逻辑 (Use Cases) **必须**与 UI 层完全分离，按平台复用。
+*   **理由:** 防止"复制密码"等功能在 Mobile/Desktop 端重复实现。业务逻辑只写一次，UI 负责适配交互方式。
 
-1.  **全面审查:** 在进行大规模 UI 框架迁移时，需要对所有涉及的 UI 组件进行细致的审查和替换，确保所有 Material 组件都被正确地替换为 Cupertino 对应项。
-2.  **动画一致性:** 确保导航动画与平台规范一致，避免混用 Material 和 Cupertino 的页面过渡效果。
-3.  **SafeArea 处理:** 在使用自定义导航栏或布局时，需要仔细处理 `SafeArea` 和 `Padding`，以防止内容被状态栏或导航栏遮挡。
-4.  **国际化兼容:** 确保在切换 UI 组件时，国际化文本（如“Back”）的显示和样式保持正确。
+---
 
-#### 当前状态
-- ✅ 所有 Material UI 组件已成功迁移到 Cupertino UI。
-- ✅ 导航动画和弹窗样式已与 iOS 规范保持一致。
-- ✅ 解决了设置页面头部内容重叠问题。
-- ✅ 构建成功并通过分析检查。
+## 6. 未来架构演进 (Future Roadmap)
+
+### P2 阶段
+*   **iOS AutoFill Extension:** 实现系统级自动填充，需设计 App Groups 共享代码。
+*   **Password History:** 保留最近 10 个历史版本。
+
+### P3 阶段
+*   **WebDAV Sync:** 支持私有云同步协议。
+*   **CRDT:** 评估 Conflict-free Replicated Data Types 实现自动合并。
+
+---
+
+**文档状态:**
+*   ✅ System Architect: Approved
+*   ✅ Mobile Performance: Approved (with notes on Isolates)
+*   ⏳ Security & Platform: In Progress
+*   **Version 2.1 (Draft Final)**
