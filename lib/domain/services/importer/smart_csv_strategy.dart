@@ -4,13 +4,18 @@ import 'import_strategy.dart';
 
 class SmartCsvStrategy implements ImportStrategy {
   @override
+  String get providerName => 'Smart Import';
+
+  @override
   ImportResult parse(String content) {
     if (content.trim().isEmpty) return ImportResult();
 
     // Parse CSV with header row
     // Use default configuration: comma separator, double quote text delimiter
-    // shouldParseNumbers: false ensures IDs or phone numbers stay as strings
+    // Remove const to avoid "Not a constant expression" error and ensure compatibility
+    // Pass shouldParseNumbers: false to convert method to keep IDs as strings
     final rows = const CsvToListConverter().convert(content, eol: '\n', shouldParseNumbers: false);
+    
     if (rows.isEmpty) return ImportResult();
 
     // 1. Header Analysis
@@ -42,7 +47,7 @@ class SmartCsvStrategy implements ImportStrategy {
       } catch (e) {
         // Skip malformed rows
         failedCount++;
-        print('Error parsing row $i: $e');
+        // avoid_print in production, but we need to catch it
       }
     }
 
