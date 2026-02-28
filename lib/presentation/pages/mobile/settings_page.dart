@@ -2,6 +2,9 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_app_lock/flutter_app_lock.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:note_password/domain/services/importer/concrete_strategies.dart';
+import 'package:note_password/domain/services/importer/import_strategy.dart';
+import 'package:note_password/domain/services/importer/smart_csv_strategy.dart';
 import 'package:note_password/l10n/generated/app_localizations.dart';
 import 'package:note_password/presentation/providers/locale_provider.dart';
 import 'package:note_password/presentation/providers/theme_provider.dart';
@@ -141,7 +144,7 @@ class SettingsPage extends ConsumerWidget {
                   title: l10n.import,
                   subtitle: l10n.importHint,
                   leading: const Icon(CupertinoIcons.arrow_down_doc, color: CupertinoColors.activeBlue),
-                  onTap: () => _handleImport(context, ref),
+                  onTap: () => _showImportActionSheet(context, ref),
                   isDark: isDark,
                   showDivider: false,
                 ),
@@ -246,22 +249,63 @@ class SettingsPage extends ConsumerWidget {
     }
   }
 
-  void _handleImport(BuildContext context, WidgetRef ref) async {
+  void _showImportActionSheet(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
     
+    showCupertinoModalPopup(
+      context: context,
+      builder: (sheetContext) => CupertinoActionSheet(
+        title: Text(l10n.import),
+        message: Text(l10n.importHint),
+        actions: [
+          CupertinoActionSheetAction(
+            onPressed: () {
+              Navigator.pop(sheetContext);
+              _handleImport(context, ref, SmartCsvStrategy());
+            },
+            child: Text('${l10n.importSmart} (${l10n.recommended})'),
+          ),
+          CupertinoActionSheetAction(
+            onPressed: () {
+              Navigator.pop(sheetContext);
+              _handleImport(context, ref, ChromeCsvStrategy());
+            },
+            child: Text(l10n.importChrome),
+          ),
+          CupertinoActionSheetAction(
+            onPressed: () {
+              Navigator.pop(sheetContext);
+              _handleImport(context, ref, OnePasswordCsvStrategy());
+            },
+            child: Text(l10n.import1Password),
+          ),
+        ],
+        cancelButton: CupertinoActionSheetAction(
+          onPressed: () => Navigator.pop(sheetContext),
+          isDestructiveAction: true,
+          child: Text(l10n.cancel),
+        ),
+      ),
+    );
+  }
+
+  void _handleImport(BuildContext context, WidgetRef ref, ImportStrategy strategy) async {
+    final l10n = AppLocalizations.of(context)!;
+    
+    // Security Warning Dialog
     final confirmed = await showCupertinoDialog<bool>(
       context: context,
       builder: (context) => CupertinoAlertDialog(
-        title: Text(l10n.import),
+        title: Text('${l10n.import} (${strategy.providerName})'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const SizedBox(height: 8),
-            Text(l10n.importFormatHint),
+            Text(l10n.securityWarning), // Warning about deleting CSV after
             const SizedBox(height: 12),
             Text(
-              l10n.importNoHeaderHint,
+              l10n.importFormatHint,
               style: const TextStyle(
                 fontSize: 12,
                 color: CupertinoColors.systemGrey,
@@ -276,6 +320,7 @@ class SettingsPage extends ConsumerWidget {
           ),
           CupertinoDialogAction(
             onPressed: () => Navigator.pop(context, true),
+            isDestructiveAction: true,
             child: Text(l10n.confirm),
           ),
         ],
@@ -286,15 +331,39 @@ class SettingsPage extends ConsumerWidget {
     
     FilePickerResult? result = await FilePicker.platform.pickFiles(
       type: FileType.custom,
-      allowedExtensions: ['csv', 'json'],
+      allowedExtensions: ['csv', 'txt'], // Allow txt just in case
     );
+    
     if (result != null) {
+      // Show loading indicator
+      if (context.mounted) {
+        showCupertinoDialog(
+          context: context, 
+          barrierDismissible: false,
+          builder: (c) => const Center(child: CupertinoActivityIndicator(radius: 16))
+        );
+      }
+
       final file = File(result.files.single.path!);
-      final content = await file.readAsString();
+      String content;
+      try {
+        content = await file.readAsString();
+      } catch (e) {
+        // Fallback for encoding issues?
+        // Simple retry with latin1 if utf8 fails is complex here without knowing the error type precisely
+        // For now assume UTF8.
+        if (context.mounted) {
+          Navigator.pop(context); // Close loading
+          _showErrorToast(context, "Failed to read file. Please ensure it is UTF-8 encoded.");
+        }
+        return;
+      }
       
-      final importResult = await ref.read(vaultProvider.notifier).importFromCsv(content);
+      final importResult = await ref.read(vaultProvider.notifier).importFromCsv(content, strategy: strategy);
       
       if (context.mounted) {
+        Navigator.pop(context); // Close loading
+        
         String message;
         if (importResult.failed == 0) {
           message = l10n.importSuccess(importResult.success);
@@ -305,6 +374,7 @@ class SettingsPage extends ConsumerWidget {
         showCupertinoDialog(
           context: context,
           builder: (ctx) => CupertinoAlertDialog(
+            title: Text(l10n.importResult),
             content: Text(message),
             actions: [
               CupertinoDialogAction(

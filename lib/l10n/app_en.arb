@@ -150,6 +150,10 @@
   },
   "resetVaultTitle": "Reset Vault?",
   "resetVaultWarning": "This will permanently delete all passwords and data on this device. This action cannot be undone.\n\nAre you sure you want to continue?",
-  "resetVaultConfirm": "Reset Vault",
-  "cancel": "Cancel"
+  "importSmart": "Smart Import",
+  "importChrome": "Google Chrome",
+  "import1Password": "1Password",
+  "recommended": "Recommended",
+  "securityWarning": "SECURITY WARNING: After import, please DELETE the CSV file immediately. It contains unencrypted passwords.",
+  "importResult": "Import Result"
 }

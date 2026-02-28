@@ -734,11 +734,41 @@ abstract class AppLocalizations {
   /// **'This will permanently delete all passwords and data on this device. This action cannot be undone.\n\nAre you sure you want to continue?'**
   String get resetVaultWarning;
 
-  /// No description provided for @resetVaultConfirm.
+  /// No description provided for @importSmart.
   ///
   /// In en, this message translates to:
-  /// **'Reset Vault'**
-  String get resetVaultConfirm;
+  /// **'Smart Import'**
+  String get importSmart;
+
+  /// No description provided for @importChrome.
+  ///
+  /// In en, this message translates to:
+  /// **'Google Chrome'**
+  String get importChrome;
+
+  /// No description provided for @import1Password.
+  ///
+  /// In en, this message translates to:
+  /// **'1Password'**
+  String get import1Password;
+
+  /// No description provided for @recommended.
+  ///
+  /// In en, this message translates to:
+  /// **'Recommended'**
+  String get recommended;
+
+  /// No description provided for @securityWarning.
+  ///
+  /// In en, this message translates to:
+  /// **'SECURITY WARNING: After import, please DELETE the CSV file immediately. It contains unencrypted passwords.'**
+  String get securityWarning;
+
+  /// No description provided for @importResult.
+  ///
+  /// In en, this message translates to:
+  /// **'Import Result'**
+  String get importResult;
 }
 
 class _AppLocalizationsDelegate

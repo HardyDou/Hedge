@@ -340,5 +340,20 @@ class AppLocalizationsZh extends AppLocalizations {
   String get resetVaultWarning => '这将永久删除您设备上的所有密码和数据。此操作无法撤销。\n\n您确定要继续吗？';
 
   @override
-  String get resetVaultConfirm => '重置密码本';
+  String get importSmart => '智能导入';
+
+  @override
+  String get importChrome => 'Google Chrome';
+
+  @override
+  String get import1Password => '1Password';
+
+  @override
+  String get recommended => '推荐';
+
+  @override
+  String get securityWarning => '安全警告：导入完成后，请立即删除您的 CSV 文件！它包含未加密的明文密码。';
+
+  @override
+  String get importResult => '导入结果';
 }

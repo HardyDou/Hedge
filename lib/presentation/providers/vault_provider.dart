@@ -6,6 +6,8 @@ import 'package:note_password/platform/sync_service_factory.dart';
 import 'package:note_password/services/sync_service.dart';
 import 'package:note_password/domain/use_cases/copy_password_usecase.dart';
 import 'package:note_password/domain/use_cases/copy_all_credentials_usecase.dart';
+import 'package:note_password/domain/services/importer/csv_import_service.dart';
+import 'package:note_password/domain/services/importer/import_strategy.dart';
 import 'package:note_password/l10n/generated/app_localizations.dart';
 import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
@@ -72,12 +74,6 @@ class VaultState {
   }
 }
 
-class ImportResult {
-  final int success;
-  final int failed;
-  
-  ImportResult({required this.success, required this.failed});
-}
 
 class VaultNotifier extends StateNotifier<VaultState> {
   final _storage = const FlutterSecureStorage();
@@ -89,6 +85,9 @@ class VaultNotifier extends StateNotifier<VaultState> {
   // Use Cases
   final _copyPasswordUseCase = CopyPasswordUseCase();
   final _copyAllCredentialsUseCase = CopyAllCredentialsUseCase();
+  
+  // Services
+  final _importService = CsvImportService();
 
   VaultNotifier() : super(VaultState(isLoading: true));
 
@@ -564,163 +563,40 @@ class VaultNotifier extends StateNotifier<VaultState> {
     Clipboard.setData(ClipboardData(text: buffer.toString().trim()));
   }
 
-  Future<ImportResult> importFromCsv(String csvContent) async {
+  Future<ImportResult> importFromCsv(String csvContent, {ImportStrategy? strategy}) async {
     if (state.vault == null || state.currentPassword == null) {
       return ImportResult(success: 0, failed: 0);
     }
     
     state = state.copyWith(isLoading: true, error: null);
-    var successCount = 0;
-    var failedCount = 0;
     
     try {
-      final lines = csvContent.split('\n');
-      if (lines.isEmpty) return ImportResult(success: 0, failed: 0);
-
-      var currentVault = state.vault!;
+      // Use the service to parse content with the provided strategy (or smart default)
+      // Note: We create a new service instance or update the existing one's strategy if needed.
+      // But CsvImportService now takes strategy in import() method if we refactored it that way?
+      // Wait, CsvImportService constructor takes strategy.
+      // Let's instantiate a fresh service for this specific import operation to keeps things clean.
+      final service = CsvImportService(strategy: strategy);
+      final result = await service.import(csvContent);
       
-      // 1. Detect if CSV has headers
-      final firstLine = lines[0].trim();
-      var hasHeaders = _detectHasHeaders(firstLine);
-      
-      Map<String, int> indexMap = {};
-      
-      if (hasHeaders) {
-        // Parse headers
-        final headerLine = firstLine.toLowerCase();
-        final headers = _parseCsvLine(headerLine);
-        for (int i = 0; i < headers.length; i++) {
-          final header = headers[i].trim().replaceAll('"', '');
-          if (header.contains('title') || header.contains('name')) indexMap['title'] = i;
-          if (header.contains('username') || header.contains('email')) indexMap['username'] = i;
-          if (header.contains('password') || header.contains('pass')) indexMap['password'] = i;
-          if (header.contains('url') || header.contains('website') || header.contains('site')) indexMap['url'] = i;
-          if (header.contains('notes') || header.contains('note') || header.contains('comment')) indexMap['notes'] = i;
+      if (result.items.isNotEmpty) {
+        var currentVault = state.vault!;
+        
+        // Add all imported items
+        for (final item in result.items) {
+           currentVault = VaultService.addItemWithDetails(currentVault, item);
         }
         
-        if (!indexMap.containsKey('title')) {
-          // No title found, try without headers
-          hasHeaders = false;
-        }
+        await _saveAndRefresh(currentVault);
       }
       
-      // 2. Parse rows
-      final startIndex = hasHeaders ? 1 : 0;
+      return result;
       
-      for (var i = startIndex; i < lines.length; i++) {
-        final line = lines[i].trim();
-        if (line.isEmpty) continue;
-        
-        try {
-          final fields = _parseCsvLine(line);
-          if (fields.isEmpty) continue;
-          
-          String title;
-          String? username;
-          String? password;
-          String? url;
-          String? notes;
-          
-          if (hasHeaders && indexMap.containsKey('title')) {
-            // Use header mapping
-            if (fields.length <= indexMap['title']!) continue;
-            title = fields[indexMap['title']!];
-            if (title.isEmpty) continue;
-            
-            username = indexMap.containsKey('username') && fields.length > indexMap['username']! 
-                ? fields[indexMap['username']!] : null;
-            password = indexMap.containsKey('password') && fields.length > indexMap['password']! 
-                ? fields[indexMap['password']!] : null;
-            url = indexMap.containsKey('url') && fields.length > indexMap['url']! 
-                ? fields[indexMap['url']!] : null;
-            notes = indexMap.containsKey('notes') && fields.length > indexMap['notes']! 
-                ? fields[indexMap['notes']!] : null;
-          } else {
-            // No headers: use default order (Title, URL, Username, Password, Notes)
-            title = fields.isNotEmpty ? fields[0] : '';
-            if (title.isEmpty) continue;
-            
-            url = fields.length > 1 && fields[1].isNotEmpty ? fields[1] : null;
-            username = fields.length > 2 && fields[2].isNotEmpty ? fields[2] : null;
-            password = fields.length > 3 && fields[3].isNotEmpty ? fields[3] : null;
-            notes = fields.length > 4 && fields[4].isNotEmpty ? fields[4] : null;
-          }
-
-          final item = VaultItem(
-            title: title,
-            username: username,
-            password: password,
-            url: url,
-            notes: notes,
-            category: null,
-            attachments: [],
-            updatedAt: DateTime.now(),
-          );
-
-          final newVaultWithTitle = VaultService.addItem(currentVault, item.title);
-          final lastItem = newVaultWithTitle.items.last;
-          
-          final fullItem = VaultItem(
-            id: lastItem.id,
-            title: item.title,
-            username: item.username,
-            password: item.password,
-            url: item.url,
-                notes: item.notes,
-          );
-
-          currentVault = VaultService.updateItem(newVaultWithTitle, fullItem);
-          successCount++;
-        } catch (e) {
-          failedCount++;
-        }
-      }
-
-      await _saveAndRefresh(currentVault);
-      return ImportResult(success: successCount, failed: failedCount);
     } catch (e) {
       state = state.copyWith(isLoading: false, error: "Import failed: ${e.toString()}");
-      return ImportResult(success: successCount, failed: failedCount + 1);
+      // Return a failed result
+      return ImportResult(success: 0, failed: 1);
     }
-  }
-  
-  bool _detectHasHeaders(String firstLine) {
-    // Heuristics: if first line contains common field names, it's likely a header
-    final lower = firstLine.toLowerCase();
-    final hasTitle = lower.contains('title') || lower.contains('name');
-    final hasUsername = lower.contains('username') || lower.contains('email') || lower.contains('user');
-    final hasPassword = lower.contains('password') || lower.contains('pass');
-    final hasUrl = lower.contains('url') || lower.contains('website') || lower.contains('http');
-    
-    // If at least 2 common field names found, assume it's a header
-    int matchCount = 0;
-    if (hasTitle) matchCount++;
-    if (hasUsername) matchCount++;
-    if (hasPassword) matchCount++;
-    if (hasUrl) matchCount++;
-    
-    return matchCount >= 2;
-  }
-
-  List<String> _parseCsvLine(String line) {
-    // Simple CSV parser that handles basic quotes
-    final result = <String>[];
-    bool inQuotes = false;
-    StringBuffer currentField = StringBuffer();
-    
-    for (int i = 0; i < line.length; i++) {
-      String char = line[i];
-      if (char == '"') {
-        inQuotes = !inQuotes;
-      } else if (char == ',' && !inQuotes) {
-        result.add(currentField.toString().trim());
-        currentField.clear();
-      } else {
-        currentField.write(char);
-      }
-    }
-    result.add(currentField.toString().trim());
-    return result;
   }
 }
 

@@ -351,5 +351,21 @@ class AppLocalizationsEn extends AppLocalizations {
       'This will permanently delete all passwords and data on this device. This action cannot be undone.\n\nAre you sure you want to continue?';
 
   @override
-  String get resetVaultConfirm => 'Reset Vault';
+  String get importSmart => 'Smart Import';
+
+  @override
+  String get importChrome => 'Google Chrome';
+
+  @override
+  String get import1Password => '1Password';
+
+  @override
+  String get recommended => 'Recommended';
+
+  @override
+  String get securityWarning =>
+      'SECURITY WARNING: After import, please DELETE the CSV file immediately. It contains unencrypted passwords.';
+
+  @override
+  String get importResult => 'Import Result';
 }

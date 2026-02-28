@@ -123,5 +123,11 @@
   "resetVaultTitle": "重置密码本？",
   "resetVaultWarning": "这将永久删除您设备上的所有密码和数据。此操作无法撤销。\n\n您确定要继续吗？",
   "resetVaultConfirm": "重置密码本",
-  "cancel": "取消"
+  "cancel": "取消",
+  "importSmart": "智能导入",
+  "importChrome": "Google Chrome",
+  "import1Password": "1Password",
+  "recommended": "推荐",
+  "securityWarning": "安全警告：导入完成后，请立即删除您的 CSV 文件！它包含未加密的明文密码。",
+  "importResult": "导入结果"
 }
