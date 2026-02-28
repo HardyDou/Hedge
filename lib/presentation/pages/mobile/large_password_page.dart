@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
 import 'package:note_password/l10n/generated/app_localizations.dart';
@@ -73,20 +72,19 @@ class _LargePasswordPageState extends State<LargePasswordPage> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     
-    return Scaffold(
+    return CupertinoPageScaffold(
       backgroundColor: const Color(0xFF1C1C1E),
-      appBar: AppBar(
+      navigationBar: CupertinoNavigationBar(
         backgroundColor: const Color(0xFF1C1C1E),
-        foregroundColor: Colors.white,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(CupertinoIcons.xmark),
+        brightness: Brightness.dark,
+        leading: CupertinoButton(
+          padding: EdgeInsets.zero,
+          child: const Icon(CupertinoIcons.xmark, color: CupertinoColors.white),
           onPressed: _close,
         ),
-        title: Text(l10n.password),
-        centerTitle: true,
+        middle: Text(l10n.password),
       ),
-      body: SafeArea(
+      child: SafeArea(
         child: Column(
           children: [
             Expanded(
@@ -117,7 +115,7 @@ class _LargePasswordPageState extends State<LargePasswordPage> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   _buildActionButton(
-                    icon: _isLandscape ? Icons.screen_rotation : Icons.rotate_right,
+                    icon: _isLandscape ? CupertinoIcons.rotate_right : CupertinoIcons.rotate_right,
                     label: _isLandscape ? l10n.vertical : l10n.horizontal,
                     onTap: _toggleOrientation,
                   ),
@@ -154,11 +152,11 @@ class _LargePasswordPageState extends State<LargePasswordPage> {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, color: Colors.white, size: 22),
+            Icon(icon, color: CupertinoColors.white, size: 22),
             const SizedBox(width: 8),
             Text(
               label,
-              style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600),
+              style: const TextStyle(color: CupertinoColors.white, fontSize: 16, fontWeight: FontWeight.w600),
             ),
           ],
         ),
@@ -169,7 +167,7 @@ class _LargePasswordPageState extends State<LargePasswordPage> {
   Widget _buildCharWithIndex(String char, int index) {
     final isEven = index % 2 == 0;
     final bgColor = isEven ? const Color(0xFF2C2C2E) : const Color(0xFF3A3A3C);
-    final textColor = isEven ? Colors.white : Colors.white.withValues(alpha: 0.85);
+    final textColor = isEven ? CupertinoColors.white : CupertinoColors.white.withValues(alpha: 0.85);
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
@@ -198,7 +196,7 @@ class _LargePasswordPageState extends State<LargePasswordPage> {
             '$index',
             style: TextStyle(
               fontSize: 14,
-              color: Colors.white.withValues(alpha: 0.4),
+              color: CupertinoColors.white.withValues(alpha: 0.4),
               fontWeight: FontWeight.w600,
             ),
           ),

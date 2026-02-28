@@ -437,31 +437,43 @@ abstract class AppLocalizations {
   /// No description provided for @resetWithBiometrics.
   ///
   /// In en, this message translates to:
-  /// **'Reset with Biometrics'**
+  /// **'Unlock with Biometrics'**
   String get resetWithBiometrics;
+
+  /// No description provided for @unlockWithFaceID.
+  ///
+  /// In en, this message translates to:
+  /// **'Unlock with Face ID'**
+  String get unlockWithFaceID;
+
+  /// No description provided for @unlockWithTouchID.
+  ///
+  /// In en, this message translates to:
+  /// **'Unlock with Touch ID'**
+  String get unlockWithTouchID;
 
   /// No description provided for @createNewVault.
   ///
   /// In en, this message translates to:
-  /// **'Create New Vault'**
+  /// **'Reset Vault'**
   String get createNewVault;
 
   /// No description provided for @resetWarning.
   ///
   /// In en, this message translates to:
-  /// **'Resetting will delete all your stored passwords. This action cannot be undone.'**
+  /// **'IMPORTANT: This action cannot be undone!\nAll your data will be permanently deleted.\nAre you sure you want to reset?'**
   String get resetWarning;
 
   /// No description provided for @confirmReset.
   ///
   /// In en, this message translates to:
-  /// **'I understand, reset now'**
+  /// **'Confirm Reset'**
   String get confirmReset;
 
   /// No description provided for @biometricResetReason.
   ///
   /// In en, this message translates to:
-  /// **'Authenticate to reset your vault'**
+  /// **'Authenticate to unlock'**
   String get biometricResetReason;
 
   /// No description provided for @vaultResetSuccess.
@@ -709,6 +721,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{count} selected'**
   String selected(int count);
+
+  /// No description provided for @resetVaultTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset Vault?'**
+  String get resetVaultTitle;
+
+  /// No description provided for @resetVaultWarning.
+  ///
+  /// In en, this message translates to:
+  /// **'This will permanently delete all passwords and data on this device. This action cannot be undone.\n\nAre you sure you want to continue?'**
+  String get resetVaultWarning;
+
+  /// No description provided for @resetVaultConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset Vault'**
+  String get resetVaultConfirm;
 }
 
 class _AppLocalizationsDelegate

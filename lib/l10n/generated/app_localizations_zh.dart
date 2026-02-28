@@ -181,19 +181,25 @@ class AppLocalizationsZh extends AppLocalizations {
   String get forgotPassword => '忘记密码？';
 
   @override
-  String get resetWithBiometrics => '使用生物识别重置';
+  String get resetWithBiometrics => '使用生物识别解锁';
 
   @override
-  String get createNewVault => '创建新密码库';
+  String get unlockWithFaceID => '使用面容 ID 解锁';
 
   @override
-  String get resetWarning => '重置将删除所有已存储的密码。此操作无法撤销。';
+  String get unlockWithTouchID => '使用触控 ID 解锁';
 
   @override
-  String get confirmReset => '我理解了，立即重置';
+  String get createNewVault => '重置密码本';
 
   @override
-  String get biometricResetReason => '验证身份以重置密码库';
+  String get resetWarning => '重要提示：此操作无法撤销！\n您的所有数据将被永久删除。\n确认要重置吗？';
+
+  @override
+  String get confirmReset => '确认重置';
+
+  @override
+  String get biometricResetReason => '验证身份以解锁';
 
   @override
   String get vaultResetSuccess => '密码库已重置，请创建新的主密码。';
@@ -326,4 +332,13 @@ class AppLocalizationsZh extends AppLocalizations {
   String selected(int count) {
     return '已选择 $count 项';
   }
+
+  @override
+  String get resetVaultTitle => '重置密码本？';
+
+  @override
+  String get resetVaultWarning => '这将永久删除您设备上的所有密码和数据。此操作无法撤销。\n\n您确定要继续吗？';
+
+  @override
+  String get resetVaultConfirm => '重置密码本';
 }

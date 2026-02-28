@@ -48,14 +48,19 @@ class _DesktopHomePageState extends ConsumerState<DesktopHomePage> {
       switch (call.method) {
         case 'openSettings':
           setState(() => _showSettings = true);
+          break;
         case 'showSettings':
           setState(() => _showSettings = true);
+          break;
         case 'newEntry':
           setState(() => _showAddItem = true);
+          break;
         case 'lockVault':
           ref.read(vaultProvider.notifier).lock();
+          break;
         case 'showAbout':
           _showAboutDialog();
+          break;
       }
     });
   }

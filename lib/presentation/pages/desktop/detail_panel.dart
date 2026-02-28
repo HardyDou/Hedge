@@ -1,5 +1,4 @@
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart' show SelectableText;
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:note_password/src/dart/vault.dart';
@@ -44,27 +43,14 @@ class _DetailPanelState extends ConsumerState<DetailPanel> {
   }
 
   void _copyToClipboard(String text, String label) {
-    Clipboard.setData(ClipboardData(text: text));
     final l10n = AppLocalizations.of(context)!;
+    ref.read(vaultProvider.notifier).copyPassword(_item.id);
     _showToast(context, l10n.copied(label));
   }
 
   void _copyAll() {
     final l10n = AppLocalizations.of(context)!;
-    final buffer = StringBuffer();
-    if (_item.username != null && _item.username!.isNotEmpty) {
-      buffer.writeln('${l10n.username}: ${_item.username}');
-    }
-    if (_item.password != null && _item.password!.isNotEmpty) {
-      buffer.writeln('${l10n.password}: ${_item.password}');
-    }
-    if (_item.url != null && _item.url!.isNotEmpty) {
-      buffer.writeln('${l10n.url}: ${_item.url}');
-    }
-    if (_item.notes != null && _item.notes!.isNotEmpty) {
-      buffer.writeln('${l10n.notes}:\n${_item.notes}');
-    }
-    Clipboard.setData(ClipboardData(text: buffer.toString().trim()));
+    ref.read(vaultProvider.notifier).copyAllCredentials(_item.id, l10n);
     _showToast(context, l10n.allDetailsCopied);
   }
 
@@ -274,12 +260,17 @@ class _DetailPanelState extends ConsumerState<DetailPanel> {
         children: [
           Padding(
             padding: const EdgeInsets.all(16),
-            child: SelectableText(
-              _item.notes!,
+            child: CupertinoTextField(
+              controller: TextEditingController(text: _item.notes),
+              readOnly: true,
+              maxLines: null,
+              decoration: null,
+              padding: EdgeInsets.zero,
               style: TextStyle(
                 color: isDark ? CupertinoColors.white : CupertinoColors.black,
                 fontSize: 15,
               ),
+              enableInteractiveSelection: true,
             ),
           ),
         ],

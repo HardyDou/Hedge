@@ -15,8 +15,6 @@ class OnboardingPage extends ConsumerStatefulWidget {
 class _OnboardingPageState extends ConsumerState<OnboardingPage> {
   final _passwordController = TextEditingController();
   final _confirmController = TextEditingController();
-  bool _isPasswordVisible = false;
-  String? _customPath;
   bool _obscurePassword = true;
   bool _obscureConfirm = true;
 
@@ -25,17 +23,6 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
     _passwordController.dispose();
     _confirmController.dispose();
     super.dispose();
-  }
-
-  Future<void> _pickPath() async {
-    String? selectedDirectory = await FilePicker.platform.getDirectoryPath();
-
-    if (selectedDirectory != null) {
-      setState(() {
-        _customPath = "$selectedDirectory/vault.db";
-      });
-      ref.read(vaultProvider.notifier).setVaultPath(_customPath!);
-    }
   }
 
   Future<void> _handleSetup() async {
@@ -145,20 +132,22 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: CupertinoColors.activeBlue.withOpacity(0.1),
+                    color: CupertinoColors.systemOrange.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: CupertinoColors.activeBlue.withOpacity(0.2)),
+                    border: Border.all(color: CupertinoColors.systemOrange.withOpacity(0.3)),
                   ),
                   child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Icon(CupertinoIcons.lock_shield, color: CupertinoColors.activeBlue),
+                      const Icon(CupertinoIcons.exclamationmark_triangle, color: CupertinoColors.systemOrange),
                       const SizedBox(width: 12),
                       Expanded(
                         child: Text(
-                          l10n.syncTip,
+                          l10n.recoveryWarning,
                           style: TextStyle(
-                            color: isDark ? CupertinoColors.white.withOpacity(0.7) : CupertinoColors.black.withOpacity(0.87),
+                            color: isDark ? CupertinoColors.white.withOpacity(0.9) : CupertinoColors.black.withOpacity(0.87),
                             fontSize: 13,
+                            fontWeight: FontWeight.w500,
                           ),
                         ),
                       ),
@@ -195,21 +184,19 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
                   width: double.infinity,
                   height: 56,
                   child: CupertinoButton(
-                    color: CupertinoColors.activeOrange,
+                    color: CupertinoColors.activeBlue,
                     borderRadius: BorderRadius.circular(12),
                     onPressed: vaultState.isLoading ? null : _handleSetup,
                     child: vaultState.isLoading
                         ? const CupertinoActivityIndicator(color: CupertinoColors.white)
-                        : Text(l10n.createVault),
-                  ),
-                ),
-                const SizedBox(height: 24),
-                Text(
-                  l10n.recoveryWarning,
-                  style: TextStyle(
-                    color: CupertinoColors.systemOrange.withOpacity(0.8),
-                    fontSize: 12,
-                    fontStyle: FontStyle.italic,
+                        : Text(
+                            l10n.createVault,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 1,
+                              color: CupertinoColors.white,
+                            ),
+                          ),
                   ),
                 ),
               ],

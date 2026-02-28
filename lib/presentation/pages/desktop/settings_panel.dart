@@ -1,5 +1,4 @@
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart' show Colors, ThemeMode;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:note_password/l10n/generated/app_localizations.dart';
 import 'package:note_password/presentation/providers/locale_provider.dart';
@@ -82,7 +81,7 @@ class _SettingsPanelState extends ConsumerState<SettingsPanel> {
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
         margin: const EdgeInsets.only(right: 4),
         decoration: BoxDecoration(
-          color: isSelected ? (isDark ? const Color(0xFF2C2C2E) : CupertinoColors.systemGrey6) : Colors.transparent,
+          color: isSelected ? (isDark ? const Color(0xFF2C2C2E) : CupertinoColors.systemGrey6) : CupertinoColors.transparent,
           borderRadius: BorderRadius.circular(6),
         ),
         child: Row(
@@ -144,7 +143,7 @@ class _SettingsPanelState extends ConsumerState<SettingsPanel> {
     );
   }
 
-  Widget _buildContent(ThemeMode themeMode, dynamic currentLocale, VaultState vaultState, bool isDark, AppLocalizations l10n) {
+  Widget _buildContent(ThemeModeOption themeMode, dynamic currentLocale, VaultState vaultState, bool isDark, AppLocalizations l10n) {
     switch (_selectedTab) {
       case 0:
         return _buildAppearanceTab(themeMode, currentLocale, isDark, l10n);
@@ -157,7 +156,7 @@ class _SettingsPanelState extends ConsumerState<SettingsPanel> {
     }
   }
 
-  Widget _buildAppearanceTab(ThemeMode themeMode, dynamic currentLocale, bool isDark, AppLocalizations l10n) {
+  Widget _buildAppearanceTab(ThemeModeOption themeMode, dynamic currentLocale, bool isDark, AppLocalizations l10n) {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -293,11 +292,11 @@ class _SettingsPanelState extends ConsumerState<SettingsPanel> {
     );
   }
 
-  String _getThemeName(ThemeMode mode, AppLocalizations l10n) {
+  String _getThemeName(ThemeModeOption mode, AppLocalizations l10n) {
     switch (mode) {
-      case ThemeMode.system: return l10n.system;
-      case ThemeMode.dark: return l10n.dark;
-      case ThemeMode.light: return l10n.light;
+      case ThemeModeOption.system: return l10n.system;
+      case ThemeModeOption.dark: return l10n.dark;
+      case ThemeModeOption.light: return l10n.light;
     }
   }
 
@@ -323,18 +322,18 @@ class _SettingsPanelState extends ConsumerState<SettingsPanel> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              _buildPickerItem(l10n.system, themeMode == ThemeMode.system, isDark, () {
-                ref.read(themeProvider.notifier).setThemeMode(ThemeMode.system);
+              _buildPickerItem(l10n.system, themeMode == ThemeModeOption.system, isDark, () {
+                ref.read(themeProvider.notifier).setThemeMode(ThemeModeOption.system);
                 Navigator.pop(ctx);
               }),
               _buildDivider(isDark),
-              _buildPickerItem(l10n.dark, themeMode == ThemeMode.dark, isDark, () {
-                ref.read(themeProvider.notifier).setThemeMode(ThemeMode.dark);
+              _buildPickerItem(l10n.dark, themeMode == ThemeModeOption.dark, isDark, () {
+                ref.read(themeProvider.notifier).setThemeMode(ThemeModeOption.dark);
                 Navigator.pop(ctx);
               }),
               _buildDivider(isDark),
-              _buildPickerItem(l10n.light, themeMode == ThemeMode.light, isDark, () {
-                ref.read(themeProvider.notifier).setThemeMode(ThemeMode.light);
+              _buildPickerItem(l10n.light, themeMode == ThemeModeOption.light, isDark, () {
+                ref.read(themeProvider.notifier).setThemeMode(ThemeModeOption.light);
                 Navigator.pop(ctx);
               }),
             ],

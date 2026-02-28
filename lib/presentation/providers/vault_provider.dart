@@ -4,6 +4,10 @@ import 'package:local_auth/local_auth.dart';
 import 'package:note_password/src/dart/vault.dart';
 import 'package:note_password/platform/sync_service_factory.dart';
 import 'package:note_password/services/sync_service.dart';
+import 'package:note_password/domain/use_cases/copy_password_usecase.dart';
+import 'package:note_password/domain/use_cases/copy_all_credentials_usecase.dart';
+import 'package:note_password/l10n/generated/app_localizations.dart';
+import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
 import 'dart:async';
 import 'dart:io';
@@ -20,6 +24,7 @@ class VaultState {
   final int autoLockTimeout; // in seconds
   final bool isSelectionMode;
   final Set<String> selectedIds;
+  final BiometricType? biometricType;
 
   VaultState({
     this.vault,
@@ -33,6 +38,7 @@ class VaultState {
     this.autoLockTimeout = 5,
     this.isSelectionMode = false,
     this.selectedIds = const {},
+    this.biometricType,
   });
 
   VaultState copyWith({
@@ -47,6 +53,7 @@ class VaultState {
     int? autoLockTimeout,
     bool? isSelectionMode,
     Set<String>? selectedIds,
+    BiometricType? biometricType,
   }) {
     return VaultState(
       vault: vault ?? this.vault,
@@ -60,6 +67,7 @@ class VaultState {
       autoLockTimeout: autoLockTimeout ?? this.autoLockTimeout,
       isSelectionMode: isSelectionMode ?? this.isSelectionMode,
       selectedIds: selectedIds ?? this.selectedIds,
+      biometricType: biometricType ?? this.biometricType,
     );
   }
 }
@@ -78,6 +86,10 @@ class VaultNotifier extends StateNotifier<VaultState> {
   StreamSubscription? _syncSubscription;
   DateTime? _lastKnownModification;
 
+  // Use Cases
+  final _copyPasswordUseCase = CopyPasswordUseCase();
+  final _copyAllCredentialsUseCase = CopyAllCredentialsUseCase();
+
   VaultNotifier() : super(VaultState(isLoading: true));
 
   Future<void> checkInitialStatus() async {
@@ -95,16 +107,40 @@ class VaultNotifier extends StateNotifier<VaultState> {
       final timeoutStr = await _storage.read(key: 'auto_lock_timeout');
       final timeout = timeoutStr != null ? int.tryParse(timeoutStr) ?? 5 : 5;
       
+      // Detect biometric type
+      final biometricType = await _detectBiometricType();
+      
       state = state.copyWith(
         hasVaultFile: exists, 
         isBiometricsEnabled: bioEnabled,
         vaultPath: path,
         autoLockTimeout: timeout,
-        isLoading: false
+        isLoading: false,
+        biometricType: biometricType,
       );
     } catch (e) {
       state = state.copyWith(isLoading: false, error: e.toString());
     }
+  }
+
+  Future<BiometricType?> _detectBiometricType() async {
+    try {
+      final availableBiometrics = await _localAuth.getAvailableBiometrics();
+      
+      if (availableBiometrics.contains(BiometricType.face)) {
+        return BiometricType.face;
+      }
+      if (availableBiometrics.contains(BiometricType.fingerprint)) {
+        return BiometricType.fingerprint;
+      }
+      // For other types like strong/weak, default to fingerprint if available, else null
+      if (availableBiometrics.isNotEmpty) {
+        return BiometricType.fingerprint; // Fallback
+      }
+    } catch (e) {
+      // Ignore errors
+    }
+    return null;
   }
 
   Future<void> setAutoLockTimeout(int seconds) async {
@@ -490,6 +526,42 @@ class VaultNotifier extends StateNotifier<VaultState> {
     } catch (e) {
       state = state.copyWith(isLoading: false, error: e.toString());
     }
+  }
+
+  VaultItem? findItem(String id) {
+    return state.vault?.items.firstWhere(
+      (item) => item.id == id,
+      orElse: () => throw Exception('Item not found'),
+    );
+  }
+
+  void copyPassword(String itemId) {
+    final item = findItem(itemId);
+    if (item == null) return;
+    final password = _copyPasswordUseCase.execute(item);
+    Clipboard.setData(ClipboardData(text: password));
+  }
+
+  void copyAllCredentials(String itemId, AppLocalizations l10n) {
+    final item = findItem(itemId);
+    if (item == null) return;
+    final parts = _copyAllCredentialsUseCase.execute(item);
+
+    final buffer = StringBuffer();
+    if (parts.username != null && parts.username!.isNotEmpty) {
+      buffer.writeln('${l10n.username}: ${parts.username}');
+    }
+    if (parts.password != null && parts.password!.isNotEmpty) {
+      buffer.writeln('${l10n.password}: ${parts.password}');
+    }
+    if (parts.url != null && parts.url!.isNotEmpty) {
+      buffer.writeln('${l10n.url}: ${parts.url}');
+    }
+    if (parts.notes != null && parts.notes!.isNotEmpty) {
+      buffer.writeln('${l10n.notes}:\n${parts.notes}');
+    }
+
+    Clipboard.setData(ClipboardData(text: buffer.toString().trim()));
   }
 
   Future<ImportResult> importFromCsv(String csvContent) async {
