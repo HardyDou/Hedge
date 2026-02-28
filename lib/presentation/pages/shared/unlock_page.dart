@@ -107,7 +107,7 @@ class _UnlockPageState extends ConsumerState<UnlockPage> {
           CupertinoDialogAction(
             isDestructiveAction: true,
             onPressed: () => Navigator.pop(ctx, true),
-            child: Text(l10n.resetVaultConfirm),
+            child: Text(l10n.confirmReset),
           ),
         ],
       ),

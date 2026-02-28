@@ -14,7 +14,7 @@ class SmartCsvStrategy implements ImportStrategy {
     // Use default configuration: comma separator, double quote text delimiter
     // Remove const to avoid "Not a constant expression" error and ensure compatibility
     // Pass shouldParseNumbers: false to convert method to keep IDs as strings
-    final rows = const CsvToListConverter().convert(content, eol: '\n', shouldParseNumbers: false);
+    final rows = CsvToListConverter().convert(content, eol: '\n', shouldParseNumbers: false);
     
     if (rows.isEmpty) return ImportResult();
 
