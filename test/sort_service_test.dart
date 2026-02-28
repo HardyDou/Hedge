@@ -108,12 +108,13 @@ void main() {
         // 数字开头
         expect(sorted[0].title, '12306');
         expect(sorted[1].title, '163邮箱');
-        // 字母开头
-        expect(sorted[2].title, 'Apple');
-        expect(sorted[3].title, 'Zoom');
-        // 中文（按拼音）
-        expect(sorted[4].title, '测试');
-        expect(sorted[5].title, '银行');
+        // 字母/拼音混合 (按拼音字典序：apple < ceshi < yinhang < zoom)
+        expect(sorted[2].title, 'Apple'); // apple
+        expect(sorted[3].title, '测试'); // ceshi
+        expect(sorted[4].title, '银行'); // yinhang
+        expect(sorted[5].title, 'Zoom'); // zoom
+        // 其他 (此测试中没有其他类别)
+        // expect(sorted[6].title, '!特殊'); // 如果有其他类别，应在此处添加
       });
     });
 
