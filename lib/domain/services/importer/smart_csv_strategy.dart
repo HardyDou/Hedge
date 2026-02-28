@@ -11,10 +11,8 @@ class SmartCsvStrategy implements ImportStrategy {
     if (content.trim().isEmpty) return ImportResult();
 
     // Parse CSV with header row
-    // Use default configuration: comma separator, double quote text delimiter
-    // Remove const to avoid "Not a constant expression" error and ensure compatibility
-    // Pass shouldParseNumbers: false to convert method to keep IDs as strings
-    final rows = csv.decode(content);
+    // Use CsvCodec to handle multiline text in quoted fields
+    final rows = CsvCodec().decode(content);
     
     if (rows.isEmpty) return ImportResult();
 
@@ -61,7 +59,7 @@ class SmartCsvStrategy implements ImportStrategy {
       if (_isSynonym(h, ['title', 'name', 'account', 'service', 'label', 'app', '标题', '名称'])) map['title'] = i;
       else if (_isSynonym(h, ['username', 'email', 'user', 'login', 'id', '用户名', '账号'])) map['username'] = i;
       else if (_isSynonym(h, ['password', 'pass', 'key', 'secret', '密码'])) map['password'] = i;
-      else if (_isSynonym(h, ['url', 'website', 'site', 'link', 'address', 'uri', '网址'])) map['url'] = i;
+      else if (_isSynonym(h, ['url', 'website', 'site', 'link', 'address', 'uri', 'url', '网址', 'URL'])) map['url'] = i;
       else if (_isSynonym(h, ['note', 'notes', 'comment', 'extra', 'remarks', 'info', 'description', '备注', '类型'])) map['notes'] = i;
     }
     
