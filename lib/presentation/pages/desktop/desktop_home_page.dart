@@ -305,6 +305,18 @@ class _DesktopHomePageState extends ConsumerState<DesktopHomePage> {
             padding: const EdgeInsets.only(left: 8),
             child: Icon(CupertinoIcons.search, color: isDark ? CupertinoColors.white.withValues(alpha: 0.4) : CupertinoColors.black.withValues(alpha: 0.4), size: 16),
           ),
+          suffix: _searchQuery.isNotEmpty
+              ? GestureDetector(
+                  onTap: () {
+                    _searchController.clear();
+                    setState(() => _searchQuery = "");
+                  },
+                  child: Padding(
+                    padding: const EdgeInsets.only(right: 8),
+                    child: Icon(CupertinoIcons.clear_circled_solid, color: isDark ? CupertinoColors.white.withValues(alpha: 0.4) : CupertinoColors.black.withValues(alpha: 0.4), size: 16),
+                  ),
+                )
+              : null,
           decoration: null,
           padding: const EdgeInsets.symmetric(vertical: 5),
         ),
