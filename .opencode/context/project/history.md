@@ -22,6 +22,21 @@
 ### 3.3 Import Complexity
 *   **Analysis**: 1Password `.1pux` is a zip with encrypted JSON. Parsing logic is heavy.
 
+### 3.4 UnlockPage Context Bug (2026-02-28)
+*   **Issue**: Clicking "Reset Vault" button had no response.
+*   **Root Cause**: In ActionSheet, `Navigator.pop(context)` invalidated the context before calling `_showResetConfirmDialog(context)`.
+*   **Fix**: Rename builder context to `sheetContext` to preserve parent context for dialogs.
+
+### 3.5 Biometric Type Detection
+*   **Issue**: "Use Biometrics" text shown instead of specific Face ID/Touch ID.
+*   **Fix**: Added `_detectBiometricType()` in `VaultProvider` using `local_auth.getAvailableBiometrics()`.
+*   **Fallback**: If specific type not detected but biometrics available, default to generic text.
+
+### 3.6 Stack Layout for UnlockPage
+*   **Goal**: Position "Forgot Password" at bottom, Bio button prominent.
+*   **Solution**: Use `Stack` with `Positioned` for bottom elements, `Center` for main content.
+*   **Benefit**: Better control over element placement independent of scroll.
+
 ## 4. macOS Desktop Experience (2026-02-27)
 
 ### 4.1 System Menu "Settings" Greyed Out

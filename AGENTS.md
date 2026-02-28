@@ -27,6 +27,11 @@ This project uses the **OpenAgents Control (OAC)** context structure.
 *   **Run (macOS):** `flutter run -d macos`
 *   **Run (iOS):** `flutter run -d iphonesimulator`
 
+### Verification Commands (Must Run Before Commit)
+*   **Analyze:** `flutter analyze | grep -E "error"`
+*   **Test:** `flutter test`
+*   **Material Check:** `grep -r "package:flutter/material.dart" lib/presentation` (Should return empty)
+
 ---
 
 ## 4. Superpowers (Thinking Tools)
@@ -34,3 +39,25 @@ This project uses the **OpenAgents Control (OAC)** context structure.
 *   **New Feature?** -> `brainstorming`
 *   **Bug?** -> `systematic-debugging`
 *   **Done?** -> `verification-before-completion`
+*   **Multi-step Task?** -> `planning-with-files`
+
+---
+
+## 5. Best Practices (Accumulated from Experience)
+
+### 5.1 UI/UX
+*   **Cupertino Only**: Never use Material widgets in presentation layer.
+*   **Stack Layout**: Use `Stack` + `Positioned` for complex layouts (e.g., bottom-fixed buttons).
+*   **Context Handling**: When using `CupertinoActionSheet`, rename builder context (e.g., `sheetContext`) to avoid conflicts with parent context.
+
+### 5.2 Biometrics
+*   **Detection**: Use `local_auth.getAvailableBiometrics()` to detect Face ID vs Touch ID.
+*   **Fallback**: If specific type not detected, fall back to generic "Biometrics" text.
+
+### 5.3 L10n
+*   Always run `flutter gen-l10n` after modifying `.arb` files.
+*   Create ARB keys immediately when adding new features.
+
+### 5.4 Planning
+*   Use `planning-with-files` skill for complex multi-step tasks.
+*   Document findings in `.opencode/plans/findings.md`.
