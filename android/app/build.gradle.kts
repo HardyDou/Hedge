@@ -6,7 +6,7 @@ plugins {
 }
 
 android {
-    namespace = "com.hardydou.note_password"
+    namespace = "com.hardydou.hedge"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -21,7 +21,7 @@ android {
 
     defaultConfig {
         // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
-        applicationId = "com.hardydou.note_password"
+        applicationId = "com.hardydou.hedge"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = flutter.minSdkVersion

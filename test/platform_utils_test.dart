@@ -1,6 +1,6 @@
 import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:note_password/core/platform/platform_utils.dart';
+import 'package:hedge/core/platform/platform_utils.dart';
 
 void main() {
   group('PlatformUtils', () {

@@ -1,5 +1,5 @@
 import 'package:csv/csv.dart';
-import 'package:note_password/src/dart/vault.dart';
+import 'package:hedge/src/dart/vault.dart';
 import 'import_strategy.dart';
 
 class SmartCsvStrategy implements ImportStrategy {

@@ -1,5 +1,5 @@
 import 'package:flutter/cupertino.dart';
-import 'package:note_password/core/platform/platform_utils.dart';
+import 'package:hedge/core/platform/platform_utils.dart';
 
 import 'mobile/detail_page.dart' as mobile;
 import 'mobile/settings_page.dart' as mobile;

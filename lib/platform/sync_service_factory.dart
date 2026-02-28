@@ -1,7 +1,7 @@
 import 'dart:io';
-import 'package:note_password/services/sync_service.dart';
-import 'package:note_password/platform/ios_sync_service.dart';
-import 'package:note_password/platform/android_sync_service.dart';
+import 'package:hedge/services/sync_service.dart';
+import 'package:hedge/platform/ios_sync_service.dart';
+import 'package:hedge/platform/android_sync_service.dart';
 
 class SyncServiceFactory {
   static SyncService? _service;

@@ -1,5 +1,5 @@
-import 'package:note_password/domain/services/importer/import_strategy.dart';
-import 'package:note_password/domain/services/importer/smart_csv_strategy.dart';
+import 'package:hedge/domain/services/importer/import_strategy.dart';
+import 'package:hedge/domain/services/importer/smart_csv_strategy.dart';
 
 /// Strategy specifically optimized for Chrome exports.
 /// Chrome format is fixed: name, url, username, password, note

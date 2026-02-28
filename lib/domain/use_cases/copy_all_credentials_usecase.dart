@@ -1,4 +1,4 @@
-import 'package:note_password/src/dart/vault.dart';
+import 'package:hedge/src/dart/vault.dart';
 
 class CredentialParts {
   final String? username;

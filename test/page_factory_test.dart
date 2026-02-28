@@ -1,8 +1,8 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:note_password/core/platform/platform_utils.dart';
-import 'package:note_password/presentation/pages/page_factory.dart';
-import 'package:note_password/src/dart/vault.dart';
+import 'package:hedge/core/platform/platform_utils.dart';
+import 'package:hedge/presentation/pages/page_factory.dart';
+import 'package:hedge/src/dart/vault.dart';
 
 void main() {
   group('PageFactory', () {

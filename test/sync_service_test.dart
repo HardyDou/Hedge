@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:note_password/src/dart/vault.dart';
-import 'package:note_password/services/sync_service.dart';
+import 'package:hedge/src/dart/vault.dart';
+import 'package:hedge/services/sync_service.dart';
 
 class MockSyncService extends SyncService {
   final _controller = StreamController<FileChangeEvent>.broadcast();

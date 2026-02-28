@@ -2,7 +2,7 @@ import 'dart:io';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:note_password/l10n/generated/app_localizations.dart';
+import 'package:hedge/l10n/generated/app_localizations.dart';
 import '../../providers/vault_provider.dart';
 
 class OnboardingPage extends ConsumerStatefulWidget {

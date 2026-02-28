@@ -1,7 +1,7 @@
 import 'dart:typed_data';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:note_password/src/dart/crypto.dart';
-import 'package:note_password/src/dart/vault.dart';
+import 'package:hedge/src/dart/crypto.dart';
+import 'package:hedge/src/dart/vault.dart';
 
 void main() {
   group('CryptoService', () {
