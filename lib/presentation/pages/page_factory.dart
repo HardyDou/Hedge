@@ -3,8 +3,8 @@ import 'package:note_password/core/platform/platform_utils.dart';
 
 import 'mobile/detail_page.dart' as mobile;
 import 'mobile/settings_page.dart' as mobile;
-import 'mobile/unlock_page.dart' as mobile;
-import 'mobile/onboarding_page.dart' as mobile;
+import 'shared/unlock_page.dart' as shared;
+import 'shared/onboarding_page.dart' as shared;
 import 'mobile/add_item_page.dart' as mobile;
 import 'mobile/edit_page.dart' as mobile;
 
@@ -36,11 +36,11 @@ class PageFactory {
   }
 
   static Widget getUnlockPage() {
-    return const mobile.UnlockPage();
+    return const shared.UnlockPage();
   }
 
   static Widget getOnboardingPage() {
-    return const mobile.OnboardingPage();
+    return const shared.OnboardingPage();
   }
 
   static Widget getAddItemPage() {

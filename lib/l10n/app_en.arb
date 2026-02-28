@@ -69,11 +69,13 @@
   "importNow": "IMPORT NOW",
   "skip": "SKIP",
   "forgotPassword": "Forgot Password?",
-  "resetWithBiometrics": "Reset with Biometrics",
-  "createNewVault": "Create New Vault",
-  "resetWarning": "Resetting will delete all your stored passwords. This action cannot be undone.",
-  "confirmReset": "I understand, reset now",
-  "biometricResetReason": "Authenticate to reset your vault",
+  "resetWithBiometrics": "Unlock with Biometrics",
+  "unlockWithFaceID": "Unlock with Face ID",
+  "unlockWithTouchID": "Unlock with Touch ID",
+  "createNewVault": "Reset Vault",
+  "resetWarning": "IMPORTANT: This action cannot be undone!\nAll your data will be permanently deleted.\nAre you sure you want to reset?",
+  "confirmReset": "Confirm Reset",
+  "biometricResetReason": "Authenticate to unlock",
   "vaultResetSuccess": "Vault has been reset. Please create a new master password.",
   "noBiometricsAvailable": "No biometrics available. You can only create a new vault.",
   "oldVaultBackup": "Old vault has been backed up as vault_backup.db",
@@ -145,5 +147,9 @@
         "type": "int"
       }
     }
-  }
+  },
+  "resetVaultTitle": "Reset Vault?",
+  "resetVaultWarning": "This will permanently delete all passwords and data on this device. This action cannot be undone.\n\nAre you sure you want to continue?",
+  "resetVaultConfirm": "Reset Vault",
+  "cancel": "Cancel"
 }

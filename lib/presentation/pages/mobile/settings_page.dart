@@ -1,6 +1,5 @@
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart' show ThemeMode, Divider;
 import 'package:flutter_app_lock/flutter_app_lock.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:note_password/l10n/generated/app_localizations.dart';
@@ -236,13 +235,13 @@ class SettingsPage extends ConsumerWidget {
     );
   }
 
-  String _getThemeName(ThemeMode mode, AppLocalizations l10n) {
+  String _getThemeName(ThemeModeOption mode, AppLocalizations l10n) {
     switch (mode) {
-      case ThemeMode.system:
+      case ThemeModeOption.system:
         return l10n.system;
-      case ThemeMode.dark:
+      case ThemeModeOption.dark:
         return l10n.dark;
-      case ThemeMode.light:
+      case ThemeModeOption.light:
         return l10n.light;
     }
   }
@@ -511,14 +510,14 @@ class SettingsPage extends ConsumerWidget {
         actions: [
           CupertinoActionSheetAction(
             onPressed: () {
-              ref.read(themeProvider.notifier).setThemeMode(ThemeMode.system);
+              ref.read(themeProvider.notifier).setThemeMode(ThemeModeOption.system);
               Navigator.pop(ctx);
             },
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(l10n.system),
-                if (themeMode == ThemeMode.system) ...[
+                if (themeMode == ThemeModeOption.system) ...[
                   const SizedBox(width: 8),
                   const Icon(CupertinoIcons.checkmark_alt, size: 18),
                 ],
@@ -527,14 +526,14 @@ class SettingsPage extends ConsumerWidget {
           ),
           CupertinoActionSheetAction(
             onPressed: () {
-              ref.read(themeProvider.notifier).setThemeMode(ThemeMode.dark);
+              ref.read(themeProvider.notifier).setThemeMode(ThemeModeOption.dark);
               Navigator.pop(ctx);
             },
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(l10n.dark),
-                if (themeMode == ThemeMode.dark) ...[
+                if (themeMode == ThemeModeOption.dark) ...[
                   const SizedBox(width: 8),
                   const Icon(CupertinoIcons.checkmark_alt, size: 18),
                 ],
@@ -543,14 +542,14 @@ class SettingsPage extends ConsumerWidget {
           ),
           CupertinoActionSheetAction(
             onPressed: () {
-              ref.read(themeProvider.notifier).setThemeMode(ThemeMode.light);
+              ref.read(themeProvider.notifier).setThemeMode(ThemeModeOption.light);
               Navigator.pop(ctx);
             },
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(l10n.light),
-                if (themeMode == ThemeMode.light) ...[
+                if (themeMode == ThemeModeOption.light) ...[
                   const SizedBox(width: 8),
                   const Icon(CupertinoIcons.checkmark_alt, size: 18),
                 ],
@@ -1015,7 +1014,7 @@ class _ResetPasswordSheetState extends ConsumerState<_ResetPasswordSheet> {
                 ],
               ),
             ),
-            const Divider(height: 1),
+            Container(height: 0.5, color: CupertinoColors.separator),
             Padding(
               padding: const EdgeInsets.all(16),
               child: Column(

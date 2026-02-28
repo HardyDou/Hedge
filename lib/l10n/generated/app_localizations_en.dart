@@ -185,20 +185,26 @@ class AppLocalizationsEn extends AppLocalizations {
   String get forgotPassword => 'Forgot Password?';
 
   @override
-  String get resetWithBiometrics => 'Reset with Biometrics';
+  String get resetWithBiometrics => 'Unlock with Biometrics';
 
   @override
-  String get createNewVault => 'Create New Vault';
+  String get unlockWithFaceID => 'Unlock with Face ID';
+
+  @override
+  String get unlockWithTouchID => 'Unlock with Touch ID';
+
+  @override
+  String get createNewVault => 'Reset Vault';
 
   @override
   String get resetWarning =>
-      'Resetting will delete all your stored passwords. This action cannot be undone.';
+      'IMPORTANT: This action cannot be undone!\nAll your data will be permanently deleted.\nAre you sure you want to reset?';
 
   @override
-  String get confirmReset => 'I understand, reset now';
+  String get confirmReset => 'Confirm Reset';
 
   @override
-  String get biometricResetReason => 'Authenticate to reset your vault';
+  String get biometricResetReason => 'Authenticate to unlock';
 
   @override
   String get vaultResetSuccess =>
@@ -336,4 +342,14 @@ class AppLocalizationsEn extends AppLocalizations {
   String selected(int count) {
     return '$count selected';
   }
+
+  @override
+  String get resetVaultTitle => 'Reset Vault?';
+
+  @override
+  String get resetVaultWarning =>
+      'This will permanently delete all passwords and data on this device. This action cannot be undone.\n\nAre you sure you want to continue?';
+
+  @override
+  String get resetVaultConfirm => 'Reset Vault';
 }

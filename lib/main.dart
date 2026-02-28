@@ -1,6 +1,4 @@
-import 'dart:io';
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart' show ThemeMode;
 import 'package:flutter_app_lock/flutter_app_lock.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -13,8 +11,8 @@ import 'package:note_password/l10n/generated/app_localizations.dart';
 
 import 'package:note_password/presentation/pages/mobile/detail_page.dart';
 import 'package:note_password/presentation/pages/mobile/settings_page.dart';
-import 'package:note_password/presentation/pages/mobile/unlock_page.dart';
-import 'package:note_password/presentation/pages/mobile/onboarding_page.dart';
+import 'package:note_password/presentation/pages/shared/unlock_page.dart';
+import 'package:note_password/presentation/pages/shared/onboarding_page.dart';
 import 'package:note_password/presentation/pages/mobile/add_item_page.dart';
 import 'package:note_password/presentation/pages/desktop/desktop_home_page.dart';
 
@@ -57,9 +55,11 @@ class NotePasswordApp extends ConsumerWidget {
       title: 'NotePassword',
       debugShowCheckedModeBanner: false,
       theme: CupertinoThemeData(
-        brightness: themeMode == ThemeMode.dark ? Brightness.dark : Brightness.light,
+        brightness: themeMode == ThemeModeOption.dark 
+            ? Brightness.dark 
+            : (themeMode == ThemeModeOption.light ? Brightness.light : null),
         primaryColor: CupertinoColors.activeBlue,
-        scaffoldBackgroundColor: themeMode == ThemeMode.dark 
+        scaffoldBackgroundColor: themeMode == ThemeModeOption.dark 
             ? CupertinoColors.black 
             : CupertinoColors.systemGroupedBackground,
       ),
@@ -128,6 +128,10 @@ class _AuthGuardState extends ConsumerState<AuthGuard> {
         }
       } else if (!next.hasVaultFile) {
         AppLock.of(context)?.setEnabled(false);
+        // Clear navigation stack when vault is reset to show OnboardingPage
+        if (previous != null && previous.hasVaultFile) {
+          Navigator.of(context).popUntil((route) => route.isFirst);
+        }
       }
     });
 
