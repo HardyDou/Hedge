@@ -4,6 +4,11 @@ import 'package:note_password/l10n/generated/app_localizations.dart';
 import 'package:note_password/presentation/providers/locale_provider.dart';
 import 'package:note_password/presentation/providers/theme_provider.dart';
 import 'package:note_password/presentation/providers/vault_provider.dart';
+import 'package:file_picker/file_picker.dart';
+import 'package:note_password/domain/services/importer/concrete_strategies.dart';
+import 'package:note_password/domain/services/importer/import_strategy.dart';
+import 'package:note_password/domain/services/importer/smart_csv_strategy.dart';
+import 'dart:io';
 
 class SettingsPanel extends ConsumerStatefulWidget {
   final bool isModal;
@@ -56,6 +61,7 @@ class _SettingsPanelState extends ConsumerState<SettingsPanel> {
     final tabs = [
       {'icon': CupertinoIcons.paintbrush, 'label': l10n.appearance},
       {'icon': CupertinoIcons.lock, 'label': l10n.security},
+      {'icon': CupertinoIcons.arrow_down_doc, 'label': l10n.data}, // Added Data tab
       {'icon': CupertinoIcons.info, 'label': '关于'},
     ];
 
@@ -150,6 +156,8 @@ class _SettingsPanelState extends ConsumerState<SettingsPanel> {
       case 1:
         return _buildSecurityTab(vaultState, isDark, l10n);
       case 2:
+        return _buildDataTab(isDark, l10n);
+      case 3:
         return _buildAboutTab(isDark, l10n);
       default:
         return _buildAppearanceTab(themeMode, currentLocale, isDark, l10n);
@@ -206,6 +214,26 @@ class _SettingsPanelState extends ConsumerState<SettingsPanel> {
                   : l10n.seconds(vaultState.autoLockTimeout),
               isDark: isDark,
               onTap: () => _showAutoLockPicker(context, ref),
+              showDivider: false,
+            ),
+          ], isDark),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDataTab(bool isDark, AppLocalizations l10n) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildSettingCard([
+            _buildListTile(
+              title: l10n.import,
+              subtitle: l10n.importHint,
+              isDark: isDark,
+              onTap: () => _showImportActionSheet(context, ref),
               showDivider: false,
             ),
           ], isDark),
@@ -448,5 +476,170 @@ class _SettingsPanelState extends ConsumerState<SettingsPanel> {
         actions: [CupertinoDialogAction(onPressed: () => Navigator.pop(context), child: const Text("OK"))],
       ),
     );
+  }
+
+  void _showImportActionSheet(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
+    
+    // For Desktop, we use a simple Dialog instead of ActionSheet for better UX
+    showCupertinoDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (sheetContext) => Center(
+        child: Container(
+          width: 300,
+          decoration: BoxDecoration(
+            color: CupertinoTheme.of(context).scaffoldBackgroundColor,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  children: [
+                    Text(l10n.import, style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w600)),
+                    const SizedBox(height: 4),
+                    Text(l10n.importHint, style: const TextStyle(fontSize: 13, color: CupertinoColors.systemGrey), textAlign: TextAlign.center),
+                  ],
+                ),
+              ),
+              Container(height: 0.5, color: CupertinoColors.separator),
+              CupertinoButton(
+                child: Text('${l10n.importSmart} (${l10n.recommended})'),
+                onPressed: () {
+                  Navigator.pop(sheetContext);
+                  _handleImport(context, ref, SmartCsvStrategy());
+                },
+              ),
+              Container(height: 0.5, color: CupertinoColors.separator),
+              CupertinoButton(
+                child: Text(l10n.importChrome),
+                onPressed: () {
+                  Navigator.pop(sheetContext);
+                  _handleImport(context, ref, ChromeCsvStrategy());
+                },
+              ),
+              Container(height: 0.5, color: CupertinoColors.separator),
+              CupertinoButton(
+                child: Text(l10n.import1Password),
+                onPressed: () {
+                  Navigator.pop(sheetContext);
+                  _handleImport(context, ref, OnePasswordCsvStrategy());
+                },
+              ),
+              Container(height: 0.5, color: CupertinoColors.separator),
+              CupertinoButton(
+                child: Text(l10n.cancel, style: const TextStyle(color: CupertinoColors.destructiveRed)),
+                onPressed: () => Navigator.pop(sheetContext),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _handleImport(BuildContext context, WidgetRef ref, ImportStrategy strategy) async {
+    final l10n = AppLocalizations.of(context)!;
+    
+    // Security Warning Dialog
+    final confirmed = await showCupertinoDialog<bool>(
+      context: context,
+      builder: (context) => CupertinoAlertDialog(
+        title: Text('${l10n.import} (${strategy.providerName})'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const SizedBox(height: 8),
+            Text(l10n.securityWarning), // Warning about deleting CSV after
+            const SizedBox(height: 12),
+            Text(
+              l10n.importFormatHint,
+              style: const TextStyle(
+                fontSize: 12,
+                color: CupertinoColors.systemGrey,
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          CupertinoDialogAction(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text(l10n.cancel),
+          ),
+          CupertinoDialogAction(
+            onPressed: () => Navigator.pop(context, true),
+            isDestructiveAction: true,
+            child: Text(l10n.confirm),
+          ),
+        ],
+      ),
+    );
+    
+    if (confirmed != true) return;
+    
+    FilePickerResult? result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['csv', 'txt'], // Allow txt just in case
+    );
+    
+    if (result != null) {
+      // Show loading indicator
+      if (context.mounted) {
+        showCupertinoDialog(
+          context: context, 
+          barrierDismissible: false,
+          builder: (c) => const Center(child: CupertinoActivityIndicator(radius: 16))
+        );
+      }
+
+      final file = File(result.files.single.path!);
+      String content;
+      try {
+        content = await file.readAsString();
+      } catch (e) {
+        if (context.mounted) {
+          Navigator.pop(context); // Close loading
+          showCupertinoDialog(
+            context: context,
+            builder: (ctx) => CupertinoAlertDialog(
+              content: const Text("Failed to read file. Please ensure it is UTF-8 encoded."),
+              actions: [CupertinoDialogAction(child: const Text("OK"), onPressed: () => Navigator.pop(ctx))],
+            ),
+          );
+        }
+        return;
+      }
+      
+      final importResult = await ref.read(vaultProvider.notifier).importFromCsv(content, strategy: strategy);
+      
+      if (context.mounted) {
+        Navigator.pop(context); // Close loading
+        
+        String message;
+        if (importResult.failed == 0) {
+          message = l10n.importSuccess(importResult.success);
+        } else {
+          message = '${l10n.importSuccess(importResult.success)}\n${l10n.importFailed(importResult.failed)}';
+        }
+        
+        showCupertinoDialog(
+          context: context,
+          builder: (ctx) => CupertinoAlertDialog(
+            title: Text(l10n.importResult),
+            content: Text(message),
+            actions: [
+              CupertinoDialogAction(
+                onPressed: () => Navigator.pop(ctx),
+                child: const Text('OK'),
+              ),
+            ],
+          ),
+        );
+      }
+    }
   }
 }
