@@ -21,7 +21,7 @@ class SmartCsvStrategy implements ImportStrategy {
     // 1. Header Analysis
     // We assume the first row *might* be headers.
     final firstRow = rows[0];
-    final headers = firstRow.map((e) => e.toString().toLowerCase().trim()).toList();
+    final headers = firstRow.map((e) => e.toString().trim()).toList();
     final headerMap = _analyzeHeaders(headers);
 
     final List<VaultItem> items = [];
@@ -57,12 +57,12 @@ class SmartCsvStrategy implements ImportStrategy {
   Map<String, int> _analyzeHeaders(List<String> headers) {
     final map = <String, int>{};
     for (var i = 0; i < headers.length; i++) {
-      final h = headers[i];
-      if (_isSynonym(h, ['title', 'name', 'account', 'service', 'label', 'app'])) map['title'] = i;
-      else if (_isSynonym(h, ['username', 'email', 'user', 'login', 'id'])) map['username'] = i;
-      else if (_isSynonym(h, ['password', 'pass', 'key', 'secret'])) map['password'] = i;
-      else if (_isSynonym(h, ['url', 'website', 'site', 'link', 'address', 'uri'])) map['url'] = i;
-      else if (_isSynonym(h, ['note', 'notes', 'comment', 'extra', 'remarks', 'info', 'description'])) map['notes'] = i;
+      final h = headers[i].toLowerCase();
+      if (_isSynonym(h, ['title', 'name', 'account', 'service', 'label', 'app', '标题', '名称'])) map['title'] = i;
+      else if (_isSynonym(h, ['username', 'email', 'user', 'login', 'id', '用户名', '账号'])) map['username'] = i;
+      else if (_isSynonym(h, ['password', 'pass', 'key', 'secret', '密码'])) map['password'] = i;
+      else if (_isSynonym(h, ['url', 'website', 'site', 'link', 'address', 'uri', '网址'])) map['url'] = i;
+      else if (_isSynonym(h, ['note', 'notes', 'comment', 'extra', 'remarks', 'info', 'description', '备注', '类型'])) map['notes'] = i;
     }
     
     // Heuristic: If we found at least 2 known columns, assume headers exist
