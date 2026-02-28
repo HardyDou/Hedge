@@ -8,6 +8,7 @@ import 'package:note_password/domain/use_cases/copy_password_usecase.dart';
 import 'package:note_password/domain/use_cases/copy_all_credentials_usecase.dart';
 import 'package:note_password/domain/services/importer/csv_import_service.dart';
 import 'package:note_password/domain/services/importer/import_strategy.dart';
+import 'package:note_password/domain/services/sort_service.dart';
 import 'package:note_password/l10n/generated/app_localizations.dart';
 import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
@@ -532,6 +533,11 @@ class VaultNotifier extends StateNotifier<VaultState> {
       (item) => item.id == id,
       orElse: () => throw Exception('Item not found'),
     );
+  }
+
+  List<VaultItem> get sortedItems {
+    final items = state.vault?.items ?? [];
+    return SortService.sort(items);
   }
 
   void copyPassword(String itemId) {

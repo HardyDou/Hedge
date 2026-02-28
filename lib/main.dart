@@ -179,13 +179,12 @@ class _HomePageState extends ConsumerState<HomePage> {
     final brightness = CupertinoTheme.of(context).brightness;
     final isDark = brightness == Brightness.dark;
 
-    final items = vaultState.vault?.items.where((item) {
+    final items = ref.read(vaultProvider.notifier).sortedItems.where((item) {
           final query = _searchQuery.toLowerCase();
           return item.title.toLowerCase().contains(query) ||
               (item.username?.toLowerCase().contains(query) ?? false) ||
               (item.notes?.toLowerCase().contains(query) ?? false);
-        }).toList() ??
-        [];
+        }).toList();
 
     return CupertinoPageScaffold(
       navigationBar: CupertinoNavigationBar(
