@@ -15,6 +15,7 @@ import 'package:note_password/presentation/pages/shared/unlock_page.dart';
 import 'package:note_password/presentation/pages/shared/onboarding_page.dart';
 import 'package:note_password/presentation/pages/mobile/add_item_page.dart';
 import 'package:note_password/presentation/pages/desktop/desktop_home_page.dart';
+import 'package:note_password/presentation/widgets/alphabet_index_bar.dart';
 
 class SlideFromLeftRoute<T> extends PageRouteBuilder<T> {
   SlideFromLeftRoute({required WidgetBuilder builder})
@@ -164,11 +165,14 @@ class HomePage extends ConsumerStatefulWidget {
 
 class _HomePageState extends ConsumerState<HomePage> {
   final _searchController = TextEditingController();
+  final _scrollController = ScrollController();
   String _searchQuery = "";
+  String? _currentLetter;
 
   @override
   void dispose() {
     _searchController.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 
@@ -360,61 +364,82 @@ class _HomePageState extends ConsumerState<HomePage> {
                             ],
                           ),
                         )
-                      : ListView.builder(
-                          padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
-                          itemCount: items.length,
-                        itemBuilder: (context, index) {
-                          final item = items[index];
-                          String? domain;
-                          if (item.url != null && item.url!.isNotEmpty) {
-                            try {
-                              String urlStr = item.url!;
-                              if (!urlStr.startsWith('http://') && !urlStr.startsWith('https://')) {
-                                urlStr = 'https://$urlStr';
-                              }
-                              final uri = Uri.parse(urlStr);
-                              domain = uri.host.isNotEmpty ? uri.host : null;
-                            } catch (_) {}
-                          }
-                          
-                          String displayChar = '?';
-                          if (item.title.isNotEmpty) {
-                            displayChar = item.title[0].toUpperCase();
-                          } else if (domain != null && domain.isNotEmpty) {
-                            displayChar = domain[0].toUpperCase();
-                          }
-                          
-                          String? subtitle;
-                          if (item.username != null && item.username!.isNotEmpty) {
-                            subtitle = item.username;
-                          } else if (domain != null && domain.isNotEmpty) {
-                            subtitle = domain;
-                          } else {
-                            subtitle = null;
-                          }
-                          
-                          return _iOSListItem(
-                            title: item.title,
-                            subtitle: subtitle,
-                            updatedAt: item.updatedAt,
-                            displayChar: displayChar,
-                            domain: domain,
-                            isDark: isDark,
-                            isSelectionMode: vaultState.isSelectionMode,
-                            isSelected: vaultState.selectedIds.contains(item.id),
-                            onSelect: () => ref.read(vaultProvider.notifier).toggleItemSelection(item.id),
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                CupertinoPageRoute(
-                                  builder: (context) => DetailPage(item: item),
-                                ),
-                              );
-                            },
-                            getColorForChar: _getColorForChar,
-                          );
-                        },
-                      ),
+                      : Row(
+                          children: [
+                            Expanded(
+                              child: CustomScrollView(
+                                controller: _scrollController,
+                                slivers: [
+                                  SliverPadding(
+                                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
+                                    sliver: SliverList(
+                                      delegate: SliverChildBuilderDelegate(
+                                        (context, index) {
+                                          final item = items[index];
+                                          String? domain;
+                                          if (item.url != null && item.url!.isNotEmpty) {
+                                            try {
+                                              String urlStr = item.url!;
+                                              if (!urlStr.startsWith('http://') && !urlStr.startsWith('https://')) {
+                                                urlStr = 'https://$urlStr';
+                                              }
+                                              final uri = Uri.parse(urlStr);
+                                              domain = uri.host.isNotEmpty ? uri.host : null;
+                                            } catch (_) {}
+                                          }
+                                          
+                                          String displayChar = '?';
+                                          if (item.title.isNotEmpty) {
+                                            displayChar = item.title[0].toUpperCase();
+                                          } else if (domain != null && domain.isNotEmpty) {
+                                            displayChar = domain[0].toUpperCase();
+                                          }
+                                          
+                                          String? subtitle;
+                                          if (item.username != null && item.username!.isNotEmpty) {
+                                            subtitle = item.username;
+                                          } else if (domain != null && domain.isNotEmpty) {
+                                            subtitle = domain;
+                                          } else {
+                                            subtitle = null;
+                                          }
+                                          
+                                          return _iOSListItem(
+                                            title: item.title,
+                                            subtitle: subtitle,
+                                            updatedAt: item.updatedAt,
+                                            displayChar: displayChar,
+                                            domain: domain,
+                                            isDark: isDark,
+                                            isSelectionMode: vaultState.isSelectionMode,
+                                            isSelected: vaultState.selectedIds.contains(item.id),
+                                            onSelect: () => ref.read(vaultProvider.notifier).toggleItemSelection(item.id),
+                                            onTap: () {
+                                              Navigator.push(
+                                                context,
+                                                CupertinoPageRoute(
+                                                  builder: (context) => DetailPage(item: item),
+                                                ),
+                                              );
+                                            },
+                                            getColorForChar: _getColorForChar,
+                                          );
+                                        },
+                                        childCount: items.length,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            if (items.length >= 20)
+                              AlphabetIndexBar(
+                                letters: _getAvailableLetters(items),
+                                onLetterSelected: (letter) => _scrollToLetter(letter, items),
+                                isDark: isDark,
+                              ),
+                          ],
+                        ),
                 ),
               ),
             ],
@@ -473,6 +498,61 @@ class _HomePageState extends ConsumerState<HomePage> {
     ];
     final index = char.toUpperCase().codeUnitAt(0) % colors.length;
     return colors[index];
+  }
+
+  List<String> _getAvailableLetters(List items) {
+    final letters = <String>{};
+    for (final item in items) {
+      if (item.title.isNotEmpty) {
+        final firstChar = item.title[0].toUpperCase();
+        final category = _getCharCategory(firstChar);
+        if (category == 0) {
+          letters.add('#');
+        } else if (category == 1) {
+          letters.add(firstChar);
+        } else {
+          letters.add('#');
+        }
+      } else {
+        letters.add('#');
+      }
+    }
+    return letters.toList()..sort();
+  }
+
+  int _getCharCategory(String char) {
+    if (char.isEmpty) return 2;
+    final code = char.codeUnitAt(0);
+    if (code >= 48 && code <= 57) return 0;
+    if ((code >= 65 && code <= 90) || (code >= 97 && code <= 122)) return 1;
+    return 2;
+  }
+
+  void _scrollToLetter(String letter, List items) {
+    for (int i = 0; i < items.length; i++) {
+      final item = items[i];
+      if (item.title.isNotEmpty) {
+        final firstChar = item.title[0].toUpperCase();
+        if (letter == '#') {
+          final category = _getCharCategory(firstChar);
+          if (category != 1) {
+            _scrollController.animateTo(
+              i * 80.0,
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeInOut,
+            );
+            return;
+          }
+        } else if (firstChar == letter) {
+          _scrollController.animateTo(
+            i * 80.0,
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeInOut,
+          );
+          return;
+        }
+      }
+    }
   }
 }
 
