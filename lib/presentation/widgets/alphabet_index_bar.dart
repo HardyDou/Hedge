@@ -1,6 +1,6 @@
 import 'package:flutter/cupertino.dart';
 
-class AlphabetIndexBar extends StatelessWidget {
+class AlphabetIndexBar extends StatefulWidget {
   final List<String> letters;
   final Function(String) onLetterSelected;
   final bool isDark;
@@ -13,52 +13,130 @@ class AlphabetIndexBar extends StatelessWidget {
   });
 
   @override
+  State<AlphabetIndexBar> createState() => _AlphabetIndexBarState();
+}
+
+class _AlphabetIndexBarState extends State<AlphabetIndexBar> {
+  String? _currentLetter;
+  bool _isActive = false;
+
+  static const _allLetters = [
+    'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M',
+    'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', '#'
+  ];
+
+  @override
   Widget build(BuildContext context) {
     return SizedBox(
       width: 24,
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.end,
+      child: Stack(
+        clipBehavior: Clip.none,
         children: [
-          Expanded(
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                final itemHeight = constraints.maxHeight / 27;
-                return GestureDetector(
-                  onVerticalDragUpdate: (details) {
-                    _handleDrag(details.localPosition.dy, itemHeight);
-                  },
-                  onVerticalDragStart: (details) {
-                    _handleDrag(details.localPosition.dy, itemHeight);
-                  },
-                  child: Container(
-                    color: CupertinoColors.transparent,
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: _buildIndexItems(itemHeight),
-                    ),
-                  ),
-                );
-              },
+          // 放大镜覆盖层
+          if (_isActive && _currentLetter != null)
+            Positioned(
+              left: -60,
+              top: 0,
+              bottom: 0,
+              child: Center(
+                child: _buildMagnifier(),
+              ),
             ),
+          // 字母索引列
+          Column(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              Expanded(
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    final itemHeight = constraints.maxHeight / 27;
+                    return GestureDetector(
+                      onVerticalDragStart: (details) {
+                        _handleDragStart(details.localPosition.dy, itemHeight);
+                      },
+                      onVerticalDragUpdate: (details) {
+                        _handleDragUpdate(details.localPosition.dy, itemHeight);
+                      },
+                      onVerticalDragEnd: (_) => _handleDragEnd(),
+                      onVerticalDragCancel: _handleDragEnd,
+                      child: Container(
+                        color: CupertinoColors.transparent,
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: _buildIndexItems(itemHeight),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
           ),
         ],
       ),
     );
   }
 
-  void _handleDrag(double dy, double itemHeight) {
-    final index = (dy / itemHeight).floor().clamp(0, letters.length - 1);
-    onLetterSelected(letters[index]);
+  Widget _buildMagnifier() {
+    return AnimatedOpacity(
+      opacity: _isActive ? 1.0 : 0.0,
+      duration: const Duration(milliseconds: 150),
+      child: Container(
+        width: 50,
+        height: 50,
+        decoration: BoxDecoration(
+          color: widget.isDark
+              ? CupertinoColors.systemGrey.darkColor
+              : CupertinoColors.systemGrey5,
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Center(
+          child: Text(
+            _currentLetter ?? '',
+            style: TextStyle(
+              fontSize: 28,
+              fontWeight: FontWeight.w600,
+              color: widget.isDark
+                  ? CupertinoColors.white
+                  : CupertinoColors.black,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _handleDragStart(double dy, double itemHeight) {
+    setState(() => _isActive = true);
+    _updateLetter(dy, itemHeight);
+  }
+
+  void _handleDragUpdate(double dy, double itemHeight) {
+    _updateLetter(dy, itemHeight);
+  }
+
+  void _handleDragEnd() {
+    setState(() {
+      _isActive = false;
+      _currentLetter = null;
+    });
+  }
+
+  void _updateLetter(double dy, double itemHeight) {
+    final index = (dy / itemHeight).floor().clamp(0, _allLetters.length - 1);
+    final letter = _allLetters[index];
+    
+    if (_currentLetter != letter) {
+      setState(() => _currentLetter = letter);
+      widget.onLetterSelected(letter);
+    }
   }
 
   List<Widget> _buildIndexItems(double itemHeight) {
-    const allLetters = [
-      'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M',
-      'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', '#'
-    ];
-
-    return allLetters.map((letter) {
-      final isActive = letters.contains(letter);
+    return _allLetters.map((letter) {
+      final isActive = widget.letters.contains(letter);
+      final isSelected = _currentLetter == letter;
+      
       return SizedBox(
         height: itemHeight,
         child: Center(
@@ -66,10 +144,10 @@ class AlphabetIndexBar extends StatelessWidget {
             letter,
             style: TextStyle(
               fontSize: 10,
-              fontWeight: FontWeight.w500,
+              fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
               color: isActive
-                  ? (isDark ? CupertinoColors.white : CupertinoColors.black)
-                  : (isDark
+                  ? (widget.isDark ? CupertinoColors.white : CupertinoColors.black)
+                  : (widget.isDark
                       ? CupertinoColors.white.withValues(alpha: 0.3)
                       : CupertinoColors.black.withValues(alpha: 0.3)),
             ),

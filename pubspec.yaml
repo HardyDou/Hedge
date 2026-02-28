@@ -49,6 +49,7 @@ dependencies:
   flutter_app_lock: ^4.3.0
   csv: ^7.1.0
   intl: ^0.20.2
+  lpinyin: ^2.0.3
 
 dev_dependencies:
   flutter_test:
