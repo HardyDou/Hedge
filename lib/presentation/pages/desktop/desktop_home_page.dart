@@ -35,10 +35,8 @@ class _DesktopHomePageState extends ConsumerState<DesktopHomePage> {
   void initState() {
     super.initState();
     _searchFocusNode.addListener(() {
-      if (!_searchFocusNode.hasFocus) {
-        _searchController.clear();
-        setState(() => _searchQuery = "");
-      }
+      // Don't clear search on blur - user may want to keep search while browsing
+      // The search will only be cleared when user explicitly clears it
     });
     _setupMenuChannel();
   }
@@ -89,7 +87,6 @@ class _DesktopHomePageState extends ConsumerState<DesktopHomePage> {
 
     return KeyboardListener(
       focusNode: FocusNode(),
-      autofocus: true,
       onKeyEvent: _handleKeyEvent,
       child: Column(
         children: [
