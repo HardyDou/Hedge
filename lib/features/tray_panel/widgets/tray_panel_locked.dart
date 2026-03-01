@@ -102,37 +102,115 @@ class TrayPanelLocked extends ConsumerWidget {
   /// 构建内容区域
   Widget _buildContent(BuildContext context, AppLocalizations l10n, bool isDark, WidgetRef ref) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 32),
       child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisAlignment: MainAxisAlignment.start,
         children: [
-          // 锁定图标
-          Icon(
-            CupertinoIcons.lock_circle_fill,
-            size: 48,
-            color: isDark ? CupertinoColors.systemGrey : CupertinoColors.systemGrey2,
+          const SizedBox(height: 20),
+
+          // Logo/Icon
+          Container(
+            width: 64,
+            height: 64,
+            decoration: BoxDecoration(
+              color: CupertinoColors.activeBlue.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: const Icon(
+              CupertinoIcons.lock_shield_fill,
+              size: 36,
+              color: CupertinoColors.activeBlue,
+            ),
+          ),
+          const SizedBox(height: 32),
+
+          // 密码输入框 + 解锁按钮
+          Row(
+            children: [
+              // 输入框
+              Expanded(
+                child: CupertinoTextField(
+                  placeholder: l10n.enterMasterPassword,
+                  obscureText: true,
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: isDark ? CupertinoColors.white : CupertinoColors.black,
+                  ),
+                  placeholderStyle: TextStyle(
+                    fontSize: 13,
+                    color: isDark ? CupertinoColors.systemGrey : CupertinoColors.systemGrey2,
+                  ),
+                  decoration: BoxDecoration(
+                    color: isDark ? const Color(0xFF2C2C2E) : const Color(0xFFF2F2F7),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  onSubmitted: (value) {
+                    // TODO: 解锁
+                  },
+                ),
+              ),
+              const SizedBox(width: 8),
+
+              // 解锁按钮
+              CupertinoButton(
+                padding: EdgeInsets.zero,
+                onPressed: () {
+                  // TODO: 解锁
+                },
+                child: Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: CupertinoColors.activeBlue,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Icon(
+                    CupertinoIcons.arrow_right,
+                    size: 20,
+                    color: CupertinoColors.white,
+                  ),
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 16),
 
-          // 提示文字
-          Text(
-            l10n.trayPanelLocked,
-            style: TextStyle(
-              fontSize: 14,
-              color: isDark ? CupertinoColors.systemGrey : CupertinoColors.systemGrey2,
-            ),
-          ),
-          const SizedBox(height: 24),
-
-          // 解锁按钮
-          _buildButton(
-            context: context,
-            label: l10n.unlockVault,
-            icon: CupertinoIcons.lock_open,
-            isDark: isDark,
-            onPressed: () async {
-              await panelWindowService.showMainWindow();
+          // 生物识别按钮
+          CupertinoButton(
+            padding: EdgeInsets.zero,
+            onPressed: () {
+              // TODO: 生物识别解锁
             },
+            child: Container(
+              width: double.infinity,
+              height: 40,
+              decoration: BoxDecoration(
+                color: isDark
+                    ? const Color(0xFF2C2C2E)
+                    : const Color(0xFFF2F2F7),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    CupertinoIcons.touchid,
+                    size: 18,
+                    color: isDark ? CupertinoColors.white : CupertinoColors.black,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    l10n.useBiometricUnlock,
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                      color: isDark ? CupertinoColors.white : CupertinoColors.black,
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
         ],
       ),
@@ -162,43 +240,6 @@ class TrayPanelLocked extends ConsumerWidget {
           color: isDestructive
               ? CupertinoColors.systemRed
               : (isDark ? CupertinoColors.white : CupertinoColors.black),
-        ),
-      ),
-    );
-  }
-
-  /// 构建按钮
-  Widget _buildButton({
-    required BuildContext context,
-    required String label,
-    required IconData icon,
-    required bool isDark,
-    required VoidCallback onPressed,
-  }) {
-    return CupertinoButton(
-      padding: EdgeInsets.zero,
-      onPressed: onPressed,
-      child: Container(
-        width: double.infinity,
-        height: 40,
-        decoration: BoxDecoration(
-          color: CupertinoColors.activeBlue,
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, size: 16, color: CupertinoColors.white),
-            const SizedBox(width: 6),
-            Text(
-              label,
-              style: const TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w500,
-                color: CupertinoColors.white,
-              ),
-            ),
-          ],
         ),
       ),
     );
