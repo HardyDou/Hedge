@@ -151,7 +151,7 @@ class _TechValidationPanelAppState extends State<TechValidationPanelApp>
 
     // Panel 尺寸（类似托盘菜单，稍大一点）
     const panelWidth = 240.0;
-    const panelHeight = 320.0;
+    const panelHeight = 400.0;
 
     // 计算 Panel 位置（紧贴托盘图标下方，居中对齐）
     // macOS 菜单栏高度通常是 24-25，托盘图标在菜单栏中
@@ -351,7 +351,7 @@ class _TechValidationPanelAppState extends State<TechValidationPanelApp>
                     ),
                   ),
                   Text(
-                    '✅ 240x320 尺寸',
+                    '✅ 240x400 尺寸',
                     style: TextStyle(
                       fontSize: 12,
                       color: isDark
