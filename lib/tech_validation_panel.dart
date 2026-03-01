@@ -129,8 +129,8 @@ class _TechValidationPanelAppState extends State<TechValidationPanelApp>
     debugPrint('托盘尺寸: ${trayBounds.width} x ${trayBounds.height}');
 
     // Panel 尺寸（类似托盘菜单，稍大一点）
-    const panelWidth = 280.0;
-    const panelHeight = 400.0;
+    const panelWidth = 240.0;
+    const panelHeight = 320.0;
 
     // 计算 Panel 位置（从托盘图标下方弹出，居中对齐）
     double panelX = trayBounds.left - panelWidth / 2 + trayBounds.width / 2;
@@ -208,6 +208,9 @@ class _TechValidationPanelAppState extends State<TechValidationPanelApp>
   Widget build(BuildContext context) {
     return CupertinoApp(
       debugShowCheckedModeBanner: false,
+      theme: const CupertinoThemeData(
+        brightness: Brightness.light,  // 亮色主题
+      ),
       home: _isPanelMode ? _buildPanelWindow() : _buildMainWindow(),
     );
   }
@@ -247,17 +250,25 @@ class _TechValidationPanelAppState extends State<TechValidationPanelApp>
   }
 
   Widget _buildPanelWindow() {
+    // 获取当前主题
+    final brightness = MediaQuery.platformBrightnessOf(context);
+    final isDark = brightness == Brightness.dark;
+
     return Container(
       decoration: BoxDecoration(
-        color: CupertinoColors.systemBackground,
+        color: isDark
+            ? CupertinoColors.darkBackgroundGray
+            : CupertinoColors.systemBackground,
         borderRadius: BorderRadius.circular(8),
         border: Border.all(
-          color: CupertinoColors.separator,
+          color: isDark
+              ? CupertinoColors.systemGrey
+              : CupertinoColors.separator,
           width: 1,
         ),
         boxShadow: [
           BoxShadow(
-            color: CupertinoColors.black.withOpacity(0.2),
+            color: CupertinoColors.black.withOpacity(isDark ? 0.5 : 0.2),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -272,27 +283,78 @@ class _TechValidationPanelAppState extends State<TechValidationPanelApp>
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(
+                  Icon(
                     CupertinoIcons.checkmark_circle_fill,
                     size: 48,
-                    color: CupertinoColors.systemGreen,
+                    color: isDark
+                        ? CupertinoColors.systemGreen.darkColor
+                        : CupertinoColors.systemGreen,
                   ),
                   const SizedBox(height: 16),
-                  const Text(
+                  Text(
                     '快捷面板',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: isDark
+                          ? CupertinoColors.white
+                          : CupertinoColors.black,
+                    ),
                   ),
                   const SizedBox(height: 16),
-                  const Text('✅ 无标题栏', style: TextStyle(fontSize: 12)),
-                  const Text('✅ 无窗口按钮', style: TextStyle(fontSize: 12)),
-                  const Text('✅ 不可移动', style: TextStyle(fontSize: 12)),
-                  const Text('✅ 280x400 尺寸', style: TextStyle(fontSize: 12)),
+                  Text(
+                    '✅ 无标题栏',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: isDark
+                          ? CupertinoColors.systemGrey6
+                          : CupertinoColors.black,
+                    ),
+                  ),
+                  Text(
+                    '✅ 无窗口按钮',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: isDark
+                          ? CupertinoColors.systemGrey6
+                          : CupertinoColors.black,
+                    ),
+                  ),
+                  Text(
+                    '✅ 不可移动',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: isDark
+                          ? CupertinoColors.systemGrey6
+                          : CupertinoColors.black,
+                    ),
+                  ),
+                  Text(
+                    '✅ 240x320 尺寸',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: isDark
+                          ? CupertinoColors.systemGrey6
+                          : CupertinoColors.black,
+                    ),
+                  ),
+                  Text(
+                    '✅ ${isDark ? "深色" : "浅色"}主题',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: isDark
+                          ? CupertinoColors.systemGrey6
+                          : CupertinoColors.black,
+                    ),
+                  ),
                   const SizedBox(height: 16),
-                  const Text(
+                  Text(
                     '点击外部自动隐藏',
                     style: TextStyle(
                       fontSize: 11,
-                      color: CupertinoColors.systemGrey,
+                      color: isDark
+                          ? CupertinoColors.systemGrey
+                          : CupertinoColors.systemGrey,
                     ),
                   ),
                 ],
@@ -303,10 +365,12 @@ class _TechValidationPanelAppState extends State<TechValidationPanelApp>
           // 底部按钮
           Container(
             padding: const EdgeInsets.all(12),
-            decoration: const BoxDecoration(
+            decoration: BoxDecoration(
               border: Border(
                 top: BorderSide(
-                  color: CupertinoColors.separator,
+                  color: isDark
+                      ? CupertinoColors.systemGrey
+                      : CupertinoColors.separator,
                   width: 0.5,
                 ),
               ),
