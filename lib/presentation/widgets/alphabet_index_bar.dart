@@ -21,8 +21,8 @@ class _AlphabetIndexBarState extends State<AlphabetIndexBar> {
   bool _isActive = false;
 
   static const _allLetters = [
-    'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M',
-    'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', '#'
+    '#', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M',
+    'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'
   ];
 
   @override
@@ -44,31 +44,29 @@ class _AlphabetIndexBarState extends State<AlphabetIndexBar> {
             ),
           // 字母索引列
           Column(
-            mainAxisAlignment: MainAxisAlignment.end,
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Expanded(
-                child: LayoutBuilder(
-                  builder: (context, constraints) {
-                    final itemHeight = constraints.maxHeight / 27;
-                    return GestureDetector(
-                      onVerticalDragStart: (details) {
-                        _handleDragStart(details.localPosition.dy, itemHeight);
-                      },
-                      onVerticalDragUpdate: (details) {
-                        _handleDragUpdate(details.localPosition.dy, itemHeight);
-                      },
-                      onVerticalDragEnd: (_) => _handleDragEnd(),
-                      onVerticalDragCancel: _handleDragEnd,
-                      child: Container(
-                        color: CupertinoColors.transparent,
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.end,
-                          children: _buildIndexItems(itemHeight),
-                        ),
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  const double itemHeight = 16.0;
+                  return GestureDetector(
+                    onVerticalDragStart: (details) {
+                      _handleDragStart(details.localPosition.dy, itemHeight);
+                    },
+                    onVerticalDragUpdate: (details) {
+                      _handleDragUpdate(details.localPosition.dy, itemHeight);
+                    },
+                    onVerticalDragEnd: (_) => _handleDragEnd(),
+                    onVerticalDragCancel: _handleDragEnd,
+                    child: Container(
+                      color: CupertinoColors.transparent,
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: _buildIndexItems(itemHeight),
                       ),
-                    );
-                  },
-                ),
+                    ),
+                  );
+                },
               ),
             ],
           ),
