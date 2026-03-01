@@ -106,7 +106,16 @@ class _TechValidationAppState extends State<TechValidationApp>
   void onWindowClose() async {
     // 验证 2: 关闭主窗口不退出应用，进入托盘状态
     debugPrint('✅ 验证 2: 主窗口关闭，应用进入托盘状态（不退出）');
+
+    // 隐藏窗口而不是销毁
     await windowManager.hide();
+
+    // 不调用 windowManager.destroy()，保持应用运行
+  }
+
+  @override
+  void onWindowEvent(String eventName) {
+    debugPrint('窗口事件: $eventName');
   }
 
   Future<void> _showPanel() async {
