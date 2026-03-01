@@ -377,4 +377,28 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get viewAll => '查看全部';
+
+  @override
+  String get trayPanelLocked => '密码本已锁定';
+
+  @override
+  String get unlockVault => '解锁密码本';
+
+  @override
+  String get useBiometricUnlock => '使用生物识别';
+
+  @override
+  String get quickAccess => '快捷访问';
+
+  @override
+  String get recentlyUsed => '最近使用';
+
+  @override
+  String get lockNow => '立即锁定';
+
+  @override
+  String get quickSettings => '快速设置';
+
+  @override
+  String get passwordCopied => '密码已复制';
 }

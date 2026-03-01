@@ -811,6 +811,54 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'View All'**
   String get viewAll;
+
+  /// No description provided for @trayPanelLocked.
+  ///
+  /// In en, this message translates to:
+  /// **'Vault is Locked'**
+  String get trayPanelLocked;
+
+  /// No description provided for @unlockVault.
+  ///
+  /// In en, this message translates to:
+  /// **'Unlock Vault'**
+  String get unlockVault;
+
+  /// No description provided for @useBiometricUnlock.
+  ///
+  /// In en, this message translates to:
+  /// **'Use Biometric'**
+  String get useBiometricUnlock;
+
+  /// No description provided for @quickAccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Quick Access'**
+  String get quickAccess;
+
+  /// No description provided for @recentlyUsed.
+  ///
+  /// In en, this message translates to:
+  /// **'Recently Used'**
+  String get recentlyUsed;
+
+  /// No description provided for @lockNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Lock Now'**
+  String get lockNow;
+
+  /// No description provided for @quickSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Quick Settings'**
+  String get quickSettings;
+
+  /// No description provided for @passwordCopied.
+  ///
+  /// In en, this message translates to:
+  /// **'Password Copied'**
+  String get passwordCopied;
 }
 
 class _AppLocalizationsDelegate

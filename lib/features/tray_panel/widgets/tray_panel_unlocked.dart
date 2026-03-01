@@ -102,16 +102,6 @@ class _TrayPanelUnlockedState extends ConsumerState<TrayPanelUnlocked> {
           const SizedBox(width: 8),
           _buildHeaderIconButton(
             context: context,
-            icon: CupertinoIcons.gear,
-            tooltip: l10n.quickSettings,
-            isDark: isDark,
-            onPressed: () {
-              // TODO: 打开快速设置
-            },
-          ),
-          const SizedBox(width: 8),
-          _buildHeaderIconButton(
-            context: context,
             icon: CupertinoIcons.lock,
             tooltip: l10n.lockNow,
             isDark: isDark,

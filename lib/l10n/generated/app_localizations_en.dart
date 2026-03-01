@@ -389,4 +389,28 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get viewAll => 'View All';
+
+  @override
+  String get trayPanelLocked => 'Vault is Locked';
+
+  @override
+  String get unlockVault => 'Unlock Vault';
+
+  @override
+  String get useBiometricUnlock => 'Use Biometric';
+
+  @override
+  String get quickAccess => 'Quick Access';
+
+  @override
+  String get recentlyUsed => 'Recently Used';
+
+  @override
+  String get lockNow => 'Lock Now';
+
+  @override
+  String get quickSettings => 'Quick Settings';
+
+  @override
+  String get passwordCopied => 'Password Copied';
 }
