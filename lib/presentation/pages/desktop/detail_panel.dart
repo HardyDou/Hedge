@@ -229,24 +229,31 @@ class _DetailPanelState extends ConsumerState<DetailPanel> {
   }
 
   Widget _buildCredentialsSection(bool isDark, AppLocalizations l10n) {
+    final hasUsername = _item.username != null && _item.username!.isNotEmpty;
+    final hasPassword = _item.password != null && _item.password!.isNotEmpty;
+    if (!hasUsername && !hasPassword) return const SizedBox.shrink();
+
+    final children = <Widget>[];
+    if (hasUsername) {
+      children.add(_buildListTile(
+        icon: CupertinoIcons.person,
+        title: l10n.username,
+        value: _item.username!,
+        isDark: isDark,
+        onCopy: () => _copyToClipboard(_item.username!, l10n.username),
+      ));
+    }
+    if (hasPassword) {
+      if (children.isNotEmpty) children.add(_buildDivider(isDark));
+      children.add(_buildPasswordTile(isDark, l10n));
+    }
+
     return Padding(
       padding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
       child: _buildCard(
         isDark: isDark,
         header: l10n.credentials.toUpperCase(),
-        children: [
-          _buildListTile(
-            icon: CupertinoIcons.person,
-            title: l10n.username,
-            value: _item.username ?? l10n.notSet,
-            isDark: isDark,
-            onCopy: _item.username != null
-                ? () => _copyToClipboard(_item.username!, l10n.username)
-                : null,
-          ),
-          _buildDivider(isDark),
-          _buildPasswordTile(isDark, l10n),
-        ],
+        children: children,
       ),
     );
   }
