@@ -47,7 +47,7 @@ class _TechValidationAppState extends State<TechValidationApp>
     // 使用 app icon 作为托盘图标（临时）
     // macOS 托盘图标推荐使用 16x16 或 32x32
     await trayManager.setIcon(
-      'macos/Runner/Assets.xcassets/AppIcon.appiconset/app_icon_32.png',
+      'assets/icons/tray_icon.png',
       isTemplate: true, // macOS 风格，自动适配深色/浅色模式
     );
 
