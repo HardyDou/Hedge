@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:window_manager/window_manager.dart';
 import 'package:hedge/main.dart' as app;
 import 'package:hedge/features/tray_panel/tray_panel.dart';
@@ -27,7 +28,7 @@ Future<void> main() async {
   });
 
   // 运行应用（带托盘功能）
-  runApp(const TrayEnabledApp());
+  runApp(const ProviderScope(child: TrayEnabledApp()));
 }
 
 /// 带托盘功能的应用包装器
@@ -119,9 +120,11 @@ class _TrayEnabledAppState extends State<TrayEnabledApp> with WindowListener {
             theme: const CupertinoThemeData(
               brightness: Brightness.light,
             ),
-            home: TrayPanel(
-              panelWindowService: _panelWindowService,
-              trayService: _trayService,
+            home: CupertinoPageScaffold(
+              child: TrayPanel(
+                panelWindowService: _panelWindowService,
+                trayService: _trayService,
+              ),
             ),
           );
         } else {
