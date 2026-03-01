@@ -155,15 +155,15 @@ class _TechValidationPanelAppState extends State<TechValidationPanelApp>
 
     // 计算 Panel 位置（紧贴托盘图标下方，居中对齐）
     double panelX = trayBounds.left - panelWidth / 2 + trayBounds.width / 2;
-    // 修正：向上偏移一个托盘高度，使其紧贴托盘图标
-    double panelY = trayBounds.top + trayBounds.height;
+    // 直接使用 top，因为 macOS 托盘在屏幕顶部
+    double panelY = trayBounds.top;
 
     // 边界检查
     if (panelX < 0) panelX = 0;
 
     debugPrint('✅ 验证 2: Panel 位置计算完成:');
     debugPrint('   托盘 top: ${trayBounds.top}, bottom: ${trayBounds.bottom}, height: ${trayBounds.height}');
-    debugPrint('   Panel X: $panelX, Y: $panelY (紧贴托盘)');
+    debugPrint('   Panel X: $panelX, Y: $panelY (使用 top)');
     debugPrint('   Panel 尺寸: ${panelWidth}x$panelHeight');
 
     // 切换到 Panel 模式
