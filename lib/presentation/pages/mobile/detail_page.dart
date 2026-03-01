@@ -1,14 +1,15 @@
-import 'dart:io';
+import 'package:hedge/presentation/providers/vault_provider.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hedge/src/dart/vault.dart';
+import 'dart:io';
 import 'package:open_file/open_file.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:hedge/l10n/generated/app_localizations.dart';
 import 'edit_page.dart';
-import '../../providers/vault_provider.dart';
 import 'large_password_page.dart' show LargePasswordPage;
+
 
 class DetailPage extends ConsumerStatefulWidget {
   final VaultItem item;

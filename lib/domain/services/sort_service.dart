@@ -1,39 +1,33 @@
 import 'package:hedge/src/dart/vault.dart';
 
 class SortService {
+  /// 排序规则：数字开头排最前，其余按拼音/字母混排
   static int compareVaultItems(VaultItem a, VaultItem b) {
-    final aCategory = _getCategory(a); // 传入 VaultItem
-    final bCategory = _getCategory(b); // 传入 VaultItem
+    final aDigit = _isDigitStart(a.title);
+    final bDigit = _isDigitStart(b.title);
 
-    if (aCategory != bCategory) {
-      return aCategory.compareTo(bCategory);
-    }
+    // 数字开头始终排最前
+    if (aDigit != bDigit) return aDigit ? -1 : 1;
 
-    // 使用预存储的拼音进行排序
-    final aPinyin = a.titlePinyin ?? a.title.toLowerCase();
-    final bPinyin = b.titlePinyin ?? b.title.toLowerCase();
-    return aPinyin.compareTo(bPinyin);
+    // 同为数字或同为非数字：按排序键比较
+    return _getSortKey(a).compareTo(_getSortKey(b));
   }
 
-  /// 获取分类：0=数字, 1=字母(含拼音), 2=其他非字母数字
-  static int _getCategory(VaultItem item) {
-    final title = item.title;
-    final titlePinyin = item.titlePinyin;
+  static bool _isDigitStart(String title) {
+    if (title.isEmpty) return false;
+    final code = title[0].codeUnitAt(0);
+    return code >= 48 && code <= 57;
+  }
 
-    // 1. 如果是数字开头，归类为数字
-    if (title.isNotEmpty) {
-      final code = title.codeUnitAt(0);
-      if (code >= 48 && code <= 57) return 0; // 0-9
+  /// 中文用 titlePinyin，英文用小写 title
+  static String _getSortKey(VaultItem item) {
+    if (item.title.isEmpty) return '';
+    final code = item.title[0].codeUnitAt(0);
+    if (code > 127) {
+      // 中文字符：使用拼音排序键
+      return item.titlePinyin ?? item.title.toLowerCase();
     }
-
-    // 2. 检查其拼音首字母（只有在 titlePinyin 存在且有效时才判断为字母类别）
-    if (titlePinyin != null && titlePinyin.isNotEmpty) {
-      final firstSortChar = titlePinyin[0];
-      final code = firstSortChar.codeUnitAt(0);
-      if (code >= 97 && code <= 122) return 1; // a-z 字母 (拼音首字母)
-    }
-
-    return 2; // 其他 (包括中文标题的原始首字符，或拼音生成失败的情况)
+    return item.title.toLowerCase();
   }
 
   static List<VaultItem> sort(List<VaultItem> items) {

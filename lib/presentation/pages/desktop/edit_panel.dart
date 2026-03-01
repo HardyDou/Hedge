@@ -1,8 +1,8 @@
+import 'package:hedge/presentation/providers/vault_provider.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hedge/src/dart/vault.dart';
 import 'package:hedge/l10n/generated/app_localizations.dart';
-import 'package:hedge/presentation/providers/vault_provider.dart';
 
 class EditPanel extends ConsumerStatefulWidget {
   final VaultItem item;

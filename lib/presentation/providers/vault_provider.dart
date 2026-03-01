@@ -6,6 +6,7 @@ import 'package:hedge/platform/sync_service_factory.dart';
 import 'package:hedge/services/sync_service.dart';
 import 'package:hedge/domain/use_cases/copy_password_usecase.dart';
 import 'package:hedge/domain/use_cases/copy_all_credentials_usecase.dart';
+import 'package:hedge/domain/use_cases/search_vault_items_usecase.dart';
 import 'package:hedge/domain/services/importer/csv_import_service.dart';
 import 'package:hedge/domain/services/importer/import_strategy.dart';
 import 'package:hedge/domain/services/sort_service.dart';
@@ -14,6 +15,15 @@ import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
 import 'dart:async';
 import 'dart:io';
+import 'package:flutter/foundation.dart'; // Added for compute function
+
+// Top-level function required by compute()
+Future<List<VaultItem>> _searchVaultItemsInIsolate(Map<String, dynamic> params) async {
+  final query = params['query'] as String;
+  final items = params['items'] as List<VaultItem>;
+  final useCase = SearchVaultItemsUseCase();
+  return useCase.execute(query, items);
+}
 
 class VaultState {
   final Vault? vault;
@@ -28,6 +38,7 @@ class VaultState {
   final bool isSelectionMode;
   final Set<String> selectedIds;
   final BiometricType? biometricType;
+  final List<VaultItem>? filteredVaultItems;
 
   VaultState({
     this.vault,
@@ -42,6 +53,7 @@ class VaultState {
     this.isSelectionMode = false,
     this.selectedIds = const {},
     this.biometricType,
+    this.filteredVaultItems = const [],
   });
 
   VaultState copyWith({
@@ -57,6 +69,7 @@ class VaultState {
     bool? isSelectionMode,
     Set<String>? selectedIds,
     BiometricType? biometricType,
+    List<VaultItem>? filteredVaultItems,
   }) {
     return VaultState(
       vault: vault ?? this.vault,
@@ -71,6 +84,7 @@ class VaultState {
       isSelectionMode: isSelectionMode ?? this.isSelectionMode,
       selectedIds: selectedIds ?? this.selectedIds,
       biometricType: biometricType ?? this.biometricType,
+      filteredVaultItems: filteredVaultItems ?? [],
     );
   }
 }
@@ -82,41 +96,67 @@ class VaultNotifier extends StateNotifier<VaultState> {
   final SyncService _syncService = SyncServiceFactory.getService();
   StreamSubscription? _syncSubscription;
   DateTime? _lastKnownModification;
+  String _currentSearchQuery = ""; // Add this line
 
   // Use Cases
   final _copyPasswordUseCase = CopyPasswordUseCase();
   final _copyAllCredentialsUseCase = CopyAllCredentialsUseCase();
-  
-  // Services
-  final _importService = CsvImportService();
 
-  VaultNotifier() : super(VaultState(isLoading: true));
+  Future<void> searchItems(String query) async {
+    _currentSearchQuery = query;
+    final currentVaultState = state;
+    if (currentVaultState.vault == null) {
+      state = state.copyWith(filteredVaultItems: []);
+      return;
+    }
 
-  Future<void> checkInitialStatus() async {
+    if (query.isEmpty) {
+      state = state.copyWith(
+        filteredVaultItems: SortService.sort(currentVaultState.vault!.items),
+      );
+      return;
+    }
+
+    final filtered = await compute(
+      _searchVaultItemsInIsolate,
+      {
+        'query': query,
+        'items': currentVaultState.vault!.items,
+      },
+    );
+    state = state.copyWith(filteredVaultItems: filtered);
+  }
+
+
+
+  VaultNotifier() : super(VaultState(isLoading: true, filteredVaultItems: []));
+
+Future<void> checkInitialStatus() async {
     state = state.copyWith(isLoading: true);
     try {
       final path = await _getDefaultVaultPath();
       final exists = await File(path).exists();
-      
+
       if (exists) {
         final file = File(path);
         _lastKnownModification = await file.lastModified();
       }
-      
+
       final bioEnabled = await _storage.read(key: 'bio_enabled') == 'true';
       final timeoutStr = await _storage.read(key: 'auto_lock_timeout');
       final timeout = timeoutStr != null ? int.tryParse(timeoutStr) ?? 5 : 5;
-      
+
       // Detect biometric type
       final biometricType = await _detectBiometricType();
-      
+
       state = state.copyWith(
-        hasVaultFile: exists, 
+        hasVaultFile: exists,
         isBiometricsEnabled: bioEnabled,
         vaultPath: path,
         autoLockTimeout: timeout,
         isLoading: false,
         biometricType: biometricType,
+        filteredVaultItems: [], // Initialize empty, will be populated on unlock/setup
       );
     } catch (e) {
       state = state.copyWith(isLoading: false, error: e.toString());
@@ -148,7 +188,7 @@ class VaultNotifier extends StateNotifier<VaultState> {
     state = state.copyWith(autoLockTimeout: seconds);
   }
 
-  Future<String> _getDefaultVaultPath() async {
+  static Future<String> _getDefaultVaultPath() async {
     final directory = await getApplicationDocumentsDirectory();
     // Use a specific filename. On iOS/macOS, files in 'Documents' are 
     // automatically synced to iCloud if the app is configured.
@@ -161,12 +201,13 @@ class VaultNotifier extends StateNotifier<VaultState> {
     state = state.copyWith(vaultPath: path, hasVaultFile: exists);
   }
 
-  Future<bool> setupVault(String masterPassword) async {
+Future<bool> setupVault(String masterPassword) async {
+    final vaultState = state;
     state = state.copyWith(isLoading: true, error: null);
     try {
       final vault = VaultService.createEmptyVault();
-      final path = state.vaultPath ?? await _getDefaultVaultPath();
-      
+      final path = vaultState.vaultPath ?? await _getDefaultVaultPath();
+
       final file = File(path);
       if (!await file.parent.exists()) {
         await file.parent.create(recursive: true);
@@ -177,7 +218,7 @@ class VaultNotifier extends StateNotifier<VaultState> {
       await _storage.write(key: 'master_password', value: masterPassword);
       await _storage.write(key: 'bio_enabled', value: 'true');
       await _storage.write(key: 'vault_path', value: path);
-      
+
       await _startSyncWatch(path, masterPassword);
 
       state = state.copyWith(
@@ -188,6 +229,7 @@ class VaultNotifier extends StateNotifier<VaultState> {
         currentPassword: masterPassword,
         isBiometricsEnabled: true,
         vaultPath: path,
+        filteredVaultItems: SortService.sort(vault?.items ?? []),
       );
       return true;
     } catch (e) {
@@ -196,7 +238,7 @@ class VaultNotifier extends StateNotifier<VaultState> {
     }
   }
 
-  Future<bool> unlockVault(String masterPassword) async {
+Future<bool> unlockVault(String masterPassword) async {
     state = state.copyWith(isLoading: true, error: null);
     try {
       final path = state.vaultPath ?? await _getDefaultVaultPath();
@@ -204,7 +246,7 @@ class VaultNotifier extends StateNotifier<VaultState> {
 
       await _storage.write(key: 'master_password', value: masterPassword);
       await _storage.write(key: 'vault_path', value: path);
-      
+
       // Start watching for file changes
       await _startSyncWatch(path, masterPassword);
 
@@ -214,6 +256,7 @@ class VaultNotifier extends StateNotifier<VaultState> {
         isAuthenticated: true,
         currentPassword: masterPassword,
         vaultPath: path,
+        filteredVaultItems: SortService.sort(vault?.items ?? []),
       );
       return true;
     } catch (e) {
@@ -308,22 +351,23 @@ class VaultNotifier extends StateNotifier<VaultState> {
   }
 
   Future<bool> resetMasterPassword(String currentPassword, String newPassword) async {
-    if (state.vault == null || !state.isAuthenticated) {
+    final vaultState = state;
+    if (vaultState.vault == null || !vaultState.isAuthenticated) {
       state = state.copyWith(error: "vault_not_unlocked");
       return false;
     }
 
-    if (state.currentPassword != currentPassword) {
+    if (vaultState.currentPassword != currentPassword) {
       state = state.copyWith(error: "incorrect_current_password");
       return false;
     }
 
     state = state.copyWith(isLoading: true, error: null);
     try {
-      final path = state.vaultPath ?? await _getDefaultVaultPath();
-      final vault = state.vault!;
+      final path = vaultState.vaultPath ?? await _getDefaultVaultPath();
+      final vault = vaultState.vault!;
       
-      await VaultService.saveVault(state.vaultPath!, state.currentPassword!, vault);
+      await VaultService.saveVault(vaultState.vaultPath!, vaultState.currentPassword!, vault);
 
       await _storage.write(key: 'master_password', value: newPassword);
       
@@ -339,9 +383,10 @@ class VaultNotifier extends StateNotifier<VaultState> {
   }
 
   Future<void> resetVaultCompletely() async {
+    final vaultState = state;
     state = state.copyWith(isLoading: true, error: null);
     try {
-      final path = state.vaultPath ?? await _getDefaultVaultPath();
+      final path = vaultState.vaultPath ?? await _getDefaultVaultPath();
       final vaultFile = File(path);
       
       if (await vaultFile.exists()) {
@@ -357,6 +402,7 @@ class VaultNotifier extends StateNotifier<VaultState> {
         isBiometricsEnabled: false,
         vaultPath: path,
         autoLockTimeout: 5,
+        filteredVaultItems: [],
       );
       checkInitialStatus();
     } catch (e) {
@@ -378,49 +424,52 @@ class VaultNotifier extends StateNotifier<VaultState> {
     state = state.copyWith(isBiometricsEnabled: enabled);
   }
 
-  Future<void> addItem(String title) async {
-    if (state.vault == null || state.currentPassword == null) return;
-    
+Future<void> addItem(String title) async {
+    final vaultState = state;
+    if (vaultState.vault == null || vaultState.currentPassword == null) return;
+
     state = state.copyWith(isLoading: true);
     try {
-      final newVault = VaultService.addItem(state.vault!, title);
+      final newVault = VaultService.addItem(vaultState.vault!, title);
       await _saveAndRefresh(newVault);
     } catch (e) {
       state = state.copyWith(isLoading: false, error: e.toString());
     }
   }
 
-  Future<void> addItemWithDetails(VaultItem item) async {
-    if (state.vault == null || state.currentPassword == null) return;
-    
+Future<void> addItemWithDetails(VaultItem item) async {
+    final vaultState = state;
+    if (vaultState.vault == null || vaultState.currentPassword == null) return;
+
     state = state.copyWith(isLoading: true);
     try {
-      // 直接添加完整的 item，而不是先添加再更新
-      final newVault = VaultService.addItemWithDetails(state.vault!, item);
+      final newVault = VaultService.addItemWithDetails(vaultState.vault!, item);
       await _saveAndRefresh(newVault);
     } catch (e) {
       state = state.copyWith(isLoading: false, error: e.toString());
     }
   }
 
-  Future<void> updateItem(VaultItem updatedItem) async {
-    if (state.vault == null || state.currentPassword == null) return;
-    
+Future<void> updateItem(VaultItem updatedItem) async {
+    final vaultState = state;
+    if (vaultState.vault == null || vaultState.currentPassword == null) return;
+
     state = state.copyWith(isLoading: true);
     try {
-      final newVault = VaultService.updateItem(state.vault!, updatedItem);
+      final newVault = VaultService.updateItem(vaultState.vault!, updatedItem);
       await _saveAndRefresh(newVault);
     } catch (e) {
       state = state.copyWith(isLoading: false, error: e.toString());
     }
   }
 
-  Future<void> deleteItem(String id) async {
-    if (state.vault == null || state.currentPassword == null) return;
-    
+Future<void> deleteItem(String id) async {
+    final vaultState = state;
+    if (vaultState.vault == null || vaultState.currentPassword == null) return;
+
     state = state.copyWith(isLoading: true);
     try {
-      final newVault = VaultService.deleteItem(state.vault!, id);
+      final newVault = VaultService.deleteItem(vaultState.vault!, id);
       await _saveAndRefresh(newVault);
     } catch (e) {
       state = state.copyWith(isLoading: false, error: e.toString());
@@ -428,14 +477,17 @@ class VaultNotifier extends StateNotifier<VaultState> {
   }
 
   Future<void> _saveAndRefresh(Vault newVault) async {
-    final path = state.vaultPath ?? await _getDefaultVaultPath();
-    await VaultService.saveVault(path, state.currentPassword!, newVault);
+    final vaultState = state;
+    final path = vaultState.vaultPath ?? await _getDefaultVaultPath();
+    await VaultService.saveVault(path, vaultState.currentPassword!, newVault);
     // Update last known modification time
     final file = File(path);
     if (await file.exists()) {
       _lastKnownModification = await file.lastModified();
     }
     state = state.copyWith(vault: newVault, isLoading: false);
+    // Re-run search with current query
+    await searchItems(_currentSearchQuery);
   }
 
   Future<void> _startSyncWatch(String path, String masterPassword) async {
@@ -447,7 +499,8 @@ class VaultNotifier extends StateNotifier<VaultState> {
     
       // Listen for file changes
       _syncSubscription = _syncService.onFileChanged.listen((event) async {
-        if (!state.isAuthenticated || state.currentPassword == null) return;
+        final currentVaultState = state;
+        if (!currentVaultState.isAuthenticated || currentVaultState.currentPassword == null) return;
       
       // Check if this is our own change (by comparing modification time)
       final file = File(path);
@@ -469,7 +522,7 @@ class VaultNotifier extends StateNotifier<VaultState> {
       
       // Reload vault from file
       try {
-        final vault = await VaultService.loadVault(state.vaultPath!, state.currentPassword!);
+        final vault = await VaultService.loadVault(currentVaultState.vaultPath!, currentVaultState.currentPassword!);
         state = state.copyWith(vault: vault);
         _lastKnownModification = currentMod;
       } catch (e) {
@@ -492,6 +545,7 @@ class VaultNotifier extends StateNotifier<VaultState> {
       currentPassword: null,
       isSelectionMode: false,
       selectedIds: {},
+      filteredVaultItems: [],
     );
   }
 
@@ -512,13 +566,14 @@ class VaultNotifier extends StateNotifier<VaultState> {
     state = state.copyWith(selectedIds: newSelected);
   }
 
-  Future<void> deleteSelectedItems() async {
-    if (state.vault == null || state.currentPassword == null || state.selectedIds.isEmpty) return;
-    
+Future<void> deleteSelectedItems() async {
+    final vaultState = state;
+    if (vaultState.vault == null || vaultState.currentPassword == null || vaultState.selectedIds.isEmpty) return;
+
     state = state.copyWith(isLoading: true);
     try {
-      var currentVault = state.vault!;
-      for (final id in state.selectedIds) {
+      var currentVault = vaultState.vault!;
+      for (final id in vaultState.selectedIds) {
         currentVault = VaultService.deleteItem(currentVault, id);
       }
       await _saveAndRefresh(currentVault);
@@ -529,14 +584,16 @@ class VaultNotifier extends StateNotifier<VaultState> {
   }
 
   VaultItem? findItem(String id) {
-    return state.vault?.items.firstWhere(
+    final vaultState = state;
+    return vaultState.vault?.items.firstWhere(
       (item) => item.id == id,
       orElse: () => throw Exception('Item not found'),
     );
   }
 
-  List<VaultItem> get sortedItems {
-    final items = state.vault?.items ?? [];
+  List<VaultItem> getSortedItems() {
+    final vaultState = state;
+    final items = vaultState.vault?.items ?? [];
     return SortService.sort(items);
   }
 
@@ -570,7 +627,8 @@ class VaultNotifier extends StateNotifier<VaultState> {
   }
 
   Future<ImportResult> importFromCsv(String csvContent, {ImportStrategy? strategy}) async {
-    if (state.vault == null || state.currentPassword == null) {
+    final vaultState = state;
+    if (vaultState.vault == null || vaultState.currentPassword == null) {
       return ImportResult(success: 0, failed: 0);
     }
     
@@ -586,7 +644,7 @@ class VaultNotifier extends StateNotifier<VaultState> {
       final result = await service.import(csvContent);
       
       if (result.items.isNotEmpty) {
-        var currentVault = state.vault!;
+        var currentVault = vaultState.vault!;
         
         // Add all imported items
         for (final item in result.items) {
