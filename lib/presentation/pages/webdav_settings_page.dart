@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hedge/domain/models/sync_config.dart';
 import 'package:hedge/presentation/providers/vault_provider.dart';
@@ -12,7 +12,6 @@ class WebDAVSettingsPage extends ConsumerStatefulWidget {
 }
 
 class _WebDAVSettingsPageState extends ConsumerState<WebDAVSettingsPage> {
-  final _formKey = GlobalKey<FormState>();
   final _serverUrlController = TextEditingController();
   final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
@@ -49,7 +48,15 @@ class _WebDAVSettingsPageState extends ConsumerState<WebDAVSettingsPage> {
   }
 
   Future<void> _testConnection() async {
-    if (!_formKey.currentState!.validate()) return;
+    if (_serverUrlController.text.isEmpty ||
+        _usernameController.text.isEmpty ||
+        _passwordController.text.isEmpty) {
+      setState(() {
+        _errorMessage = '请填写所有必填字段';
+        _successMessage = null;
+      });
+      return;
+    }
 
     setState(() {
       _isLoading = true;
@@ -79,7 +86,15 @@ class _WebDAVSettingsPageState extends ConsumerState<WebDAVSettingsPage> {
   }
 
   Future<void> _saveAndEnable() async {
-    if (!_formKey.currentState!.validate()) return;
+    if (_serverUrlController.text.isEmpty ||
+        _usernameController.text.isEmpty ||
+        _passwordController.text.isEmpty) {
+      setState(() {
+        _errorMessage = '请填写所有必填字段';
+        _successMessage = null;
+      });
+      return;
+    }
 
     setState(() {
       _isLoading = true;
@@ -95,15 +110,13 @@ class _WebDAVSettingsPageState extends ConsumerState<WebDAVSettingsPage> {
       );
 
       await ref.read(vaultProvider.notifier).setSyncMode(
-        SyncMode.webdav,
-        webdavConfig: config,
-      );
+            SyncMode.webdav,
+            webdavConfig: config,
+          );
 
       if (mounted) {
         Navigator.of(context).pop();
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('WebDAV 同步已启用')),
-        );
+        Navigator.of(context).pop(); // 返回到设置页面
       }
     } catch (e) {
       setState(() {
@@ -120,7 +133,8 @@ class _WebDAVSettingsPageState extends ConsumerState<WebDAVSettingsPage> {
         _remotePathController.text = 'Hedge/vault.db';
         break;
       case 'nextcloud':
-        _serverUrlController.text = 'https://your-nextcloud.com/remote.php/dav/files/username/';
+        _serverUrlController.text =
+            'https://your-nextcloud.com/remote.php/dav/files/username/';
         _remotePathController.text = 'Hedge/vault.db';
         break;
       case 'synology':
@@ -133,231 +147,281 @@ class _WebDAVSettingsPageState extends ConsumerState<WebDAVSettingsPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('WebDAV 同步设置'),
+    final brightness = CupertinoTheme.of(context).brightness;
+    final isDark = brightness == Brightness.dark;
+
+    return CupertinoPageScaffold(
+      navigationBar: CupertinoNavigationBar(
+        middle: const Text('WebDAV 配置'),
+        backgroundColor: isDark ? const Color(0xFF1C1C1E) : CupertinoColors.white,
       ),
-      body: Form(
-        key: _formKey,
+      child: SafeArea(
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
-            // 配置模板
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      '快速配置模板',
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                    ),
-                    const SizedBox(height: 12),
-                    Wrap(
-                      spacing: 8,
-                      children: [
-                        ActionChip(
-                          label: const Text('坚果云'),
-                          onPressed: () => _useTemplate('jianguoyun'),
-                        ),
-                        ActionChip(
-                          label: const Text('Nextcloud'),
-                          onPressed: () => _useTemplate('nextcloud'),
-                        ),
-                        ActionChip(
-                          label: const Text('Synology NAS'),
-                          onPressed: () => _useTemplate('synology'),
-                        ),
-                      ],
-                    ),
-                  ],
+            // 快速配置模板
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: isDark ? const Color(0xFF2C2C2E) : CupertinoColors.white,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(
+                  color: isDark
+                      ? const Color(0xFF3C3C3E)
+                      : CupertinoColors.systemGrey5,
                 ),
               ),
-            ),
-
-            const SizedBox(height: 24),
-
-            // 服务器地址
-            TextFormField(
-              controller: _serverUrlController,
-              decoration: const InputDecoration(
-                labelText: '服务器地址',
-                hintText: 'https://your-server.com/webdav',
-                border: OutlineInputBorder(),
-                helperText: '完整的 WebDAV 服务器 URL',
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '快速配置',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: isDark ? CupertinoColors.white : CupertinoColors.black,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      _buildTemplateChip('坚果云', () => _useTemplate('jianguoyun'), isDark),
+                      _buildTemplateChip('Nextcloud', () => _useTemplate('nextcloud'), isDark),
+                      _buildTemplateChip('Synology', () => _useTemplate('synology'), isDark),
+                    ],
+                  ),
+                ],
               ),
-              keyboardType: TextInputType.url,
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return '请输入服务器地址';
-                }
-                if (!value.startsWith('http://') && !value.startsWith('https://')) {
-                  return '请输入有效的 URL（以 http:// 或 https:// 开头）';
-                }
-                return null;
-              },
             ),
 
             const SizedBox(height: 16),
 
-            // 用户名
-            TextFormField(
-              controller: _usernameController,
-              decoration: const InputDecoration(
-                labelText: '用户名',
-                border: OutlineInputBorder(),
-              ),
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return '请输入用户名';
-                }
-                return null;
-              },
-            ),
-
-            const SizedBox(height: 16),
-
-            // 密码
-            TextFormField(
-              controller: _passwordController,
-              decoration: InputDecoration(
-                labelText: '密码',
-                border: const OutlineInputBorder(),
-                helperText: '坚果云请使用应用密码',
-                suffixIcon: IconButton(
-                  icon: Icon(_obscurePassword ? Icons.visibility : Icons.visibility_off),
-                  onPressed: () {
-                    setState(() {
-                      _obscurePassword = !_obscurePassword;
-                    });
-                  },
+            // 服务器配置
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: isDark ? const Color(0xFF2C2C2E) : CupertinoColors.white,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(
+                  color: isDark
+                      ? const Color(0xFF3C3C3E)
+                      : CupertinoColors.systemGrey5,
                 ),
               ),
-              obscureText: _obscurePassword,
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return '请输入密码';
-                }
-                return null;
-              },
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildTextField(
+                    label: '服务器地址',
+                    controller: _serverUrlController,
+                    placeholder: 'https://your-server.com/webdav',
+                    isDark: isDark,
+                  ),
+                  const SizedBox(height: 16),
+                  _buildTextField(
+                    label: '用户名',
+                    controller: _usernameController,
+                    placeholder: '用户名',
+                    isDark: isDark,
+                  ),
+                  const SizedBox(height: 16),
+                  _buildTextField(
+                    label: '密码',
+                    controller: _passwordController,
+                    placeholder: '密码或应用密码',
+                    obscureText: _obscurePassword,
+                    isDark: isDark,
+                    suffix: CupertinoButton(
+                      padding: const EdgeInsets.only(right: 8),
+                      minSize: 0,
+                      onPressed: () =>
+                          setState(() => _obscurePassword = !_obscurePassword),
+                      child: Icon(
+                        _obscurePassword
+                            ? CupertinoIcons.eye
+                            : CupertinoIcons.eye_slash,
+                        size: 18,
+                        color: isDark
+                            ? CupertinoColors.white.withOpacity(0.6)
+                            : CupertinoColors.black.withOpacity(0.6),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  _buildTextField(
+                    label: '远程路径',
+                    controller: _remotePathController,
+                    placeholder: 'Hedge/vault.db',
+                    isDark: isDark,
+                  ),
+                ],
+              ),
             ),
 
             const SizedBox(height: 16),
-
-            // 远程路径
-            TextFormField(
-              controller: _remotePathController,
-              decoration: const InputDecoration(
-                labelText: '远程路径',
-                border: OutlineInputBorder(),
-                helperText: '服务器上的文件路径',
-              ),
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return '请输入远程路径';
-                }
-                return null;
-              },
-            ),
-
-            const SizedBox(height: 24),
 
             // 错误/成功消息
             if (_errorMessage != null)
-              Card(
-                color: Colors.red.shade50,
-                child: Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.error, color: Colors.red),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          _errorMessage!,
-                          style: const TextStyle(color: Colors.red),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: CupertinoColors.systemRed.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(CupertinoIcons.xmark_circle,
+                        color: CupertinoColors.systemRed, size: 18),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        _errorMessage!,
+                        style: const TextStyle(
+                          fontSize: 13,
+                          color: CupertinoColors.systemRed,
                         ),
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ),
 
             if (_successMessage != null)
-              Card(
-                color: Colors.green.shade50,
-                child: Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.check_circle, color: Colors.green),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          _successMessage!,
-                          style: const TextStyle(color: Colors.green),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: CupertinoColors.systemGreen.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(CupertinoIcons.checkmark_circle,
+                        color: CupertinoColors.systemGreen, size: 18),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        _successMessage!,
+                        style: const TextStyle(
+                          fontSize: 13,
+                          color: CupertinoColors.systemGreen,
                         ),
                       ),
-                    ],
-                  ),
-                ),
-              ),
-
-            const SizedBox(height: 16),
-
-            // 测试连接按钮
-            OutlinedButton.icon(
-              onPressed: _isLoading ? null : _testConnection,
-              icon: _isLoading
-                  ? const SizedBox(
-                      width: 16,
-                      height: 16,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : const Icon(Icons.wifi_tethering),
-              label: const Text('测试连接'),
-            ),
-
-            const SizedBox(height: 8),
-
-            // 保存并启用按钮
-            FilledButton.icon(
-              onPressed: _isLoading ? null : _saveAndEnable,
-              icon: const Icon(Icons.save),
-              label: const Text('保存并启用'),
-            ),
-
-            const SizedBox(height: 24),
-
-            // 帮助信息
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      '配置说明',
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                     ),
-                    const SizedBox(height: 12),
-                    const Text('坚果云配置步骤：'),
-                    const Text('1. 登录坚果云网页版'),
-                    const Text('2. 进入"账户信息 > 安全选项 > 第三方应用管理"'),
-                    const Text('3. 添加应用，生成应用密码'),
-                    const Text('4. 使用应用密码（不是登录密码）'),
-                    const SizedBox(height: 12),
-                    const Text('支持的服务：'),
-                    const Text('• Nextcloud（自建，推荐）'),
-                    const Text('• Synology NAS（自建，推荐）'),
-                    const Text('• 坚果云（云服务，1GB 免费）'),
-                    const Text('• ownCloud（自建）'),
                   ],
                 ),
               ),
+
+            if (_errorMessage != null || _successMessage != null)
+              const SizedBox(height: 16),
+
+            // 按钮
+            Row(
+              children: [
+                Expanded(
+                  child: CupertinoButton(
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    color: isDark
+                        ? const Color(0xFF2C2C2E)
+                        : CupertinoColors.systemGrey6,
+                    borderRadius: BorderRadius.circular(10),
+                    onPressed: _isLoading ? null : _testConnection,
+                    child: _isLoading
+                        ? const CupertinoActivityIndicator()
+                        : Text(
+                            '测试连接',
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: isDark
+                                  ? CupertinoColors.white
+                                  : CupertinoColors.black,
+                            ),
+                          ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: CupertinoButton(
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    color: CupertinoColors.activeBlue,
+                    borderRadius: BorderRadius.circular(10),
+                    onPressed: _isLoading ? null : _saveAndEnable,
+                    child: const Text(
+                      '保存并启用',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: CupertinoColors.white,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTextField({
+    required String label,
+    required TextEditingController controller,
+    required String placeholder,
+    required bool isDark,
+    bool obscureText = false,
+    Widget? suffix,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 13,
+            color: isDark
+                ? CupertinoColors.white.withOpacity(0.6)
+                : CupertinoColors.black.withOpacity(0.6),
+          ),
+        ),
+        const SizedBox(height: 6),
+        CupertinoTextField(
+          controller: controller,
+          placeholder: placeholder,
+          obscureText: obscureText,
+          style: TextStyle(
+            fontSize: 14,
+            color: isDark ? CupertinoColors.white : CupertinoColors.black,
+          ),
+          decoration: BoxDecoration(
+            color: isDark ? const Color(0xFF1C1C1E) : CupertinoColors.systemGrey6,
+            borderRadius: BorderRadius.circular(8),
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          suffix: suffix,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildTemplateChip(String label, VoidCallback onTap, bool isDark) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: CupertinoColors.activeBlue.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: CupertinoColors.activeBlue.withOpacity(0.3),
+          ),
+        ),
+        child: Text(
+          label,
+          style: const TextStyle(
+            fontSize: 13,
+            color: CupertinoColors.activeBlue,
+          ),
         ),
       ),
     );
