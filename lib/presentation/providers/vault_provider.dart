@@ -134,6 +134,9 @@ class VaultNotifier extends StateNotifier<VaultState> {
 Future<void> checkInitialStatus() async {
     state = state.copyWith(isLoading: true);
     try {
+      // 检查 iCloud Drive 是否可用
+      final iCloudAvailable = await isICloudDriveAvailable();
+
       final path = await _getDefaultVaultPath();
       final exists = await File(path).exists();
 
@@ -158,6 +161,13 @@ Future<void> checkInitialStatus() async {
         biometricType: biometricType,
         filteredVaultItems: [], // Initialize empty, will be populated on unlock/setup
       );
+
+      // 显示 iCloud Drive 状态
+      if (iCloudAvailable) {
+        print('[Vault] Using iCloud Drive: $path');
+      } else {
+        print('[Vault] Using local storage: $path');
+      }
     } catch (e) {
       state = state.copyWith(isLoading: false, error: e.toString());
     }
@@ -188,10 +198,59 @@ Future<void> checkInitialStatus() async {
     state = state.copyWith(autoLockTimeout: seconds);
   }
 
+  /// 获取 iCloud Drive 路径
+  static Future<String?> _getICloudDrivePath() async {
+    if (!Platform.isIOS && !Platform.isMacOS) {
+      return null;
+    }
+
+    try {
+      // iOS/macOS iCloud Drive 路径
+      final home = Platform.environment['HOME'];
+      if (home == null) return null;
+
+      final iCloudDrivePath = '$home/Library/Mobile Documents/com~apple~CloudDocs';
+      final iCloudDir = Directory(iCloudDrivePath);
+
+      // 检查 iCloud Drive 是否可用
+      if (await iCloudDir.exists()) {
+        // 创建应用专属文件夹
+        final appFolder = Directory('$iCloudDrivePath/Hedge');
+        if (!await appFolder.exists()) {
+          await appFolder.create(recursive: true);
+        }
+
+        print('[iCloud Drive] Path: ${appFolder.path}');
+        return appFolder.path;
+      } else {
+        print('[iCloud Drive] Not available');
+        return null;
+      }
+    } catch (e) {
+      print('[iCloud Drive] Error: $e');
+      return null;
+    }
+  }
+
+  /// 检查 iCloud Drive 是否可用
+  static Future<bool> isICloudDriveAvailable() async {
+    final path = await _getICloudDrivePath();
+    return path != null;
+  }
+
   static Future<String> _getDefaultVaultPath() async {
+    // iOS/macOS: 优先使用 iCloud Drive
+    if (Platform.isIOS || Platform.isMacOS) {
+      final iCloudPath = await _getICloudDrivePath();
+      if (iCloudPath != null) {
+        return '$iCloudPath/vault.db';
+      } else {
+        print('[Vault] iCloud Drive not available, using local storage');
+      }
+    }
+
+    // Fallback: 使用本地 Documents 目录
     final directory = await getApplicationDocumentsDirectory();
-    // Use a specific filename. On iOS/macOS, files in 'Documents' are 
-    // automatically synced to iCloud if the app is configured.
     return '${directory.path}/vault.db';
   }
 
