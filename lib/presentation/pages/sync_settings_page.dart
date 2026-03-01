@@ -85,7 +85,7 @@ class SyncSettingsPage extends ConsumerWidget {
               isAvailable: true,
               badge: '需要付费开发者账号',
               onTap: () async {
-                final available = await ref.read(vaultProvider.notifier).isICloudDriveAvailable();
+                final available = await VaultNotifier.isICloudDriveAvailable();
                 if (!available) {
                   if (context.mounted) {
                     showDialog(
@@ -94,7 +94,7 @@ class SyncSettingsPage extends ConsumerWidget {
                         title: const Text('iCloud Drive 不可用'),
                         content: const Text(
                           'iCloud Drive 功能需要：\n\n'
-                          '1. 付费的 Apple Developer Program ($99/年)\n'
+                          '1. 付费的 Apple Developer Program (\$99/年)\n'
                           '2. 在 Xcode 中配置 iCloud capability\n\n'
                           '建议使用 WebDAV 作为替代方案。',
                         ),

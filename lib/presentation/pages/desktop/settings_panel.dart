@@ -4,6 +4,7 @@ import 'package:hedge/l10n/generated/app_localizations.dart';
 import 'package:hedge/presentation/providers/locale_provider.dart';
 import 'package:hedge/presentation/providers/theme_provider.dart';
 import 'package:hedge/presentation/providers/vault_provider.dart';
+import 'package:hedge/presentation/pages/sync_settings_page.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:hedge/domain/services/importer/concrete_strategies.dart';
 import 'package:hedge/domain/services/importer/import_strategy.dart';
@@ -286,6 +287,13 @@ class _SettingsPanelState extends ConsumerState<SettingsPanel> {
         children: [
           _buildSettingCard([
             _buildListTile(
+              title: '同步设置',
+              subtitle: '配置 WebDAV 或 iCloud Drive 同步',
+              isDark: isDark,
+              onTap: () => _navigateToSyncSettings(context),
+            ),
+            _buildDivider(isDark),
+            _buildListTile(
               title: l10n.import,
               subtitle: l10n.importHint,
               isDark: isDark,
@@ -530,6 +538,14 @@ class _SettingsPanelState extends ConsumerState<SettingsPanel> {
         title: Text(l10n.appTitle),
         content: Text(l10n.aboutDescription),
         actions: [CupertinoDialogAction(onPressed: () => Navigator.pop(context), child: const Text("OK"))],
+      ),
+    );
+  }
+
+  void _navigateToSyncSettings(BuildContext context) {
+    Navigator.of(context).push(
+      CupertinoPageRoute(
+        builder: (context) => const SyncSettingsPage(),
       ),
     );
   }
