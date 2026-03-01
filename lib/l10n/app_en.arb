@@ -155,5 +155,12 @@
   "import1Password": "1Password",
   "recommended": "Recommended",
   "securityWarning": "SECURITY WARNING: After import, please DELETE the CSV file immediately. It contains unencrypted passwords.",
-  "importResult": "Import Result"
+  "importResult": "Import Result",
+  "trayPanelTitle": "Quick Access",
+  "openMainWindow": "Open Main Window",
+  "exitApp": "Exit Application",
+  "recentPasswords": "Recent Passwords",
+  "noRecentPasswords": "No recent passwords",
+  "quickSearch": "Quick Search...",
+  "viewAll": "View All"
 }

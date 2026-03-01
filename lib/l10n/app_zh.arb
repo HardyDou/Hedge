@@ -129,5 +129,12 @@
   "import1Password": "1Password",
   "recommended": "推荐",
   "securityWarning": "安全警告：导入完成后，请立即删除您的 CSV 文件！它包含未加密的明文密码。",
-  "importResult": "导入结果"
+  "importResult": "导入结果",
+  "trayPanelTitle": "快捷访问",
+  "openMainWindow": "打开主窗口",
+  "exitApp": "退出应用",
+  "recentPasswords": "最近使用",
+  "noRecentPasswords": "暂无最近使用的密码",
+  "quickSearch": "快速搜索...",
+  "viewAll": "查看全部"
 }
