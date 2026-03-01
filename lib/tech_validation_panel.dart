@@ -155,16 +155,16 @@ class _TechValidationPanelAppState extends State<TechValidationPanelApp>
 
     // 计算 Panel 位置（紧贴托盘图标下方，居中对齐）
     double panelX = trayBounds.left - panelWidth / 2 + trayBounds.width / 2;
-    // macOS 窗口标题栏高度约 28 像素，即使隐藏了也会占用空间
-    // 所以需要向上偏移标题栏高度
-    double panelY = -28.0;  // 负值向上偏移
+    // 尝试不同的偏移值来找到正确的位置
+    // macOS 菜单栏 + 窗口标题栏的总高度
+    double panelY = -52.0;  // 尝试更大的负偏移
 
     // 边界检查
     if (panelX < 0) panelX = 0;
 
     debugPrint('✅ 验证 2: Panel 位置计算完成:');
     debugPrint('   托盘 top: ${trayBounds.top}, bottom: ${trayBounds.bottom}, height: ${trayBounds.height}');
-    debugPrint('   Panel X: $panelX, Y: $panelY (向上偏移标题栏高度)');
+    debugPrint('   Panel X: $panelX, Y: $panelY (偏移 -52)');
     debugPrint('   Panel 尺寸: ${panelWidth}x$panelHeight');
 
     // 切换到 Panel 模式
