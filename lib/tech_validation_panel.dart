@@ -62,7 +62,28 @@ class _TechValidationPanelAppState extends State<TechValidationPanelApp>
   @override
   void onTrayIconMouseDown() {
     debugPrint('托盘图标被点击');
-    _showPanel();
+    _togglePanel();
+  }
+
+  Future<void> _togglePanel() async {
+    if (_isPanelMode) {
+      // 如果已经是 Panel 模式，检查窗口是否可见
+      final isVisible = await windowManager.isVisible();
+      if (isVisible) {
+        // 可见则隐藏
+        debugPrint('隐藏 Panel');
+        await windowManager.hide();
+        await windowManager.setSkipTaskbar(true);
+      } else {
+        // 不可见则显示
+        debugPrint('显示 Panel');
+        await windowManager.show();
+        await windowManager.focus();
+      }
+    } else {
+      // 不是 Panel 模式，显示 Panel
+      _showPanel();
+    }
   }
 
   @override
