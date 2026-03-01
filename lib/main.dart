@@ -294,6 +294,16 @@ class HomePage extends ConsumerStatefulWidget {
 class _HomePageState extends ConsumerState<HomePage> {
   final _searchController = TextEditingController();
   final _scrollController = ScrollController();
+
+  @override
+  void initState() {
+    super.initState();
+    // 初始化时清空搜索，确保显示所有数据
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(vaultProvider.notifier).searchItems('');
+    });
+  }
+
   @override
   void dispose() {
     _searchController.dispose();
