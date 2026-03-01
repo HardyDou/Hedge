@@ -110,6 +110,9 @@ class _TechValidationAppState extends State<TechValidationApp>
     // 隐藏窗口而不是销毁
     await windowManager.hide();
 
+    // 隐藏 Dock 图标
+    await windowManager.setSkipTaskbar(true);
+
     // 不调用 windowManager.destroy()，保持应用运行
   }
 
@@ -147,6 +150,9 @@ class _TechValidationAppState extends State<TechValidationApp>
   }
 
   void _showMainWindow() async {
+    // 恢复 Dock 图标
+    await windowManager.setSkipTaskbar(false);
+
     await windowManager.show();
     await windowManager.focus();
     debugPrint('✅ 验证 5: 主窗口显示');
