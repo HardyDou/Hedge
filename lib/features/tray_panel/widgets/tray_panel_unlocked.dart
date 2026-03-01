@@ -132,7 +132,16 @@ class _TrayPanelUnlockedState extends ConsumerState<TrayPanelUnlocked> {
   Widget _buildSearchBar(BuildContext context, AppLocalizations l10n, bool isDark) {
     return Container(
       height: 36,
-      margin: const EdgeInsets.all(12),
+      margin: const EdgeInsets.symmetric(horizontal: 0, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 8),
+      decoration: BoxDecoration(
+        border: Border(
+          bottom: BorderSide(
+            color: isDark ? const Color(0xFF38383A) : const Color(0xFFC6C6C8),
+            width: 0.5,
+          ),
+        ),
+      ),
       child: CupertinoSearchTextField(
         controller: _searchController,
         placeholder: l10n.quickSearch,
