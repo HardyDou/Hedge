@@ -331,10 +331,56 @@ class _DesktopHomePageState extends ConsumerState<DesktopHomePage> {
   }
 
   Widget _buildListView(List<VaultItem> items, bool isDark, VaultState vaultState) {
+    final groupedList = _buildGroupedList(items);
     return ListView.builder(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      itemCount: items.length,
-      itemBuilder: (context, index) => _buildListItem(items[index], isDark, vaultState),
+      itemCount: groupedList.length,
+      itemBuilder: (context, index) {
+        final element = groupedList[index];
+        if (element is String) return _buildGroupHeader(element, isDark);
+        return _buildListItem(element as VaultItem, isDark, vaultState);
+      },
+    );
+  }
+
+  List<Object> _buildGroupedList(List<VaultItem> items) {
+    final result = <Object>[];
+    String? currentLetter;
+    for (final item in items) {
+      final letter = _getIndexLetter(item);
+      if (letter != currentLetter) {
+        result.add(letter);
+        currentLetter = letter;
+      }
+      result.add(item);
+    }
+    return result;
+  }
+
+  String _getIndexLetter(VaultItem item) {
+    if (item.title.isEmpty) return '#';
+    final code = item.title[0].codeUnitAt(0);
+    if (code >= 48 && code <= 57) return '#';
+    if ((code >= 65 && code <= 90) || (code >= 97 && code <= 122)) {
+      return item.title[0].toUpperCase();
+    }
+    final pinyin = item.titlePinyin;
+    if (pinyin != null && pinyin.isNotEmpty) return pinyin[0].toUpperCase();
+    return '#';
+  }
+
+  Widget _buildGroupHeader(String letter, bool isDark) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(4, 10, 4, 2),
+      child: Text(
+        letter,
+        style: TextStyle(
+          color: (isDark ? CupertinoColors.white : CupertinoColors.black).withValues(alpha: 0.4),
+          fontSize: 11,
+          fontWeight: FontWeight.w600,
+          letterSpacing: 0.8,
+        ),
+      ),
     );
   }
 

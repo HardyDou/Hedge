@@ -11,6 +11,7 @@ import 'package:hedge/presentation/providers/theme_provider.dart';
 import 'package:hedge/presentation/providers/vault_provider.dart';
 import 'package:hedge/l10n/generated/app_localizations.dart';
 
+import 'package:hedge/src/dart/vault.dart';
 import 'package:hedge/presentation/pages/mobile/detail_page.dart';
 import 'package:hedge/presentation/pages/mobile/settings_page.dart';
 import 'package:hedge/presentation/pages/shared/unlock_page.dart';
@@ -183,6 +184,7 @@ class _HomePageState extends ConsumerState<HomePage> {
     final isDark = brightness == Brightness.dark;
 
     final items = vaultState.filteredVaultItems ?? []; // Use filtered items from provider, default to empty list
+    final groupedList = _buildGroupedList(items);
 
     return CupertinoPageScaffold(
       navigationBar: CupertinoNavigationBar(
@@ -369,7 +371,11 @@ class _HomePageState extends ConsumerState<HomePage> {
                                     sliver: SliverList(
                                       delegate: SliverChildBuilderDelegate(
                                         (context, index) {
-                                          final item = items[index];
+                                          final element = groupedList[index];
+                                          if (element is String) {
+                                            return _buildGroupHeader(element, isDark);
+                                          }
+                                          final item = element as VaultItem;
                                           String? domain;
                                           if (item.url != null && item.url!.isNotEmpty) {
                                             try {
@@ -381,14 +387,14 @@ class _HomePageState extends ConsumerState<HomePage> {
                                               domain = uri.host.isNotEmpty ? uri.host : null;
                                             } catch (_) {}
                                           }
-                                          
+
                                           String displayChar = '?';
                                           if (item.title.isNotEmpty) {
                                             displayChar = item.title[0].toUpperCase();
                                           } else if (domain != null && domain.isNotEmpty) {
                                             displayChar = domain[0].toUpperCase();
                                           }
-                                          
+
                                           String? subtitle;
                                           if (item.username != null && item.username!.isNotEmpty) {
                                             subtitle = item.username;
@@ -397,7 +403,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                                           } else {
                                             subtitle = null;
                                           }
-                                          
+
                                           return _iOSListItem(
                                             title: item.title,
                                             subtitle: subtitle,
@@ -419,7 +425,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                                             getColorForChar: _getColorForChar,
                                           );
                                         },
-                                        childCount: items.length,
+                                        childCount: groupedList.length,
                                       ),
                                     ),
                                   ),
@@ -429,7 +435,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                             if (items.length >= 20)
                               AlphabetIndexBar(
                                 letters: _getAvailableLetters(items),
-                                onLetterSelected: (letter) => _scrollToLetter(letter, items),
+                                onLetterSelected: (letter) => _scrollToLetter(letter, groupedList),
                                 isDark: isDark,
                               ),
                           ],
@@ -518,17 +524,50 @@ class _HomePageState extends ConsumerState<HomePage> {
     return letters.toList()..sort();
   }
 
-  void _scrollToLetter(String letter, List items) {
-    for (int i = 0; i < items.length; i++) {
-      if (_getIndexLetter(items[i]) == letter) {
-        _scrollController.animateTo(
-          8.0 + i * 79.0,
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeInOut,
-        );
-        return;
-      }
+  void _scrollToLetter(String letter, List<Object> groupedList) {
+    const double itemHeight = 79.0;
+    const double headerHeight = 32.0;
+    double offset = 8.0; // SliverPadding top
+    for (final element in groupedList) {
+      if (element is String && element == letter) break;
+      offset += element is String ? headerHeight : itemHeight;
     }
+    _scrollController.animateTo(
+      offset,
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeInOut,
+    );
+  }
+
+  List<Object> _buildGroupedList(List items) {
+    final result = <Object>[];
+    String? currentLetter;
+    for (final item in items) {
+      final letter = _getIndexLetter(item);
+      if (letter != currentLetter) {
+        result.add(letter);
+        currentLetter = letter;
+      }
+      result.add(item);
+    }
+    return result;
+  }
+
+  Widget _buildGroupHeader(String letter, bool isDark) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(4, 12, 4, 4),
+      child: Text(
+        letter,
+        style: TextStyle(
+          color: isDark
+              ? CupertinoColors.white.withValues(alpha: 0.4)
+              : CupertinoColors.black.withValues(alpha: 0.45),
+          fontSize: 13,
+          fontWeight: FontWeight.w600,
+          letterSpacing: 0.5,
+        ),
+      ),
+    );
   }
 }
 
