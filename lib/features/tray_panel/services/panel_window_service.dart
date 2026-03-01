@@ -7,6 +7,7 @@ import '../models/panel_state.dart';
 /// 负责管理 Panel 窗口的显示、隐藏、位置等
 class PanelWindowService extends ChangeNotifier {
   PanelState _state = const PanelState();
+  VoidCallback? onShowMainWindow;
 
   PanelState get state => _state;
 
@@ -93,6 +94,9 @@ class PanelWindowService extends ChangeNotifier {
     await windowManager.setSkipTaskbar(false);
     await windowManager.show();
     await windowManager.focus();
+
+    // 触发回调，通知主窗口刷新数据
+    onShowMainWindow?.call();
 
     debugPrint('主窗口已显示');
   }

@@ -7,6 +7,7 @@ import 'package:hedge/main.dart' as app;
 import 'package:hedge/l10n/generated/app_localizations.dart';
 import 'package:hedge/presentation/providers/theme_provider.dart';
 import 'package:hedge/presentation/providers/locale_provider.dart';
+import 'package:hedge/presentation/providers/vault_provider.dart';
 import 'package:hedge/features/tray_panel/tray_panel.dart';
 
 /// 带托盘功能的主入口
@@ -117,7 +118,18 @@ class _TrayEnabledAppState extends State<TrayEnabledApp> with WindowListener {
     return ListenableBuilder(
       listenable: _panelWindowService,
       builder: (context, child) {
-        if (_panelWindowService.state.isPanelMode) {
+        final isPanelMode = _panelWindowService.state.isPanelMode;
+
+        // 当从 Panel 切换回主窗口时，刷新数据
+        if (!isPanelMode) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            // 使用 ProviderScope 的 container 来访问 provider
+            final container = ProviderScope.containerOf(context, listen: false);
+            container.read(vaultProvider.notifier).searchItems('');
+          });
+        }
+
+        if (isPanelMode) {
           // Panel 模式：显示快捷面板
           return Consumer(
             builder: (context, ref, child) {

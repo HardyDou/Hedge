@@ -38,17 +38,19 @@ class _DesktopHomePageState extends ConsumerState<DesktopHomePage> {
       // Don't clear search on blur - user may want to keep search while browsing
       // The search will only be cleared when user explicitly clears it
     });
-  }
 
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    // 每次依赖变化时刷新数据，确保从 Panel 切换回来时也能显示数据
+    // 初始化时清空搜索，确保显示所有数据
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         ref.read(vaultProvider.notifier).searchItems('');
       }
     });
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // 不在这里刷新，避免频繁调用
   }
 
   @override
