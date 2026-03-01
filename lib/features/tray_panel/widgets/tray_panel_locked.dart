@@ -6,7 +6,7 @@ import '../services/panel_window_service.dart';
 import '../services/tray_service.dart';
 
 /// 托盘面板 - 未解锁状态
-class TrayPanelLocked extends ConsumerWidget {
+class TrayPanelLocked extends ConsumerStatefulWidget {
   final PanelWindowService panelWindowService;
   final TrayService trayService;
 
@@ -15,6 +15,73 @@ class TrayPanelLocked extends ConsumerWidget {
     required this.panelWindowService,
     required this.trayService,
   });
+
+  @override
+  ConsumerState<TrayPanelLocked> createState() => _TrayPanelLockedState();
+}
+
+class _TrayPanelLockedState extends ConsumerState<TrayPanelLocked> {
+  final _passwordController = TextEditingController();
+  bool _isUnlocking = false;
+  String? _errorMessage;
+
+  @override
+  void dispose() {
+    _passwordController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _unlock() async {
+    if (_passwordController.text.isEmpty) return;
+
+    setState(() {
+      _isUnlocking = true;
+      _errorMessage = null;
+    });
+
+    try {
+      final success = await ref.read(vaultProvider.notifier).unlock(_passwordController.text);
+
+      if (!success && mounted) {
+        setState(() {
+          _errorMessage = AppLocalizations.of(context)?.incorrectPassword ?? 'Incorrect password';
+          _isUnlocking = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _errorMessage = e.toString();
+          _isUnlocking = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _unlockWithBiometric() async {
+    setState(() {
+      _isUnlocking = true;
+      _errorMessage = null;
+    });
+
+    try {
+      // TODO: 实现生物识别解锁
+      // final success = await ref.read(vaultProvider.notifier).unlockWithBiometric();
+
+      if (mounted) {
+        setState(() {
+          _isUnlocking = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _errorMessage = e.toString();
+          _isUnlocking = false;
+        });
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -79,7 +146,7 @@ class TrayPanelLocked extends ConsumerWidget {
             tooltip: l10n.openMainWindow,
             isDark: isDark,
             onPressed: () async {
-              await panelWindowService.showMainWindow();
+              await widget.panelWindowService.showMainWindow();
             },
           ),
           const SizedBox(width: 8),
@@ -90,7 +157,7 @@ class TrayPanelLocked extends ConsumerWidget {
             isDark: isDark,
             isDestructive: true,
             onPressed: () {
-              trayService.exitApp();
+              widget.trayService.exitApp();
             },
           ),
           const SizedBox(width: 4),
@@ -130,8 +197,10 @@ class TrayPanelLocked extends ConsumerWidget {
               // 输入框
               Expanded(
                 child: CupertinoTextField(
+                  controller: _passwordController,
                   placeholder: l10n.enterMasterPassword,
                   obscureText: true,
+                  enabled: !_isUnlocking,
                   style: TextStyle(
                     fontSize: 13,
                     color: isDark ? CupertinoColors.white : CupertinoColors.black,
@@ -143,11 +212,12 @@ class TrayPanelLocked extends ConsumerWidget {
                   decoration: BoxDecoration(
                     color: isDark ? const Color(0xFF2C2C2E) : const Color(0xFFF2F2F7),
                     borderRadius: BorderRadius.circular(8),
+                    border: _errorMessage != null
+                        ? Border.all(color: CupertinoColors.systemRed, width: 1)
+                        : null,
                   ),
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                  onSubmitted: (value) {
-                    // TODO: 解锁
-                  },
+                  onSubmitted: (value) => _unlock(),
                 ),
               ),
               const SizedBox(width: 8),
@@ -155,33 +225,46 @@ class TrayPanelLocked extends ConsumerWidget {
               // 解锁按钮
               CupertinoButton(
                 padding: EdgeInsets.zero,
-                onPressed: () {
-                  // TODO: 解锁
-                },
+                onPressed: _isUnlocking ? null : _unlock,
                 child: Container(
                   width: 40,
                   height: 40,
                   decoration: BoxDecoration(
-                    color: CupertinoColors.activeBlue,
+                    color: _isUnlocking
+                        ? CupertinoColors.systemGrey
+                        : CupertinoColors.activeBlue,
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: const Icon(
-                    CupertinoIcons.arrow_right,
-                    size: 20,
-                    color: CupertinoColors.white,
-                  ),
+                  child: _isUnlocking
+                      ? const CupertinoActivityIndicator(color: CupertinoColors.white)
+                      : const Icon(
+                          CupertinoIcons.arrow_right,
+                          size: 20,
+                          color: CupertinoColors.white,
+                        ),
                 ),
               ),
             ],
           ),
+
+          // 错误提示
+          if (_errorMessage != null) ...[
+            const SizedBox(height: 8),
+            Text(
+              _errorMessage!,
+              style: const TextStyle(
+                fontSize: 12,
+                color: CupertinoColors.systemRed,
+              ),
+            ),
+          ],
+
           const SizedBox(height: 16),
 
           // 生物识别按钮
           CupertinoButton(
             padding: EdgeInsets.zero,
-            onPressed: () {
-              // TODO: 生物识别解锁
-            },
+            onPressed: _isUnlocking ? null : _unlockWithBiometric,
             child: Container(
               width: double.infinity,
               height: 40,
@@ -195,7 +278,7 @@ class TrayPanelLocked extends ConsumerWidget {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Icon(
-                    CupertinoIcons.touchid,
+                    CupertinoIcons.hand_raised_fill,
                     size: 18,
                     color: isDark ? CupertinoColors.white : CupertinoColors.black,
                   ),
