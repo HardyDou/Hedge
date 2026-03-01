@@ -7,9 +7,10 @@ import 'package:window_manager/window_manager.dart';
 /// 验证内容：
 /// 1. 是否可以为 app 添加托盘图标
 /// 2. 关闭主窗口是否可以进入托盘状态（不退出应用）
-/// 3. 点击托盘是否可以弹出一个 Panel
-/// 4. 点击 Panel 是否可以打开主窗口
-/// 5. 点击 Panel 的退出是否可以退出应用
+/// 3. 点击托盘是否可以弹出一个独立的 Panel 窗口
+/// 4. Panel 窗口是否可以从托盘图标位置弹出
+/// 5. 点击 Panel 是否可以打开主窗口
+/// 6. 点击 Panel 的退出是否可以退出应用
 class TechValidationApp extends StatefulWidget {
   const TechValidationApp({super.key});
 
@@ -19,7 +20,6 @@ class TechValidationApp extends StatefulWidget {
 
 class _TechValidationAppState extends State<TechValidationApp>
     with TrayListener, WindowListener {
-  bool _isPanelVisible = false;
 
   @override
   void initState() {
@@ -45,13 +45,11 @@ class _TechValidationAppState extends State<TechValidationApp>
 
   Future<void> _initTray() async {
     // 使用 app icon 作为托盘图标（临时）
-    // macOS 托盘图标推荐使用 16x16 或 32x32
     await trayManager.setIcon(
       'assets/icons/tray_icon.png',
-      isTemplate: true, // macOS 风格，自动适配深色/浅色模式
+      isTemplate: true,
     );
 
-    // 设置托盘提示文本
     await trayManager.setToolTip('Hedge 密码管理器');
 
     // 设置托盘菜单
@@ -110,28 +108,42 @@ class _TechValidationAppState extends State<TechValidationApp>
     await windowManager.hide();
   }
 
-  void _showPanel() {
-    setState(() {
-      _isPanelVisible = true;
-    });
-    debugPrint('✅ 验证 3: 快捷面板显示');
-  }
+  Future<void> _showPanel() async {
+    // TODO: 这里需要创建独立的 Panel 窗口
+    // 当前验证阶段，先打印日志
+    debugPrint('✅ 验证 3: 准备显示快捷面板');
 
-  void _hidePanel() {
-    setState(() {
-      _isPanelVisible = false;
-    });
-    debugPrint('快捷面板隐藏');
+    // 获取托盘图标位置
+    final trayBounds = await trayManager.getBounds();
+    debugPrint('托盘图标位置: ${trayBounds?.left}, ${trayBounds?.top}');
+    debugPrint('托盘图标尺寸: ${trayBounds?.width}, ${trayBounds?.height}');
+
+    // 获取屏幕尺寸
+    final screenSize = await windowManager.getSize();
+    debugPrint('屏幕尺寸: ${screenSize.width}, ${screenSize.height}');
+
+    // 计算 Panel 窗口位置
+    if (trayBounds != null) {
+      const panelWidth = 350.0;
+      const panelHeight = 500.0;
+
+      // 从托盘图标下方弹出
+      double panelX = trayBounds.left - panelWidth / 2 + trayBounds.width / 2;
+      double panelY = trayBounds.top + trayBounds.height + 5;
+
+      debugPrint('✅ 验证 4: Panel 窗口位置计算完成: ($panelX, $panelY)');
+      debugPrint('Panel 窗口尺寸: ${panelWidth}x$panelHeight');
+    }
   }
 
   void _showMainWindow() async {
     await windowManager.show();
     await windowManager.focus();
-    debugPrint('✅ 验证 4: 主窗口显示');
+    debugPrint('✅ 验证 5: 主窗口显示');
   }
 
   void _exitApp() {
-    debugPrint('✅ 验证 5: 退出应用');
+    debugPrint('✅ 验证 6: 退出应用');
     windowManager.destroy();
   }
 
@@ -146,47 +158,40 @@ class _TechValidationAppState extends State<TechValidationApp>
   Widget build(BuildContext context) {
     return CupertinoApp(
       debugShowCheckedModeBanner: false,
-      home: Stack(
-        children: [
-          // 主窗口
-          CupertinoPageScaffold(
-            navigationBar: const CupertinoNavigationBar(
-              middle: Text('技术验证 - 主窗口'),
-            ),
-            child: SafeArea(
-              child: Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Text(
-                      '托盘快捷面板技术验证',
-                      style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-                    ),
-                    const SizedBox(height: 40),
-                    _buildValidationItem('1. 托盘图标已创建', true),
-                    _buildValidationItem('2. 关闭窗口进入托盘（点击关闭按钮测试）', null),
-                    _buildValidationItem('3. 点击托盘弹出面板', _isPanelVisible),
-                    _buildValidationItem('4. 从面板打开主窗口', null),
-                    _buildValidationItem('5. 从面板退出应用', null),
-                    const SizedBox(height: 40),
-                    CupertinoButton.filled(
-                      onPressed: _showPanel,
-                      child: const Text('显示快捷面板'),
-                    ),
-                  ],
+      home: CupertinoPageScaffold(
+        navigationBar: const CupertinoNavigationBar(
+          middle: Text('技术验证 - 主窗口'),
+        ),
+        child: SafeArea(
+          child: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Text(
+                  '托盘快捷面板技术验证',
+                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                 ),
-              ),
+                const SizedBox(height: 40),
+                _buildValidationItem('1. 托盘图标已创建', true),
+                _buildValidationItem('2. 关闭窗口进入托盘（点击关闭按钮测试）', null),
+                _buildValidationItem('3. 点击托盘触发事件', null),
+                _buildValidationItem('4. 计算 Panel 窗口位置', null),
+                _buildValidationItem('5. 从托盘菜单打开主窗口', null),
+                _buildValidationItem('6. 从托盘菜单退出应用', null),
+                const SizedBox(height: 40),
+                const Text(
+                  '操作说明：',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 10),
+                const Text('1. 点击菜单栏的托盘图标（左键）'),
+                const Text('2. 右键点击托盘图标查看菜单'),
+                const Text('3. 关闭主窗口测试托盘状态'),
+                const Text('4. 查看控制台输出验证结果'),
+              ],
             ),
           ),
-
-          // 快捷面板（模拟）
-          if (_isPanelVisible)
-            Positioned(
-              right: 20,
-              top: 100,
-              child: _buildPanel(),
-            ),
-        ],
+        ),
       ),
     );
   }
@@ -211,114 +216,6 @@ class _TechValidationAppState extends State<TechValidationApp>
           ),
           const SizedBox(width: 12),
           Text(text),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildPanel() {
-    return Container(
-      width: 350,
-      height: 500,
-      decoration: BoxDecoration(
-        color: CupertinoColors.systemBackground,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: CupertinoColors.black.withOpacity(0.3),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          // 标题栏
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: const BoxDecoration(
-              border: Border(
-                bottom: BorderSide(
-                  color: CupertinoColors.separator,
-                  width: 0.5,
-                ),
-              ),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text(
-                  '快捷面板',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                CupertinoButton(
-                  padding: EdgeInsets.zero,
-                  onPressed: _hidePanel,
-                  child: const Icon(CupertinoIcons.xmark),
-                ),
-              ],
-            ),
-          ),
-
-          // 内容区域
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Text(
-                    '这是快捷面板',
-                    style: TextStyle(fontSize: 16),
-                  ),
-                  const SizedBox(height: 20),
-                  const Text(
-                    '✅ 验证 3: 面板可以弹出',
-                    style: TextStyle(color: CupertinoColors.systemGreen),
-                  ),
-                ],
-              ),
-            ),
-          ),
-
-          // 底部按钮
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: const BoxDecoration(
-              border: Border(
-                top: BorderSide(
-                  color: CupertinoColors.separator,
-                  width: 0.5,
-                ),
-              ),
-            ),
-            child: Column(
-              children: [
-                SizedBox(
-                  width: double.infinity,
-                  child: CupertinoButton.filled(
-                    onPressed: () {
-                      _hidePanel();
-                      _showMainWindow();
-                    },
-                    child: const Text('打开主窗口'),
-                  ),
-                ),
-                const SizedBox(height: 8),
-                SizedBox(
-                  width: double.infinity,
-                  child: CupertinoButton(
-                    color: CupertinoColors.systemRed,
-                    onPressed: _exitApp,
-                    child: const Text('退出应用'),
-                  ),
-                ),
-              ],
-            ),
-          ),
         ],
       ),
     );
