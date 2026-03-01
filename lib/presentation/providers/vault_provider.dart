@@ -10,6 +10,7 @@ import 'package:hedge/domain/use_cases/search_vault_items_usecase.dart';
 import 'package:hedge/domain/services/importer/csv_import_service.dart';
 import 'package:hedge/domain/services/importer/import_strategy.dart';
 import 'package:hedge/domain/services/sort_service.dart';
+import 'package:hedge/domain/models/sync_config.dart';
 import 'package:hedge/l10n/generated/app_localizations.dart';
 import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
@@ -39,6 +40,8 @@ class VaultState {
   final Set<String> selectedIds;
   final BiometricType? biometricType;
   final List<VaultItem>? filteredVaultItems;
+  final SyncMode syncMode;
+  final WebDAVConfig? webdavConfig;
 
   VaultState({
     this.vault,
@@ -54,6 +57,8 @@ class VaultState {
     this.selectedIds = const {},
     this.biometricType,
     this.filteredVaultItems = const [],
+    this.syncMode = SyncMode.local,
+    this.webdavConfig,
   });
 
   VaultState copyWith({
@@ -70,6 +75,8 @@ class VaultState {
     Set<String>? selectedIds,
     BiometricType? biometricType,
     List<VaultItem>? filteredVaultItems,
+    SyncMode? syncMode,
+    WebDAVConfig? webdavConfig,
   }) {
     return VaultState(
       vault: vault ?? this.vault,
@@ -85,6 +92,8 @@ class VaultState {
       selectedIds: selectedIds ?? this.selectedIds,
       biometricType: biometricType ?? this.biometricType,
       filteredVaultItems: filteredVaultItems ?? this.filteredVaultItems,
+      syncMode: syncMode ?? this.syncMode,
+      webdavConfig: webdavConfig ?? this.webdavConfig,
     );
   }
 }
@@ -134,6 +143,12 @@ class VaultNotifier extends StateNotifier<VaultState> {
 Future<void> checkInitialStatus() async {
     state = state.copyWith(isLoading: true);
     try {
+      // 加载同步配置
+      await _loadSyncConfig();
+
+      // 检查 iCloud Drive 是否可用
+      final iCloudAvailable = await isICloudDriveAvailable();
+
       final path = await _getDefaultVaultPath();
       final exists = await File(path).exists();
 
@@ -158,6 +173,16 @@ Future<void> checkInitialStatus() async {
         biometricType: biometricType,
         filteredVaultItems: [], // Initialize empty, will be populated on unlock/setup
       );
+
+      // 显示同步状态
+      print('[Vault] Sync mode: ${state.syncMode.name}');
+      if (iCloudAvailable && state.syncMode == SyncMode.icloud) {
+        print('[Vault] Using iCloud Drive: $path');
+      } else if (state.syncMode == SyncMode.webdav) {
+        print('[Vault] Using WebDAV: ${state.webdavConfig?.serverUrl}');
+      } else {
+        print('[Vault] Using local storage: $path');
+      }
     } catch (e) {
       state = state.copyWith(isLoading: false, error: e.toString());
     }
@@ -188,10 +213,59 @@ Future<void> checkInitialStatus() async {
     state = state.copyWith(autoLockTimeout: seconds);
   }
 
+  /// 获取 iCloud Drive 路径
+  static Future<String?> _getICloudDrivePath() async {
+    if (!Platform.isIOS && !Platform.isMacOS) {
+      return null;
+    }
+
+    try {
+      // iOS/macOS iCloud Drive 路径
+      final home = Platform.environment['HOME'];
+      if (home == null) return null;
+
+      final iCloudDrivePath = '$home/Library/Mobile Documents/com~apple~CloudDocs';
+      final iCloudDir = Directory(iCloudDrivePath);
+
+      // 检查 iCloud Drive 是否可用
+      if (await iCloudDir.exists()) {
+        // 创建应用专属文件夹
+        final appFolder = Directory('$iCloudDrivePath/Hedge');
+        if (!await appFolder.exists()) {
+          await appFolder.create(recursive: true);
+        }
+
+        print('[iCloud Drive] Path: ${appFolder.path}');
+        return appFolder.path;
+      } else {
+        print('[iCloud Drive] Not available');
+        return null;
+      }
+    } catch (e) {
+      print('[iCloud Drive] Error: $e');
+      return null;
+    }
+  }
+
+  /// 检查 iCloud Drive 是否可用
+  static Future<bool> isICloudDriveAvailable() async {
+    final path = await _getICloudDrivePath();
+    return path != null;
+  }
+
   static Future<String> _getDefaultVaultPath() async {
+    // iOS/macOS: 优先使用 iCloud Drive
+    if (Platform.isIOS || Platform.isMacOS) {
+      final iCloudPath = await _getICloudDrivePath();
+      if (iCloudPath != null) {
+        return '$iCloudPath/vault.db';
+      } else {
+        print('[Vault] iCloud Drive not available, using local storage');
+      }
+    }
+
+    // Fallback: 使用本地 Documents 目录
     final directory = await getApplicationDocumentsDirectory();
-    // Use a specific filename. On iOS/macOS, files in 'Documents' are 
-    // automatically synced to iCloud if the app is configured.
     return '${directory.path}/vault.db';
   }
 
@@ -258,6 +332,10 @@ Future<bool> unlockVault(String masterPassword) async {
         vaultPath: path,
         filteredVaultItems: SortService.sort(vault?.items ?? []),
       );
+
+      // 检查是否有待同步的数据
+      _checkAndUploadPendingSync();
+
       return true;
     } catch (e) {
       state = state.copyWith(isLoading: false, error: "Incorrect master password");
@@ -488,6 +566,65 @@ Future<void> deleteItem(String id) async {
     state = state.copyWith(vault: newVault, isLoading: false);
     // Re-run search with current query
     await searchItems(_currentSearchQuery);
+
+    // 如果是 WebDAV 模式，上传到服务器
+    if (state.syncMode == SyncMode.webdav && state.webdavConfig != null) {
+      _uploadToWebDAVWithRetry(path);
+    }
+  }
+
+  /// 上传到 WebDAV，支持后台重试
+  Future<void> _uploadToWebDAVWithRetry(String path, {int retryCount = 0}) async {
+    if (state.webdavConfig == null) return;
+
+    try {
+      print('[Vault] Uploading to WebDAV after save... (attempt ${retryCount + 1})');
+      final webdavService = await SyncServiceFactory.createWebDAVService(state.webdavConfig!);
+      await webdavService.uploadVault(path);
+      print('[Vault] Upload to WebDAV completed');
+
+      // 标记需要同步的标志为 false
+      await _storage.write(key: 'needs_webdav_sync', value: 'false');
+    } catch (e) {
+      print('[Vault] Failed to upload to WebDAV: $e');
+
+      // 标记需要同步
+      await _storage.write(key: 'needs_webdav_sync', value: 'true');
+
+      // 如果是网络错误，尝试重试（最多 3 次）
+      if (retryCount < 2 && _isNetworkError(e)) {
+        print('[Vault] Will retry upload in 5 seconds...');
+        Future.delayed(const Duration(seconds: 5), () {
+          _uploadToWebDAVWithRetry(path, retryCount: retryCount + 1);
+        });
+      } else {
+        print('[Vault] Upload failed after ${retryCount + 1} attempts, will retry on next save');
+      }
+    }
+  }
+
+  /// 检查是否是网络错误
+  bool _isNetworkError(dynamic error) {
+    final errorStr = error.toString().toLowerCase();
+    return errorStr.contains('network') ||
+        errorStr.contains('connection') ||
+        errorStr.contains('timeout') ||
+        errorStr.contains('unreachable');
+  }
+
+  /// 检查并上传待同步的数据
+  Future<void> _checkAndUploadPendingSync() async {
+    if (state.syncMode != SyncMode.webdav || state.webdavConfig == null) return;
+
+    final needsSync = await _storage.read(key: 'needs_webdav_sync');
+    if (needsSync == 'true') {
+      final path = state.vaultPath ?? await _getDefaultVaultPath();
+      final file = File(path);
+      if (await file.exists()) {
+        print('[Vault] Found pending sync, uploading...');
+        _uploadToWebDAVWithRetry(path);
+      }
+    }
   }
 
   Future<void> _startSyncWatch(String path, String masterPassword) async {
@@ -589,6 +726,77 @@ Future<void> deleteSelectedItems() async {
       (item) => item.id == id,
       orElse: () => throw Exception('Item not found'),
     );
+  }
+
+  /// 设置同步模式
+  Future<void> setSyncMode(SyncMode mode, {WebDAVConfig? webdavConfig}) async {
+    await _storage.write(key: 'sync_mode', value: mode.name);
+
+    if (mode == SyncMode.webdav && webdavConfig != null) {
+      // 保存 WebDAV 配置
+      final config = webdavConfig.toJson();
+      await _storage.write(key: 'webdav_server_url', value: config['serverUrl']);
+      await _storage.write(key: 'webdav_username', value: config['username']);
+      await _storage.write(key: 'webdav_password', value: config['password']);
+      await _storage.write(key: 'webdav_remote_path', value: config['remotePath']);
+    }
+
+    state = state.copyWith(syncMode: mode, webdavConfig: webdavConfig);
+    print('[Vault] Sync mode changed to: ${mode.name}');
+
+    // 如果切换到 WebDAV 模式，立即上传当前 vault
+    if (mode == SyncMode.webdav && webdavConfig != null && state.vault != null) {
+      try {
+        final vaultPath = state.vaultPath ?? await _getDefaultVaultPath();
+        final file = File(vaultPath);
+        if (await file.exists()) {
+          print('[Vault] Uploading existing vault to WebDAV...');
+
+          // 初始化 WebDAV 服务
+          final webdavService = await SyncServiceFactory.createWebDAVService(webdavConfig);
+          await webdavService.uploadVault(vaultPath);
+
+          print('[Vault] Initial upload to WebDAV completed');
+
+          // 重新启动同步监听
+          await _stopSyncWatch();
+          final masterPassword = state.currentPassword;
+          if (masterPassword != null) {
+            await _startSyncWatch(vaultPath, masterPassword);
+          }
+        }
+      } catch (e) {
+        print('[Vault] Failed to upload to WebDAV: $e');
+        // 不抛出异常，让用户继续使用
+      }
+    }
+  }
+
+  /// 加载同步配置
+  Future<void> _loadSyncConfig() async {
+    final modeStr = await _storage.read(key: 'sync_mode');
+    final mode = modeStr != null
+        ? SyncMode.values.firstWhere((e) => e.name == modeStr, orElse: () => SyncMode.local)
+        : SyncMode.local;
+
+    WebDAVConfig? webdavConfig;
+    if (mode == SyncMode.webdav) {
+      final serverUrl = await _storage.read(key: 'webdav_server_url');
+      final username = await _storage.read(key: 'webdav_username');
+      final password = await _storage.read(key: 'webdav_password');
+      final remotePath = await _storage.read(key: 'webdav_remote_path');
+
+      if (serverUrl != null && username != null && password != null) {
+        webdavConfig = WebDAVConfig(
+          serverUrl: serverUrl,
+          username: username,
+          password: password,
+          remotePath: remotePath ?? 'Hedge/vault.db',
+        );
+      }
+    }
+
+    state = state.copyWith(syncMode: mode, webdavConfig: webdavConfig);
   }
 
   List<VaultItem> getSortedItems() {

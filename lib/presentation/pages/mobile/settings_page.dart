@@ -9,6 +9,7 @@ import 'package:hedge/l10n/generated/app_localizations.dart';
 import 'package:hedge/presentation/providers/locale_provider.dart';
 import 'package:hedge/presentation/providers/theme_provider.dart';
 import 'package:hedge/presentation/providers/vault_provider.dart';
+import 'package:hedge/presentation/pages/sync_settings_page.dart';
 import 'dart:io';
 
 class _CustomNavBar extends StatelessWidget {
@@ -140,6 +141,13 @@ class SettingsPage extends ConsumerWidget {
               context: context,
               header: l10n.data,
               children: [
+                _iOSListTile(
+                  title: '同步设置',
+                  subtitle: '配置 WebDAV 或 iCloud Drive 同步',
+                  leading: const Icon(CupertinoIcons.cloud_upload, color: CupertinoColors.activeBlue),
+                  onTap: () => _navigateToSyncSettings(context),
+                  isDark: isDark,
+                ),
                 _iOSListTile(
                   title: l10n.import,
                   subtitle: l10n.importHint,
@@ -699,6 +707,14 @@ class SettingsPage extends ConsumerWidget {
           isDestructiveAction: true,
           child: Text(l10n.cancel),
         ),
+      ),
+    );
+  }
+
+  void _navigateToSyncSettings(BuildContext context) {
+    Navigator.of(context).push(
+      CupertinoPageRoute(
+        builder: (context) => const SyncSettingsPage(),
       ),
     );
   }

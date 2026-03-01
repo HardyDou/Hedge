@@ -1,84 +1,76 @@
 import 'dart:async';
 import 'dart:io';
-import 'package:flutter/services.dart';
 import 'package:hedge/services/sync_service.dart';
-import 'package:path_provider/path_provider.dart';
 
 class IOSSyncService implements SyncService {
   final _eventController = StreamController<FileChangeEvent>.broadcast();
-  Timer? _pollTimer;
-  DateTime? _lastKnownModification;
+  StreamSubscription? _fileWatcher;
   String? _vaultPath;
-  String? _masterPassword;
-  
-  IOSSyncService() {
-    _channel.setMethodCallHandler(_handleMethodCall);
-  }
-  
-  static const _channel = MethodChannel('com.hardydou.hedge/sync');
-  
-  Future<dynamic> _handleMethodCall(MethodCall call) async {
-    if (call.method == 'onFileChanged') {
-      final args = call.arguments as Map<dynamic, dynamic>;
-      final type = args['type'] as String;
-      final timestamp = args['timestamp'] as int;
-      
-      _eventController.add(FileChangeEvent(
-        type: type == 'modified' ? ChangeType.modified 
-            : type == 'deleted' ? ChangeType.deleted 
-            : ChangeType.created,
-        timestamp: DateTime.fromMillisecondsSinceEpoch(timestamp),
-      ));
-    }
-  }
+  DateTime? _lastModification;
 
   @override
   Future<void> startWatching(String vaultPath, {String? masterPassword}) async {
     _vaultPath = vaultPath;
-    _masterPassword = masterPassword;
-    
-    // Get initial modification time
+
     final file = File(vaultPath);
     if (await file.exists()) {
-      _lastKnownModification = await file.lastModified();
+      _lastModification = await file.lastModified();
     }
-    
-    // Start polling every 2 seconds
-    _pollTimer?.cancel();
-    _pollTimer = Timer.periodic(const Duration(seconds: 2), (_) => _checkForChanges());
+
+    // 监听文件所在目录的变化
+    final directory = file.parent;
+    _fileWatcher = directory.watch(events: FileSystemEvent.all).listen((event) {
+      if (event.path == vaultPath) {
+        _handleFileChange(event);
+      }
+    });
+
+    print('[iCloud Drive] Started watching: $vaultPath');
   }
-  
-  Future<void> _checkForChanges() async {
+
+  Future<void> _handleFileChange(FileSystemEvent event) async {
     if (_vaultPath == null) return;
-    
-    final file = File(_vaultPath!);
-    if (!await file.exists()) return;
-    
+
     try {
+      final file = File(_vaultPath!);
+
+      if (event.type == FileSystemEvent.delete) {
+        print('[iCloud Drive] File deleted');
+        _eventController.add(FileChangeEvent(
+          type: ChangeType.deleted,
+          timestamp: DateTime.now(),
+          filePath: _vaultPath,
+        ));
+        return;
+      }
+
+      if (!await file.exists()) return;
+
       final currentMod = await file.lastModified();
-      if (_lastKnownModification != null && 
-          currentMod.difference(_lastKnownModification!).inMilliseconds > 1000) {
-        // File has changed - this could be from iCloud sync!
-        print('[iCloud Sync] Detected file change: $_vaultPath at $currentMod');
-        _lastKnownModification = currentMod;
-        
+
+      // 检查是否真的修改了（避免重复通知）
+      if (_lastModification != null &&
+          currentMod.isAfter(_lastModification!)) {
+        print('[iCloud Drive] File modified at $currentMod');
+        _lastModification = currentMod;
+
         _eventController.add(FileChangeEvent(
           type: ChangeType.modified,
-          timestamp: DateTime.now(),
+          timestamp: currentMod,
           filePath: _vaultPath,
         ));
       }
     } catch (e) {
-      print('[iCloud Sync] Error checking changes: $e');
+      print('[iCloud Drive] Error handling file change: $e');
     }
   }
 
   @override
   Future<void> stopWatching() async {
-    _pollTimer?.cancel();
-    _pollTimer = null;
+    await _fileWatcher?.cancel();
+    _fileWatcher = null;
     _vaultPath = null;
-    _masterPassword = null;
+    print('[iCloud Drive] Stopped watching');
   }
 
   @override
@@ -86,7 +78,18 @@ class IOSSyncService implements SyncService {
 
   @override
   Future<SyncStatus> getSyncStatus() async {
-    return SyncStatus.synced;
+    // iCloud Drive 同步状态检测
+    if (_vaultPath == null) return SyncStatus.idle;
+
+    try {
+      final file = File(_vaultPath!);
+      if (await file.exists()) {
+        return SyncStatus.synced;
+      }
+      return SyncStatus.idle;
+    } catch (e) {
+      return SyncStatus.error;
+    }
   }
 
   @override
@@ -94,11 +97,11 @@ class IOSSyncService implements SyncService {
     final file = File(vaultPath);
     final directory = file.parent;
     final fileName = file.path.split('/').last.replaceAll('.db', '');
-    
+
     try {
-      final files = directory.listSync();
-      return files.any((f) => 
-        f.path.contains('${fileName}_') && 
+      final files = await directory.list().toList();
+      return files.any((f) =>
+        f.path.contains('${fileName}_conflict_') &&
         f.path.endsWith('.db') &&
         f.path != vaultPath
       );
@@ -111,15 +114,16 @@ class IOSSyncService implements SyncService {
   Future<void> createConflictBackup(String vaultPath) async {
     final file = File(vaultPath);
     if (!await file.exists()) return;
-    
+
     final timestamp = DateTime.now().toIso8601String().replaceAll(':', '-');
-    final backupPath = vaultPath.replaceAll('.db', '_$timestamp.db');
-    
+    final backupPath = vaultPath.replaceAll('.db', '_conflict_$timestamp.db');
+
     await file.copy(backupPath);
+    print('[iCloud Drive] Created conflict backup: $backupPath');
   }
-  
+
   void dispose() {
-    _pollTimer?.cancel();
+    stopWatching();
     _eventController.close();
   }
 }

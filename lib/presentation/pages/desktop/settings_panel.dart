@@ -4,6 +4,8 @@ import 'package:hedge/l10n/generated/app_localizations.dart';
 import 'package:hedge/presentation/providers/locale_provider.dart';
 import 'package:hedge/presentation/providers/theme_provider.dart';
 import 'package:hedge/presentation/providers/vault_provider.dart';
+import 'package:hedge/domain/models/sync_config.dart';
+import 'package:hedge/platform/webdav_sync_service.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:hedge/domain/services/importer/concrete_strategies.dart';
 import 'package:hedge/domain/services/importer/import_strategy.dart';
@@ -26,6 +28,25 @@ class SettingsPanel extends ConsumerStatefulWidget {
 
 class _SettingsPanelState extends ConsumerState<SettingsPanel> {
   int _selectedTab = 0;
+
+  // WebDAV 配置状态
+  final _serverUrlController = TextEditingController();
+  final _usernameController = TextEditingController();
+  final _passwordController = TextEditingController();
+  final _remotePathController = TextEditingController(text: 'Hedge/vault.db');
+  bool _isTestingConnection = false;
+  String? _connectionError;
+  String? _connectionSuccess;
+  bool _obscurePassword = true;
+
+  @override
+  void dispose() {
+    _serverUrlController.dispose();
+    _usernameController.dispose();
+    _passwordController.dispose();
+    _remotePathController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -65,6 +86,7 @@ class _SettingsPanelState extends ConsumerState<SettingsPanel> {
       {'icon': CupertinoIcons.paintbrush, 'label': l10n.appearance, 'requiresAuth': false},
       {'icon': CupertinoIcons.lock, 'label': l10n.security, 'requiresAuth': true},
       {'icon': CupertinoIcons.arrow_down_doc, 'label': l10n.data, 'requiresAuth': true},
+      {'icon': CupertinoIcons.cloud, 'label': '同步', 'requiresAuth': false},
       {'icon': CupertinoIcons.info, 'label': '关于', 'requiresAuth': false},
     ];
 
@@ -214,7 +236,11 @@ class _SettingsPanelState extends ConsumerState<SettingsPanel> {
       case 2:
         return _buildDataTab(isDark, l10n);
       case 3:
+        return _buildSyncTab(vaultState, isDark, l10n);
+      case 4:
         return _buildAboutTab(isDark, l10n);
+      case 10: // WebDAV 配置页面
+        return _buildWebDAVConfigTab(vaultState, isDark, l10n);
       default:
         return _buildAppearanceTab(themeMode, currentLocale, isDark, l10n);
     }
@@ -296,6 +322,502 @@ class _SettingsPanelState extends ConsumerState<SettingsPanel> {
         ],
       ),
     );
+  }
+
+  Widget _buildSyncTab(VaultState vaultState, bool isDark, AppLocalizations l10n) {
+    final currentMode = vaultState.syncMode;
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // 本地存储
+          _buildSyncModeCard(
+            title: '仅本地存储',
+            subtitle: '数据仅保存在本设备',
+            icon: CupertinoIcons.device_phone_portrait,
+            isSelected: currentMode == SyncMode.local,
+            isDark: isDark,
+            onTap: () async {
+              await ref.read(vaultProvider.notifier).setSyncMode(SyncMode.local);
+            },
+          ),
+
+          const SizedBox(height: 12),
+
+          // iCloud Drive (仅 iOS/macOS)
+          if (Platform.isIOS || Platform.isMacOS)
+            _buildSyncModeCard(
+              title: 'iCloud Drive',
+              subtitle: '自动同步到 iPhone、iPad、Mac',
+              icon: CupertinoIcons.cloud,
+              badge: '需付费账号',
+              isSelected: currentMode == SyncMode.icloud,
+              isDark: isDark,
+              onTap: () async {
+                final available = await VaultNotifier.isICloudDriveAvailable();
+                if (!available) {
+                  _showICloudUnavailableDialog();
+                  return;
+                }
+                await ref.read(vaultProvider.notifier).setSyncMode(SyncMode.icloud);
+              },
+            ),
+
+          if (Platform.isIOS || Platform.isMacOS)
+            const SizedBox(height: 12),
+
+          // WebDAV
+          _buildSyncModeCard(
+            title: 'WebDAV 同步',
+            subtitle: currentMode == SyncMode.webdav && vaultState.webdavConfig != null
+                ? vaultState.webdavConfig!.serverUrl
+                : '使用您的私有云服务器',
+            icon: CupertinoIcons.cloud_upload,
+            badge: '跨平台',
+            isSelected: currentMode == SyncMode.webdav,
+            isDark: isDark,
+            onTap: () {
+              setState(() => _selectedTab = 10); // 切换到 WebDAV 配置页面
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSyncModeCard({
+    required String title,
+    required String subtitle,
+    required IconData icon,
+    String? badge,
+    required bool isSelected,
+    required bool isDark,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: isDark ? const Color(0xFF2C2C2E) : CupertinoColors.white,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: isSelected
+                ? CupertinoColors.activeBlue
+                : (isDark ? const Color(0xFF3C3C3E) : CupertinoColors.systemGrey5),
+            width: isSelected ? 2 : 1,
+          ),
+        ),
+        child: Row(
+          children: [
+            Icon(
+              icon,
+              size: 24,
+              color: isSelected ? CupertinoColors.activeBlue : (isDark ? CupertinoColors.white.withOpacity(0.6) : CupertinoColors.black.withOpacity(0.6)),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Text(
+                        title,
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: isSelected ? CupertinoColors.activeBlue : (isDark ? CupertinoColors.white : CupertinoColors.black),
+                        ),
+                      ),
+                      if (badge != null) ...[
+                        const SizedBox(width: 6),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: CupertinoColors.systemOrange.withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Text(
+                            badge,
+                            style: TextStyle(
+                              fontSize: 10,
+                              color: CupertinoColors.systemOrange,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: isDark ? CupertinoColors.white.withOpacity(0.6) : CupertinoColors.black.withOpacity(0.6),
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
+            if (isSelected)
+              const Icon(
+                CupertinoIcons.checkmark_circle_fill,
+                color: CupertinoColors.activeBlue,
+                size: 20,
+              )
+            else
+              Icon(
+                CupertinoIcons.chevron_forward,
+                size: 16,
+                color: isDark ? CupertinoColors.white.withOpacity(0.3) : CupertinoColors.black.withOpacity(0.3),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showICloudUnavailableDialog() {
+    showCupertinoDialog(
+      context: context,
+      builder: (context) => CupertinoAlertDialog(
+        title: const Text('iCloud Drive 不可用'),
+        content: const Text(
+          'iCloud Drive 功能需要：\n\n'
+          '1. 付费的 Apple Developer Program (\$99/年)\n'
+          '2. 在 Xcode 中配置 iCloud capability\n\n'
+          '建议使用 WebDAV 作为替代方案。',
+        ),
+        actions: [
+          CupertinoDialogAction(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('知道了'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildWebDAVConfigTab(VaultState vaultState, bool isDark, AppLocalizations l10n) {
+    // 加载现有配置
+    if (vaultState.webdavConfig != null && _serverUrlController.text.isEmpty) {
+      _serverUrlController.text = vaultState.webdavConfig!.serverUrl;
+      _usernameController.text = vaultState.webdavConfig!.username;
+      _passwordController.text = vaultState.webdavConfig!.password;
+      _remotePathController.text = vaultState.webdavConfig!.remotePath;
+    }
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // 返回按钮
+          CupertinoButton(
+            padding: EdgeInsets.zero,
+            onPressed: () => setState(() => _selectedTab = 3),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(CupertinoIcons.back, size: 16, color: CupertinoColors.activeBlue),
+                const SizedBox(width: 4),
+                Text('返回', style: TextStyle(color: CupertinoColors.activeBlue, fontSize: 13)),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 12),
+
+          // 服务器配置
+          _buildSettingCard([
+            Padding(
+              padding: const EdgeInsets.all(12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // 服务器地址 + 快速配置按钮
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text('服务器地址', style: TextStyle(fontSize: 12, color: isDark ? CupertinoColors.white.withOpacity(0.6) : CupertinoColors.black.withOpacity(0.6))),
+                      ),
+                      _buildTemplateChip('坚果云', () => _useTemplate('jianguoyun'), isDark),
+                      const SizedBox(width: 4),
+                      _buildTemplateChip('Nextcloud', () => _useTemplate('nextcloud'), isDark),
+                      const SizedBox(width: 4),
+                      _buildTemplateChip('Synology', () => _useTemplate('synology'), isDark),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  CupertinoTextField(
+                    controller: _serverUrlController,
+                    placeholder: 'https://your-server.com/webdav',
+                    style: TextStyle(fontSize: 13, color: isDark ? CupertinoColors.white : CupertinoColors.black),
+                    decoration: BoxDecoration(
+                      color: isDark ? const Color(0xFF1C1C1E) : CupertinoColors.systemGrey6,
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                  ),
+                  const SizedBox(height: 12),
+                  Text('用户名', style: TextStyle(fontSize: 12, color: isDark ? CupertinoColors.white.withOpacity(0.6) : CupertinoColors.black.withOpacity(0.6))),
+                  const SizedBox(height: 6),
+                  CupertinoTextField(
+                    controller: _usernameController,
+                    placeholder: '用户名',
+                    style: TextStyle(fontSize: 13, color: isDark ? CupertinoColors.white : CupertinoColors.black),
+                    decoration: BoxDecoration(
+                      color: isDark ? const Color(0xFF1C1C1E) : CupertinoColors.systemGrey6,
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                  ),
+                  const SizedBox(height: 12),
+                  Text('密码', style: TextStyle(fontSize: 12, color: isDark ? CupertinoColors.white.withOpacity(0.6) : CupertinoColors.black.withOpacity(0.6))),
+                  const SizedBox(height: 6),
+                  CupertinoTextField(
+                    controller: _passwordController,
+                    placeholder: '密码或应用密码',
+                    obscureText: _obscurePassword,
+                    style: TextStyle(fontSize: 13, color: isDark ? CupertinoColors.white : CupertinoColors.black),
+                    decoration: BoxDecoration(
+                      color: isDark ? const Color(0xFF1C1C1E) : CupertinoColors.systemGrey6,
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                    suffix: CupertinoButton(
+                      padding: const EdgeInsets.only(right: 8),
+                      minSize: 0,
+                      onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                      child: Icon(
+                        _obscurePassword ? CupertinoIcons.eye : CupertinoIcons.eye_slash,
+                        size: 16,
+                        color: isDark ? CupertinoColors.white.withOpacity(0.6) : CupertinoColors.black.withOpacity(0.6),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Text('远程路径', style: TextStyle(fontSize: 12, color: isDark ? CupertinoColors.white.withOpacity(0.6) : CupertinoColors.black.withOpacity(0.6))),
+                  const SizedBox(height: 6),
+                  CupertinoTextField(
+                    controller: _remotePathController,
+                    placeholder: 'Hedge/vault.db',
+                    style: TextStyle(fontSize: 13, color: isDark ? CupertinoColors.white : CupertinoColors.black),
+                    decoration: BoxDecoration(
+                      color: isDark ? const Color(0xFF1C1C1E) : CupertinoColors.systemGrey6,
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                  ),
+                ],
+              ),
+            ),
+          ], isDark),
+
+          const SizedBox(height: 12),
+
+          // 错误/成功消息
+          if (_connectionError != null)
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: CupertinoColors.systemRed.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: Row(
+                children: [
+                  Icon(CupertinoIcons.xmark_circle, color: CupertinoColors.systemRed, size: 14),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      _connectionError!,
+                      style: TextStyle(fontSize: 11, color: CupertinoColors.systemRed),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+          if (_connectionSuccess != null)
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: CupertinoColors.systemGreen.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: Row(
+                children: [
+                  Icon(CupertinoIcons.checkmark_circle, color: CupertinoColors.systemGreen, size: 14),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      _connectionSuccess!,
+                      style: TextStyle(fontSize: 11, color: CupertinoColors.systemGreen),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+          if (_connectionError != null || _connectionSuccess != null)
+            const SizedBox(height: 12),
+
+          // 按钮
+          Row(
+            children: [
+              Expanded(
+                child: CupertinoButton(
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  color: isDark ? const Color(0xFF2C2C2E) : CupertinoColors.systemGrey6,
+                  borderRadius: BorderRadius.circular(6),
+                  onPressed: _isTestingConnection ? null : _testConnection,
+                  child: _isTestingConnection
+                      ? const CupertinoActivityIndicator(radius: 8)
+                      : Text(
+                          '测试连接',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: isDark ? CupertinoColors.white : CupertinoColors.black,
+                          ),
+                        ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: CupertinoButton(
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  color: CupertinoColors.activeBlue,
+                  borderRadius: BorderRadius.circular(6),
+                  onPressed: _isTestingConnection ? null : _saveAndEnable,
+                  child: Text(
+                    '保存并启用',
+                    style: TextStyle(fontSize: 12, color: CupertinoColors.white),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTemplateChip(String label, VoidCallback onTap, bool isDark) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        decoration: BoxDecoration(
+          color: CupertinoColors.activeBlue.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(4),
+          border: Border.all(color: CupertinoColors.activeBlue.withOpacity(0.3), width: 0.5),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(fontSize: 11, color: CupertinoColors.activeBlue, fontWeight: FontWeight.w500),
+        ),
+      ),
+    );
+  }
+
+  void _useTemplate(String template) {
+    setState(() {
+      switch (template) {
+        case 'jianguoyun':
+          _serverUrlController.text = 'https://dav.jianguoyun.com/dav/';
+          _remotePathController.text = 'Hedge/vault.db';
+          break;
+        case 'nextcloud':
+          _serverUrlController.text = 'https://your-nextcloud.com/remote.php/dav/files/username/';
+          _remotePathController.text = 'Hedge/vault.db';
+          break;
+        case 'synology':
+          _serverUrlController.text = 'https://your-nas-ip:5006/';
+          _remotePathController.text = 'Hedge/vault.db';
+          break;
+      }
+    });
+  }
+
+  Future<void> _testConnection() async {
+    if (_serverUrlController.text.isEmpty || _usernameController.text.isEmpty || _passwordController.text.isEmpty) {
+      setState(() {
+        _connectionError = '请填写所有必填字段';
+        _connectionSuccess = null;
+      });
+      return;
+    }
+
+    setState(() {
+      _isTestingConnection = true;
+      _connectionError = null;
+      _connectionSuccess = null;
+    });
+
+    try {
+      final service = WebDAVSyncService();
+      await service.initialize(
+        serverUrl: _serverUrlController.text.trim(),
+        username: _usernameController.text.trim(),
+        password: _passwordController.text,
+        remotePath: _remotePathController.text.trim(),
+      );
+
+      setState(() {
+        _connectionSuccess = '连接成功！';
+        _isTestingConnection = false;
+      });
+    } catch (e) {
+      setState(() {
+        _connectionError = '连接失败: $e';
+        _isTestingConnection = false;
+      });
+    }
+  }
+
+  Future<void> _saveAndEnable() async {
+    if (_serverUrlController.text.isEmpty || _usernameController.text.isEmpty || _passwordController.text.isEmpty) {
+      setState(() {
+        _connectionError = '请填写所有必填字段';
+        _connectionSuccess = null;
+      });
+      return;
+    }
+
+    setState(() {
+      _isTestingConnection = true;
+      _connectionError = null;
+      _connectionSuccess = null;
+    });
+
+    try {
+      final config = WebDAVConfig(
+        serverUrl: _serverUrlController.text.trim(),
+        username: _usernameController.text.trim(),
+        password: _passwordController.text,
+        remotePath: _remotePathController.text.trim(),
+      );
+
+      await ref.read(vaultProvider.notifier).setSyncMode(
+        SyncMode.webdav,
+        webdavConfig: config,
+      );
+
+      setState(() {
+        _isTestingConnection = false;
+        _selectedTab = 3; // 返回同步标签页
+      });
+    } catch (e) {
+      setState(() {
+        _connectionError = '保存失败: $e';
+        _isTestingConnection = false;
+      });
+    }
   }
 
   Widget _buildAboutTab(bool isDark, AppLocalizations l10n) {
