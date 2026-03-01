@@ -154,12 +154,12 @@ class _TechValidationPanelAppState extends State<TechValidationPanelApp>
     const panelHeight = 320.0;
 
     // 计算 Panel 位置（紧贴托盘图标下方，居中对齐）
+    // macOS 菜单栏高度通常是 24-25，托盘图标在菜单栏中
     double panelX = trayBounds.left - panelWidth / 2 + trayBounds.width / 2;
-    double panelY = trayBounds.top + trayBounds.height;  // 紧贴，无间距
+    double panelY = trayBounds.bottom;  // 使用 bottom 而不是 top + height
 
-    // 边界检查（简单处理）
+    // 边界检查
     if (panelX < 0) panelX = 0;
-    if (panelY < 0) panelY = 0;
 
     debugPrint('✅ 验证 2: Panel 位置计算完成: ($panelX, $panelY) - 紧贴托盘');
 
