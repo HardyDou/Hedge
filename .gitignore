@@ -52,4 +52,4 @@ rust/target/
 
 # iOS build artifacts
 ios/Frameworks/
-build/
+build/releases/
