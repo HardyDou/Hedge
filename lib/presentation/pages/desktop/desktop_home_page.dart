@@ -22,7 +22,6 @@ class _DesktopHomePageState extends ConsumerState<DesktopHomePage> {
   final _searchController = TextEditingController();
   final _searchFocusNode = FocusNode();
   final _menuChannel = const MethodChannel('app.menu');
-  String _searchQuery = "";
   VaultItem? _selectedItem;
   bool _showSettings = false;
   bool _showAddItem = false;
@@ -77,12 +76,7 @@ class _DesktopHomePageState extends ConsumerState<DesktopHomePage> {
     final brightness = CupertinoTheme.of(context).brightness;
     final isDark = brightness == Brightness.dark;
 
-    final items = ref.read(vaultProvider.notifier).sortedItems.where((item) {
-          final query = _searchQuery.toLowerCase();
-          return item.title.toLowerCase().contains(query) ||
-              (item.username?.toLowerCase().contains(query) ?? false) ||
-              (item.notes?.toLowerCase().contains(query) ?? false);
-        }).toList();
+    final items = vaultState.filteredVaultItems ?? []; // Use filtered items from provider, default to empty list
 
     return KeyboardListener(
       focusNode: FocusNode(),
@@ -296,7 +290,7 @@ class _DesktopHomePageState extends ConsumerState<DesktopHomePage> {
         child: CupertinoTextField(
           controller: _searchController,
           focusNode: _searchFocusNode,
-          onChanged: (v) => setState(() => _searchQuery = v),
+          onChanged: (v) => ref.read(vaultProvider.notifier).searchItems(v),
           style: TextStyle(color: isDark ? CupertinoColors.white : CupertinoColors.black, fontSize: 14),
           placeholder: '搜索',
           placeholderStyle: TextStyle(color: isDark ? CupertinoColors.white.withValues(alpha: 0.4) : CupertinoColors.black.withValues(alpha: 0.4), fontSize: 14),
@@ -304,11 +298,11 @@ class _DesktopHomePageState extends ConsumerState<DesktopHomePage> {
             padding: const EdgeInsets.only(left: 8),
             child: Icon(CupertinoIcons.search, color: isDark ? CupertinoColors.white.withValues(alpha: 0.4) : CupertinoColors.black.withValues(alpha: 0.4), size: 16),
           ),
-          suffix: _searchQuery.isNotEmpty
+          suffix: _searchController.text.isNotEmpty
               ? GestureDetector(
                   onTap: () {
                     _searchController.clear();
-                    setState(() => _searchQuery = "");
+                    ref.read(vaultProvider.notifier).searchItems("");
                   },
                   child: Padding(
                     padding: const EdgeInsets.only(right: 8),

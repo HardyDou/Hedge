@@ -1,7 +1,9 @@
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_app_lock/flutter_app_lock.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:hedge/core/platform/platform_utils.dart';
 import 'package:hedge/presentation/providers/locale_provider.dart';
@@ -166,9 +168,6 @@ class HomePage extends ConsumerStatefulWidget {
 class _HomePageState extends ConsumerState<HomePage> {
   final _searchController = TextEditingController();
   final _scrollController = ScrollController();
-  String _searchQuery = "";
-  String? _currentLetter;
-
   @override
   void dispose() {
     _searchController.dispose();
@@ -183,12 +182,7 @@ class _HomePageState extends ConsumerState<HomePage> {
     final brightness = CupertinoTheme.of(context).brightness;
     final isDark = brightness == Brightness.dark;
 
-    final items = ref.read(vaultProvider.notifier).sortedItems.where((item) {
-          final query = _searchQuery.toLowerCase();
-          return item.title.toLowerCase().contains(query) ||
-              (item.username?.toLowerCase().contains(query) ?? false) ||
-              (item.notes?.toLowerCase().contains(query) ?? false);
-        }).toList();
+    final items = vaultState.filteredVaultItems ?? []; // Use filtered items from provider, default to empty list
 
     return CupertinoPageScaffold(
       navigationBar: CupertinoNavigationBar(
@@ -299,7 +293,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                   ),
                   child: CupertinoTextField(
                     controller: _searchController,
-                    onChanged: (v) => setState(() => _searchQuery = v),
+                    onChanged: (v) => ref.read(vaultProvider.notifier).searchItems(v),
                     style: TextStyle(
                       color: isDark ? CupertinoColors.white : CupertinoColors.black,
                       fontSize: 16,
@@ -317,11 +311,11 @@ class _HomePageState extends ConsumerState<HomePage> {
                         size: 20,
                       ),
                     ),
-                    suffix: _searchQuery.isNotEmpty
+                    suffix: _searchController.text.isNotEmpty
                         ? GestureDetector(
                             onTap: () {
                               _searchController.clear();
-                              setState(() => _searchQuery = "");
+                              ref.read(vaultProvider.notifier).searchItems("");
                             },
                             child: Padding(
                               padding: const EdgeInsets.only(right: 8),
@@ -500,57 +494,39 @@ class _HomePageState extends ConsumerState<HomePage> {
     return colors[index];
   }
 
+  /// 获取条目在索引栏中对应的字母：英文取首字母，中文取拼音首字母，数字返回 '#'
+  String _getIndexLetter(item) {
+    if (item.title.isEmpty) return '#';
+    final code = item.title[0].codeUnitAt(0);
+    if (code >= 48 && code <= 57) return '#'; // 数字
+    if ((code >= 65 && code <= 90) || (code >= 97 && code <= 122)) {
+      return item.title[0].toUpperCase(); // 英文
+    }
+    // 中文：取拼音首字母
+    final pinyin = item.titlePinyin as String?;
+    if (pinyin != null && pinyin.isNotEmpty) {
+      return pinyin[0].toUpperCase();
+    }
+    return '#';
+  }
+
   List<String> _getAvailableLetters(List items) {
     final letters = <String>{};
     for (final item in items) {
-      if (item.title.isNotEmpty) {
-        final firstChar = item.title[0].toUpperCase();
-        final category = _getCharCategory(firstChar);
-        if (category == 0) {
-          letters.add('#');
-        } else if (category == 1) {
-          letters.add(firstChar);
-        } else {
-          letters.add('#');
-        }
-      } else {
-        letters.add('#');
-      }
+      letters.add(_getIndexLetter(item));
     }
     return letters.toList()..sort();
   }
 
-  int _getCharCategory(String char) {
-    if (char.isEmpty) return 2;
-    final code = char.codeUnitAt(0);
-    if (code >= 48 && code <= 57) return 0;
-    if ((code >= 65 && code <= 90) || (code >= 97 && code <= 122)) return 1;
-    return 2;
-  }
-
   void _scrollToLetter(String letter, List items) {
     for (int i = 0; i < items.length; i++) {
-      final item = items[i];
-      if (item.title.isNotEmpty) {
-        final firstChar = item.title[0].toUpperCase();
-        if (letter == '#') {
-          final category = _getCharCategory(firstChar);
-          if (category != 1) {
-            _scrollController.animateTo(
-              i * 80.0,
-              duration: const Duration(milliseconds: 300),
-              curve: Curves.easeInOut,
-            );
-            return;
-          }
-        } else if (firstChar == letter) {
-          _scrollController.animateTo(
-            i * 80.0,
-            duration: const Duration(milliseconds: 300),
-            curve: Curves.easeInOut,
-          );
-          return;
-        }
+      if (_getIndexLetter(items[i]) == letter) {
+        _scrollController.animateTo(
+          8.0 + i * 79.0,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeInOut,
+        );
+        return;
       }
     }
   }

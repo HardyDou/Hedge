@@ -61,3 +61,37 @@ This project uses the **OpenAgents Control (OAC)** context structure.
 ### 5.4 Planning
 *   Use `planning-with-files` skill for complex multi-step tasks.
 *   Document findings in `.opencode/plans/findings.md`.
+
+---
+
+## 6. VaultNotifier Call Conventions
+
+Most `VaultNotifier` methods require a `Ref ref` parameter. Always pass `ref` from the calling widget:
+
+```dart
+ref.read(vaultProvider.notifier).updateItem(item, ref);
+ref.read(vaultProvider.notifier).deleteItem(id, ref);
+ref.read(vaultProvider.notifier).addItemWithDetails(item, ref);
+ref.read(vaultProvider.notifier).deleteSelectedItems(ref);
+ref.read(vaultProvider.notifier).copyPassword(id, ref);
+ref.read(vaultProvider.notifier).copyAllCredentials(id, l10n, ref);
+ref.read(vaultProvider.notifier).checkInitialStatus(ref);
+```
+
+Internal helpers (`_saveAndRefresh`, `_startSyncWatch`) use the stored `_ref` field — do not add `Ref` parameters to them.
+
+---
+
+## 7. Pinyin Search & Sorting
+
+*   `SearchVaultItemsUseCase` matches `item.title` and `item.titlePinyin`.
+*   Search runs in an isolate via `compute(_searchVaultItemsInIsolate, ...)`.
+*   `_searchVaultItemsInIsolate` **must** be a top-level function (not a method).
+*   `SortService.sort(items)` handles pinyin-aware alphabetical ordering.
+
+---
+
+## 8. App Lock
+
+Uses `flutter_app_lock` package. Import: `package:flutter_app_lock/flutter_app_lock.dart`.
+Do **not** use a local `app_lock.dart` — the package is already in `pubspec.yaml`.
