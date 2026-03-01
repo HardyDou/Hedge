@@ -7,7 +7,7 @@ class AppDelegate: FlutterAppDelegate {
     private var canShowSettings = true
 
     override func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
-        return true
+        return false  // 关闭窗口后不退出应用，保持托盘运行
     }
 
     override func applicationSupportsSecureRestorableState(_ app: NSApplication) -> Bool {
