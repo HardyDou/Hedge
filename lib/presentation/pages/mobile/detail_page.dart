@@ -2,6 +2,7 @@ import 'package:hedge/presentation/providers/vault_provider.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:hedge/src/dart/vault.dart';
 import 'dart:io';
 import 'package:open_file/open_file.dart';
@@ -194,20 +195,19 @@ class _DetailPageState extends ConsumerState<DetailPage> {
                 context: context,
                 header: l10n.notes.toUpperCase(),
                 children: [
-                  Container(
-                    width: double.infinity,
+                  Padding(
                     padding: const EdgeInsets.all(16),
-                    child: CupertinoTextField(
-                      controller: TextEditingController(text: _item.notes),
-                      readOnly: true,
-                      maxLines: null,
-                      decoration: null,
-                      padding: EdgeInsets.zero,
-                      style: TextStyle(
-                        color: isDark ? CupertinoColors.white : CupertinoColors.black,
-                        fontSize: 15,
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(minHeight: 60),
+                      child: SizedBox(
+                        width: double.infinity,
+                        child: MarkdownBody(
+                          data: _item.notes!,
+                          selectable: true,
+                          fitContent: false,
+                          styleSheet: _markdownStyle(isDark),
+                        ),
                       ),
-                      enableInteractiveSelection: true,
                     ),
                   ),
                 ],
@@ -262,6 +262,36 @@ class _DetailPageState extends ConsumerState<DetailPage> {
             
             const SizedBox(height: 40),
           ],
+        ),
+      ),
+    );
+  }
+
+  MarkdownStyleSheet _markdownStyle(bool isDark) {
+    final textColor = isDark ? CupertinoColors.white : CupertinoColors.black;
+    final codeBackground = isDark ? const Color(0xFF2C2C2E) : const Color(0xFFE5E5EA);
+    return MarkdownStyleSheet(
+      p: TextStyle(color: textColor, fontSize: 15, height: 1.5),
+      strong: TextStyle(color: textColor, fontWeight: FontWeight.bold),
+      em: TextStyle(color: textColor, fontStyle: FontStyle.italic),
+      code: TextStyle(
+        color: textColor,
+        backgroundColor: codeBackground,
+        fontSize: 13,
+        fontFamily: 'Courier',
+      ),
+      codeblockDecoration: BoxDecoration(
+        color: codeBackground,
+        borderRadius: BorderRadius.circular(6),
+      ),
+      listBullet: TextStyle(color: textColor, fontSize: 15),
+      horizontalRuleDecoration: BoxDecoration(
+        border: Border(
+          top: BorderSide(
+            color: isDark
+                ? CupertinoColors.white.withOpacity(0.2)
+                : CupertinoColors.black.withOpacity(0.2),
+          ),
         ),
       ),
     );

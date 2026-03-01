@@ -1,8 +1,10 @@
 import 'package:hedge/presentation/providers/vault_provider.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hedge/src/dart/vault.dart';
 import 'package:hedge/l10n/generated/app_localizations.dart';
+import 'package:hedge/presentation/widgets/markdown_toolbar.dart';
 
 class EditPanel extends ConsumerStatefulWidget {
   final VaultItem item;
@@ -22,6 +24,7 @@ class _EditPanelState extends ConsumerState<EditPanel> {
   late TextEditingController _urlController;
   late TextEditingController _notesController;
   bool _isLoading = false;
+  bool _notesPreview = false;
 
   @override
   void initState() {
@@ -31,6 +34,7 @@ class _EditPanelState extends ConsumerState<EditPanel> {
     _passwordController = TextEditingController(text: widget.item.password ?? '');
     _urlController = TextEditingController(text: widget.item.url ?? '');
     _notesController = TextEditingController(text: widget.item.notes ?? '');
+    _notesPreview = widget.item.notes?.isNotEmpty ?? false;
   }
 
   @override
@@ -68,7 +72,7 @@ class _EditPanelState extends ConsumerState<EditPanel> {
                   const SizedBox(height: 16),
                   _buildTextField('网址', _urlController, isDark, placeholder: 'https://'),
                   const SizedBox(height: 16),
-                  _buildTextField('备注', _notesController, isDark, maxLines: 4),
+                  _buildNotesSection(isDark),
                 ],
               ),
             ),
@@ -131,6 +135,106 @@ class _EditPanelState extends ConsumerState<EditPanel> {
             color: isDark ? const Color(0xFF1C1C1E) : CupertinoColors.white,
             borderRadius: BorderRadius.circular(8),
             border: Border.all(color: isDark ? CupertinoColors.white.withValues(alpha: 0.2) : CupertinoColors.black.withValues(alpha: 0.1)),
+          ),
+        ),
+      ],
+    );
+  }
+
+  MarkdownStyleSheet _markdownStyle(bool isDark) {
+    final textColor = isDark ? CupertinoColors.white : CupertinoColors.black;
+    final codeBg = isDark ? const Color(0xFF2C2C2E) : const Color(0xFFE5E5EA);
+    return MarkdownStyleSheet(
+      p: TextStyle(color: textColor, fontSize: 15, height: 1.5),
+      strong: TextStyle(color: textColor, fontWeight: FontWeight.bold),
+      em: TextStyle(color: textColor, fontStyle: FontStyle.italic),
+      code: TextStyle(color: textColor, backgroundColor: codeBg, fontSize: 13, fontFamily: 'Courier'),
+      codeblockDecoration: BoxDecoration(color: codeBg, borderRadius: BorderRadius.circular(6)),
+      listBullet: TextStyle(color: textColor, fontSize: 15),
+      horizontalRuleDecoration: BoxDecoration(
+        border: Border(top: BorderSide(color: isDark ? CupertinoColors.white.withValues(alpha: 0.2) : CupertinoColors.black.withValues(alpha: 0.2))),
+      ),
+    );
+  }
+
+  Widget _buildNotesSection(bool isDark) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Text('备注', style: TextStyle(fontSize: 13, color: isDark ? CupertinoColors.white.withValues(alpha: 0.6) : CupertinoColors.black.withValues(alpha: 0.6))),
+            const Spacer(),
+            CupertinoButton(
+              padding: EdgeInsets.zero,
+              minSize: 0,
+              onPressed: () => setState(() => _notesPreview = !_notesPreview),
+              child: Text(
+                _notesPreview ? '编辑' : '预览',
+                style: const TextStyle(color: CupertinoColors.activeBlue, fontSize: 13),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Container(
+          decoration: BoxDecoration(
+            color: isDark ? const Color(0xFF1C1C1E) : CupertinoColors.white,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: isDark ? CupertinoColors.white.withValues(alpha: 0.2) : CupertinoColors.black.withValues(alpha: 0.1)),
+          ),
+          child: Column(
+            children: [
+              MarkdownToolbar(
+                controller: _notesController,
+                isDark: isDark,
+                isPreview: _notesPreview,
+              ),
+              _notesPreview
+                  ? Padding(
+                      padding: const EdgeInsets.all(12),
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(minHeight: 100),
+                        child: SizedBox(
+                          width: double.infinity,
+                          child: _notesController.text.isEmpty
+                              ? Text(
+                                  '暂无内容',
+                                  style: TextStyle(
+                                    color: isDark ? CupertinoColors.white.withValues(alpha: 0.3) : CupertinoColors.black.withValues(alpha: 0.3),
+                                    fontSize: 15,
+                                  ),
+                                )
+                              : MarkdownBody(
+                                  data: _notesController.text,
+                                  selectable: true,
+                                  fitContent: false,
+                                  styleSheet: _markdownStyle(isDark),
+                                ),
+                        ),
+                      ),
+                    )
+                  : Padding(
+                      padding: const EdgeInsets.all(12),
+                      child: CupertinoTextField(
+                        controller: _notesController,
+                        maxLines: null,
+                        minLines: 5,
+                        padding: EdgeInsets.zero,
+                        style: TextStyle(
+                          color: isDark ? CupertinoColors.white : CupertinoColors.black,
+                          fontSize: 15,
+                          height: 1.5,
+                        ),
+                        placeholder: '输入备注...',
+                        placeholderStyle: TextStyle(
+                          color: isDark ? CupertinoColors.white.withValues(alpha: 0.3) : CupertinoColors.black.withValues(alpha: 0.3),
+                          fontSize: 15,
+                        ),
+                        decoration: const BoxDecoration(),
+                      ),
+                    ),
+            ],
           ),
         ),
       ],

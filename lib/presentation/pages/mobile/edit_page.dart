@@ -1,9 +1,11 @@
 import 'dart:io';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hedge/l10n/generated/app_localizations.dart';
 import 'package:hedge/src/dart/vault.dart';
+import 'package:hedge/presentation/widgets/markdown_toolbar.dart';
 import '../../providers/vault_provider.dart';
 
 class EditPage extends ConsumerStatefulWidget {
@@ -21,6 +23,7 @@ class _EditPageState extends ConsumerState<EditPage> {
   late TextEditingController _urlController;
   late TextEditingController _notesController;
   late List<Attachment> _attachments;
+  late bool _notesPreview;
 
   @override
   void initState() {
@@ -31,6 +34,7 @@ class _EditPageState extends ConsumerState<EditPage> {
     _urlController = TextEditingController(text: widget.item.url);
     _notesController = TextEditingController(text: widget.item.notes);
     _attachments = List.from(widget.item.attachments);
+    _notesPreview = widget.item.notes?.isNotEmpty ?? false;
   }
 
   @override
@@ -142,21 +146,7 @@ class _EditPageState extends ConsumerState<EditPage> {
               ],
             ),
             const SizedBox(height: 32),
-            _buildiOSSection(
-              context: context,
-              header: l10n.notes.toUpperCase(),
-              children: [
-                _iOSTextField(
-                  label: l10n.notes,
-                  controller: _notesController,
-                  placeholder: l10n.notesHint,
-                  icon: CupertinoIcons.doc_text,
-                  isDark: isDark,
-                  maxLines: 4,
-                  showDivider: false,
-                ),
-              ],
-            ),
+            _buildNotesSectionWithPreview(context, l10n, isDark),
             const SizedBox(height: 32),
             _buildiOSSection(
               context: context,
@@ -197,6 +187,97 @@ class _EditPageState extends ConsumerState<EditPage> {
           ],
         ),
       ),
+    );
+  }
+
+  MarkdownStyleSheet _markdownStyle(bool isDark) {
+    final textColor = isDark ? CupertinoColors.white : CupertinoColors.black;
+    final codeBg = isDark ? const Color(0xFF2C2C2E) : const Color(0xFFE5E5EA);
+    return MarkdownStyleSheet(
+      p: TextStyle(color: textColor, fontSize: 15, height: 1.5),
+      strong: TextStyle(color: textColor, fontWeight: FontWeight.bold),
+      em: TextStyle(color: textColor, fontStyle: FontStyle.italic),
+      code: TextStyle(color: textColor, backgroundColor: codeBg, fontSize: 13, fontFamily: 'Courier'),
+      codeblockDecoration: BoxDecoration(color: codeBg, borderRadius: BorderRadius.circular(6)),
+      listBullet: TextStyle(color: textColor, fontSize: 15),
+      horizontalRuleDecoration: BoxDecoration(
+        border: Border(top: BorderSide(color: isDark ? CupertinoColors.white.withValues(alpha: 0.2) : CupertinoColors.black.withValues(alpha: 0.2))),
+      ),
+    );
+  }
+
+  Future<void> _openFullscreen(BuildContext context, bool isDark) async {
+    await Navigator.push(
+      context,
+      CupertinoPageRoute(
+        builder: (_) => _FullscreenNotesEditor(controller: _notesController, isDark: isDark),
+      ),
+    );
+  }
+
+  Widget _buildNotesSectionWithPreview(
+      BuildContext context, AppLocalizations l10n, bool isDark) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(32, 0, 16, 8),
+          child: Row(
+            children: [
+              Text(
+                l10n.notes.toUpperCase(),
+                style: TextStyle(
+                  color: isDark ? CupertinoColors.white.withValues(alpha: 0.6) : CupertinoColors.black.withValues(alpha: 0.54),
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                  letterSpacing: 0.5,
+                ),
+              ),
+              const Spacer(),
+              CupertinoButton(
+                padding: EdgeInsets.zero,
+                minSize: 0,
+                onPressed: () => _openFullscreen(context, isDark),
+                child: const Text(
+                  '编辑',
+                  style: TextStyle(color: CupertinoColors.activeBlue, fontSize: 13),
+                ),
+              ),
+            ],
+          ),
+        ),
+        Container(
+          margin: const EdgeInsets.symmetric(horizontal: 16),
+          decoration: BoxDecoration(
+            color: isDark ? const Color(0xFF1C1C1E) : CupertinoColors.white,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          clipBehavior: Clip.antiAlias,
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(minHeight: 60),
+              child: SizedBox(
+                width: double.infinity,
+                child: _notesController.text.isEmpty
+                    ? Text(
+                        l10n.notesHint,
+                        style: TextStyle(
+                          color: isDark ? CupertinoColors.white.withValues(alpha: 0.24) : CupertinoColors.black.withValues(alpha: 0.26),
+                          fontSize: 15,
+                        ),
+                      )
+                    : MarkdownBody(
+                        data: _notesController.text,
+                        selectable: true,
+                        fitContent: false,
+                        styleSheet: _markdownStyle(isDark),
+                      ),
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -475,6 +556,152 @@ class _iOSAttachmentTile extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _FullscreenNotesEditor extends StatefulWidget {
+  final TextEditingController controller;
+  final bool isDark;
+
+  const _FullscreenNotesEditor({required this.controller, required this.isDark});
+
+  @override
+  State<_FullscreenNotesEditor> createState() => _FullscreenNotesEditorState();
+}
+
+class _FullscreenNotesEditorState extends State<_FullscreenNotesEditor> {
+  bool _isPreview = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // 监听文本变化，自动刷新预览
+    widget.controller.addListener(() {
+      if (_isPreview && mounted) {
+        setState(() {});
+      }
+    });
+  }
+
+  MarkdownStyleSheet _markdownStyle() {
+    final textColor = widget.isDark ? CupertinoColors.white : CupertinoColors.black;
+    final codeBg = widget.isDark ? const Color(0xFF2C2C2E) : const Color(0xFFE5E5EA);
+    return MarkdownStyleSheet(
+      p: TextStyle(color: textColor, fontSize: 15, height: 1.5),
+      strong: TextStyle(color: textColor, fontWeight: FontWeight.bold),
+      em: TextStyle(color: textColor, fontStyle: FontStyle.italic),
+      code: TextStyle(color: textColor, backgroundColor: codeBg, fontSize: 13, fontFamily: 'Courier'),
+      codeblockDecoration: BoxDecoration(color: codeBg, borderRadius: BorderRadius.circular(6)),
+      listBullet: TextStyle(color: textColor, fontSize: 15),
+      horizontalRuleDecoration: BoxDecoration(
+        border: Border(top: BorderSide(color: widget.isDark ? CupertinoColors.white.withValues(alpha: 0.2) : CupertinoColors.black.withValues(alpha: 0.2))),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return CupertinoPageScaffold(
+      backgroundColor: widget.isDark ? const Color(0xFF000000) : const Color(0xFFF2F2F7),
+      navigationBar: CupertinoNavigationBar(
+        backgroundColor: widget.isDark ? const Color(0xFF1C1C1E) : CupertinoColors.white,
+        border: Border(
+          bottom: BorderSide(
+            color: widget.isDark
+                ? CupertinoColors.white.withValues(alpha: 0.1)
+                : CupertinoColors.black.withValues(alpha: 0.08),
+            width: 0.5,
+          ),
+        ),
+        middle: const Text('备注'),
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            CupertinoButton(
+              padding: EdgeInsets.zero,
+              onPressed: () => setState(() => _isPreview = !_isPreview),
+              child: Text(
+                _isPreview ? '编辑' : '预览',
+                style: const TextStyle(color: CupertinoColors.activeBlue),
+              ),
+            ),
+            const SizedBox(width: 12),
+            CupertinoButton(
+              padding: EdgeInsets.zero,
+              onPressed: () => Navigator.pop(context),
+              child: const Text('完成', style: TextStyle(color: CupertinoColors.activeBlue, fontWeight: FontWeight.w600)),
+            ),
+          ],
+        ),
+      ),
+      child: SafeArea(
+        child: Column(
+          children: [
+            MarkdownToolbar(
+              controller: widget.controller,
+              isDark: widget.isDark,
+              isPreview: _isPreview,
+            ),
+            Expanded(
+              child: _isPreview
+                  ? LayoutBuilder(
+                      builder: (context, constraints) {
+                        return SingleChildScrollView(
+                          child: ConstrainedBox(
+                            constraints: BoxConstraints(
+                              minHeight: constraints.maxHeight,
+                            ),
+                            child: Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.all(16),
+                              color: widget.isDark ? const Color(0xFF1C1C1E) : CupertinoColors.white,
+                              child: widget.controller.text.isEmpty
+                                  ? Text(
+                                      '暂无内容',
+                                      style: TextStyle(
+                                        color: widget.isDark ? CupertinoColors.white.withValues(alpha: 0.24) : CupertinoColors.black.withValues(alpha: 0.26),
+                                        fontSize: 15,
+                                      ),
+                                    )
+                                  : MarkdownBody(
+                                      data: widget.controller.text,
+                                      selectable: true,
+                                      styleSheet: _markdownStyle(),
+                                    ),
+                            ),
+                          ),
+                        );
+                      },
+                    )
+                  : Container(
+                      color: widget.isDark ? const Color(0xFF1C1C1E) : CupertinoColors.white,
+                      child: SingleChildScrollView(
+                        padding: const EdgeInsets.all(16),
+                        child: CupertinoTextField(
+                          controller: widget.controller,
+                          maxLines: null,
+                          minLines: 20,
+                          autofocus: true,
+                          padding: EdgeInsets.zero,
+                          style: TextStyle(
+                            color: widget.isDark ? CupertinoColors.white : CupertinoColors.black,
+                            fontSize: 15,
+                            height: 1.6,
+                          ),
+                          placeholder: '输入备注...',
+                          placeholderStyle: TextStyle(
+                            color: widget.isDark ? CupertinoColors.white.withValues(alpha: 0.24) : CupertinoColors.black.withValues(alpha: 0.26),
+                            fontSize: 15,
+                          ),
+                          decoration: const BoxDecoration(),
+                        ),
+                      ),
+                    ),
+            ),
+          ],
+        ),
       ),
     );
   }
