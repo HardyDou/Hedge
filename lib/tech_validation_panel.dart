@@ -1,0 +1,358 @@
+import 'package:flutter/cupertino.dart';
+import 'package:tray_manager/tray_manager.dart';
+import 'package:window_manager/window_manager.dart';
+
+/// 技术验证：独立窗口快捷面板
+///
+/// 验证内容：
+/// 1. 是否可以创建独立的 Panel 窗口（无边框、置顶）
+/// 2. Panel 窗口是否可以从托盘图标位置弹出
+/// 3. Panel 窗口是否可以固定尺寸（350x500）
+/// 4. Panel 窗口失焦是否可以自动隐藏
+class TechValidationPanelApp extends StatefulWidget {
+  const TechValidationPanelApp({super.key});
+
+  @override
+  State<TechValidationPanelApp> createState() => _TechValidationPanelAppState();
+}
+
+class _TechValidationPanelAppState extends State<TechValidationPanelApp>
+    with TrayListener, WindowListener {
+  bool _isPanelMode = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _initTrayAndWindow();
+  }
+
+  Future<void> _initTrayAndWindow() async {
+    await windowManager.ensureInitialized();
+    trayManager.addListener(this);
+    windowManager.addListener(this);
+
+    // 配置主窗口
+    await windowManager.setPreventClose(true);
+    await windowManager.setTitle('技术验证 - 主窗口');
+    await windowManager.setSize(const Size(800, 600));
+    await windowManager.center();
+    await windowManager.show();
+
+    // 初始化托盘图标
+    await _initTray();
+  }
+
+  Future<void> _initTray() async {
+    await trayManager.setIcon('assets/icons/tray_icon.png', isTemplate: true);
+    await trayManager.setToolTip('Hedge 密码管理器');
+
+    Menu menu = Menu(
+      items: [
+        MenuItem(key: 'show_panel', label: '显示快捷面板'),
+        MenuItem(key: 'show_main', label: '打开主窗口'),
+        MenuItem.separator(),
+        MenuItem(key: 'exit', label: '退出应用'),
+      ],
+    );
+    await trayManager.setContextMenu(menu);
+
+    debugPrint('✅ 验证 1: 托盘图标已创建');
+  }
+
+  @override
+  void onTrayIconMouseDown() {
+    debugPrint('托盘图标被点击');
+    _showPanel();
+  }
+
+  @override
+  void onTrayIconRightMouseDown() {
+    trayManager.popUpContextMenu();
+  }
+
+  @override
+  void onTrayMenuItemClick(MenuItem menuItem) {
+    switch (menuItem.key) {
+      case 'show_panel':
+        _showPanel();
+        break;
+      case 'show_main':
+        _showMainWindow();
+        break;
+      case 'exit':
+        _exitApp();
+        break;
+    }
+  }
+
+  @override
+  void onWindowClose() async {
+    if (_isPanelMode) {
+      // Panel 模式下，关闭就是隐藏
+      await windowManager.hide();
+      await windowManager.setSkipTaskbar(true);
+    } else {
+      // 主窗口模式，关闭进入托盘
+      debugPrint('✅ 主窗口关闭，进入托盘状态');
+      await windowManager.hide();
+      await windowManager.setSkipTaskbar(true);
+    }
+  }
+
+  @override
+  void onWindowBlur() async {
+    if (_isPanelMode) {
+      // Panel 模式下失焦自动隐藏
+      debugPrint('✅ 验证 4: Panel 失焦，自动隐藏');
+      await Future.delayed(const Duration(milliseconds: 100));
+      await windowManager.hide();
+      await windowManager.setSkipTaskbar(true);
+    }
+  }
+
+  @override
+  void onWindowEvent(String eventName) {
+    debugPrint('窗口事件: $eventName');
+  }
+
+  Future<void> _showPanel() async {
+    debugPrint('✅ 验证 2: 准备显示 Panel 窗口');
+
+    // 获取托盘图标位置
+    final trayBounds = await trayManager.getBounds();
+    if (trayBounds == null) {
+      debugPrint('❌ 无法获取托盘位置');
+      return;
+    }
+
+    debugPrint('托盘位置: (${trayBounds.left}, ${trayBounds.top})');
+    debugPrint('托盘尺寸: ${trayBounds.width} x ${trayBounds.height}');
+
+    // Panel 尺寸
+    const panelWidth = 350.0;
+    const panelHeight = 500.0;
+
+    // 计算 Panel 位置（从托盘图标下方弹出，居中对齐）
+    double panelX = trayBounds.left - panelWidth / 2 + trayBounds.width / 2;
+    double panelY = trayBounds.top + trayBounds.height + 5;
+
+    // 边界检查（简单处理）
+    if (panelX < 0) panelX = 0;
+    if (panelY < 0) panelY = 0;
+
+    debugPrint('✅ 验证 2: Panel 位置计算完成: ($panelX, $panelY)');
+
+    // 切换到 Panel 模式
+    setState(() {
+      _isPanelMode = true;
+    });
+
+    // 配置窗口为 Panel 样式
+    await windowManager.setSize(const Size(panelWidth, panelHeight));
+    await windowManager.setPosition(Offset(panelX, panelY));
+    await windowManager.setAlwaysOnTop(true);
+    await windowManager.setSkipTaskbar(true);
+    await windowManager.setResizable(false);
+    await windowManager.setTitle('');
+
+    // 设置无边框样式（macOS）
+    await windowManager.setTitleBarStyle(TitleBarStyle.hidden);
+
+    await windowManager.show();
+    await windowManager.focus();
+
+    debugPrint('✅ 验证 3: Panel 窗口已显示（350x500，无边框，置顶）');
+  }
+
+  Future<void> _showMainWindow() async {
+    debugPrint('✅ 恢复主窗口模式');
+
+    // 切换回主窗口模式
+    setState(() {
+      _isPanelMode = false;
+    });
+
+    // 恢复主窗口样式
+    await windowManager.setAlwaysOnTop(false);
+    await windowManager.setResizable(true);
+    await windowManager.setSize(const Size(800, 600));
+    await windowManager.center();
+    await windowManager.setTitle('技术验证 - 主窗口');
+    await windowManager.setTitleBarStyle(TitleBarStyle.normal);
+    await windowManager.setSkipTaskbar(false);
+    await windowManager.show();
+    await windowManager.focus();
+  }
+
+  void _exitApp() {
+    debugPrint('✅ 退出应用');
+    windowManager.destroy();
+  }
+
+  @override
+  void dispose() {
+    trayManager.removeListener(this);
+    windowManager.removeListener(this);
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return CupertinoApp(
+      debugShowCheckedModeBanner: false,
+      home: _isPanelMode ? _buildPanelWindow() : _buildMainWindow(),
+    );
+  }
+
+  Widget _buildMainWindow() {
+    return CupertinoPageScaffold(
+      navigationBar: const CupertinoNavigationBar(
+        middle: Text('技术验证 - 主窗口'),
+      ),
+      child: SafeArea(
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Text(
+                '独立窗口快捷面板验证',
+                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 40),
+              const Text('操作说明：'),
+              const SizedBox(height: 10),
+              const Text('1. 点击托盘图标（左键）显示 Panel'),
+              const Text('2. Panel 会从托盘位置弹出'),
+              const Text('3. Panel 是无边框、置顶窗口'),
+              const Text('4. 点击 Panel 外部会自动隐藏'),
+              const Text('5. 从托盘菜单可以恢复主窗口'),
+              const SizedBox(height: 40),
+              CupertinoButton.filled(
+                onPressed: _showPanel,
+                child: const Text('显示 Panel 窗口'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPanelWindow() {
+    return Container(
+      decoration: BoxDecoration(
+        color: CupertinoColors.systemBackground,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: CupertinoColors.separator,
+          width: 1,
+        ),
+      ),
+      child: Column(
+        children: [
+          // 标题栏
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: const BoxDecoration(
+              border: Border(
+                bottom: BorderSide(
+                  color: CupertinoColors.separator,
+                  width: 0.5,
+                ),
+              ),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  '快捷面板',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                CupertinoButton(
+                  padding: EdgeInsets.zero,
+                  onPressed: () async {
+                    await windowManager.hide();
+                    await windowManager.setSkipTaskbar(true);
+                  },
+                  child: const Icon(CupertinoIcons.xmark, size: 20),
+                ),
+              ],
+            ),
+          ),
+
+          // 内容区域
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(
+                    CupertinoIcons.checkmark_circle_fill,
+                    size: 64,
+                    color: CupertinoColors.systemGreen,
+                  ),
+                  const SizedBox(height: 20),
+                  const Text(
+                    '这是独立的 Panel 窗口',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 20),
+                  const Text('✅ 无边框窗口'),
+                  const Text('✅ 置顶显示'),
+                  const Text('✅ 固定尺寸 350x500'),
+                  const Text('✅ 从托盘位置弹出'),
+                  const Text('✅ 失焦自动隐藏'),
+                  const SizedBox(height: 20),
+                  const Text(
+                    '点击窗口外部测试自动隐藏',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: CupertinoColors.systemGrey,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+          // 底部按钮
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: const BoxDecoration(
+              border: Border(
+                top: BorderSide(
+                  color: CupertinoColors.separator,
+                  width: 0.5,
+                ),
+              ),
+            ),
+            child: Column(
+              children: [
+                SizedBox(
+                  width: double.infinity,
+                  child: CupertinoButton.filled(
+                    onPressed: _showMainWindow,
+                    child: const Text('打开主窗口'),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                SizedBox(
+                  width: double.infinity,
+                  child: CupertinoButton(
+                    color: CupertinoColors.systemRed,
+                    onPressed: _exitApp,
+                    child: const Text('退出应用'),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
