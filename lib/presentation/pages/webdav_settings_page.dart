@@ -159,45 +159,6 @@ class _WebDAVSettingsPageState extends ConsumerState<WebDAVSettingsPage> {
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
-            // 快速配置模板
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: isDark ? const Color(0xFF2C2C2E) : CupertinoColors.white,
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(
-                  color: isDark
-                      ? const Color(0xFF3C3C3E)
-                      : CupertinoColors.systemGrey5,
-                ),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    '快速配置',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: isDark ? CupertinoColors.white : CupertinoColors.black,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: [
-                      _buildTemplateChip('坚果云', () => _useTemplate('jianguoyun'), isDark),
-                      _buildTemplateChip('Nextcloud', () => _useTemplate('nextcloud'), isDark),
-                      _buildTemplateChip('Synology', () => _useTemplate('synology'), isDark),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-
-            const SizedBox(height: 16),
-
             // 服务器配置
             Container(
               padding: const EdgeInsets.all(16),
@@ -213,11 +174,40 @@ class _WebDAVSettingsPageState extends ConsumerState<WebDAVSettingsPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildTextField(
-                    label: '服务器地址',
+                  // 服务器地址 + 快速配置
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          '服务器地址',
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: isDark
+                                ? CupertinoColors.white.withOpacity(0.6)
+                                : CupertinoColors.black.withOpacity(0.6),
+                          ),
+                        ),
+                      ),
+                      _buildTemplateChip('坚果云', () => _useTemplate('jianguoyun'), isDark),
+                      const SizedBox(width: 6),
+                      _buildTemplateChip('Nextcloud', () => _useTemplate('nextcloud'), isDark),
+                      const SizedBox(width: 6),
+                      _buildTemplateChip('Synology', () => _useTemplate('synology'), isDark),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  CupertinoTextField(
                     controller: _serverUrlController,
                     placeholder: 'https://your-server.com/webdav',
-                    isDark: isDark,
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: isDark ? CupertinoColors.white : CupertinoColors.black,
+                    ),
+                    decoration: BoxDecoration(
+                      color: isDark ? const Color(0xFF1C1C1E) : CupertinoColors.systemGrey6,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                   ),
                   const SizedBox(height: 16),
                   _buildTextField(
@@ -408,19 +398,21 @@ class _WebDAVSettingsPageState extends ConsumerState<WebDAVSettingsPage> {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
         decoration: BoxDecoration(
           color: CupertinoColors.activeBlue.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(6),
           border: Border.all(
             color: CupertinoColors.activeBlue.withOpacity(0.3),
+            width: 0.5,
           ),
         ),
         child: Text(
           label,
           style: const TextStyle(
-            fontSize: 13,
+            fontSize: 12,
             color: CupertinoColors.activeBlue,
+            fontWeight: FontWeight.w500,
           ),
         ),
       ),

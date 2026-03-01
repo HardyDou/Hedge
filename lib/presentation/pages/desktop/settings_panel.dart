@@ -531,39 +531,7 @@ class _SettingsPanelState extends ConsumerState<SettingsPanel> {
             ),
           ),
 
-          const SizedBox(height: 8),
-
-          // 快速配置模板
-          _buildSettingCard([
-            Padding(
-              padding: const EdgeInsets.all(12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    '快速配置',
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: isDark ? CupertinoColors.white : CupertinoColors.black,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Wrap(
-                    spacing: 6,
-                    runSpacing: 6,
-                    children: [
-                      _buildTemplateChip('坚果云', () => _useTemplate('jianguoyun'), isDark),
-                      _buildTemplateChip('Nextcloud', () => _useTemplate('nextcloud'), isDark),
-                      _buildTemplateChip('Synology', () => _useTemplate('synology'), isDark),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ], isDark),
-
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
 
           // 服务器配置
           _buildSettingCard([
@@ -572,7 +540,19 @@ class _SettingsPanelState extends ConsumerState<SettingsPanel> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('服务器地址', style: TextStyle(fontSize: 12, color: isDark ? CupertinoColors.white.withOpacity(0.6) : CupertinoColors.black.withOpacity(0.6))),
+                  // 服务器地址 + 快速配置按钮
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text('服务器地址', style: TextStyle(fontSize: 12, color: isDark ? CupertinoColors.white.withOpacity(0.6) : CupertinoColors.black.withOpacity(0.6))),
+                      ),
+                      _buildTemplateChip('坚果云', () => _useTemplate('jianguoyun'), isDark),
+                      const SizedBox(width: 4),
+                      _buildTemplateChip('Nextcloud', () => _useTemplate('nextcloud'), isDark),
+                      const SizedBox(width: 4),
+                      _buildTemplateChip('Synology', () => _useTemplate('synology'), isDark),
+                    ],
+                  ),
                   const SizedBox(height: 6),
                   CupertinoTextField(
                     controller: _serverUrlController,
@@ -639,24 +619,24 @@ class _SettingsPanelState extends ConsumerState<SettingsPanel> {
             ),
           ], isDark),
 
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
 
           // 错误/成功消息
           if (_connectionError != null)
             Container(
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
                 color: CupertinoColors.systemRed.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(6),
               ),
               child: Row(
                 children: [
-                  Icon(CupertinoIcons.xmark_circle, color: CupertinoColors.systemRed, size: 16),
+                  Icon(CupertinoIcons.xmark_circle, color: CupertinoColors.systemRed, size: 14),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
                       _connectionError!,
-                      style: TextStyle(fontSize: 12, color: CupertinoColors.systemRed),
+                      style: TextStyle(fontSize: 11, color: CupertinoColors.systemRed),
                     ),
                   ),
                 ],
@@ -665,19 +645,19 @@ class _SettingsPanelState extends ConsumerState<SettingsPanel> {
 
           if (_connectionSuccess != null)
             Container(
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
                 color: CupertinoColors.systemGreen.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(6),
               ),
               child: Row(
                 children: [
-                  Icon(CupertinoIcons.checkmark_circle, color: CupertinoColors.systemGreen, size: 16),
+                  Icon(CupertinoIcons.checkmark_circle, color: CupertinoColors.systemGreen, size: 14),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
                       _connectionSuccess!,
-                      style: TextStyle(fontSize: 12, color: CupertinoColors.systemGreen),
+                      style: TextStyle(fontSize: 11, color: CupertinoColors.systemGreen),
                     ),
                   ),
                 ],
@@ -685,38 +665,38 @@ class _SettingsPanelState extends ConsumerState<SettingsPanel> {
             ),
 
           if (_connectionError != null || _connectionSuccess != null)
-            const SizedBox(height: 16),
+            const SizedBox(height: 12),
 
           // 按钮
           Row(
             children: [
               Expanded(
                 child: CupertinoButton(
-                  padding: const EdgeInsets.symmetric(vertical: 10),
+                  padding: const EdgeInsets.symmetric(vertical: 8),
                   color: isDark ? const Color(0xFF2C2C2E) : CupertinoColors.systemGrey6,
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(6),
                   onPressed: _isTestingConnection ? null : _testConnection,
                   child: _isTestingConnection
-                      ? const CupertinoActivityIndicator()
+                      ? const CupertinoActivityIndicator(radius: 8)
                       : Text(
                           '测试连接',
                           style: TextStyle(
-                            fontSize: 13,
+                            fontSize: 12,
                             color: isDark ? CupertinoColors.white : CupertinoColors.black,
                           ),
                         ),
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 8),
               Expanded(
                 child: CupertinoButton(
-                  padding: const EdgeInsets.symmetric(vertical: 10),
+                  padding: const EdgeInsets.symmetric(vertical: 8),
                   color: CupertinoColors.activeBlue,
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(6),
                   onPressed: _isTestingConnection ? null : _saveAndEnable,
                   child: Text(
                     '保存并启用',
-                    style: TextStyle(fontSize: 13, color: CupertinoColors.white),
+                    style: TextStyle(fontSize: 12, color: CupertinoColors.white),
                   ),
                 ),
               ),
@@ -731,15 +711,15 @@ class _SettingsPanelState extends ConsumerState<SettingsPanel> {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
         decoration: BoxDecoration(
           color: CupertinoColors.activeBlue.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(6),
-          border: Border.all(color: CupertinoColors.activeBlue.withOpacity(0.3)),
+          borderRadius: BorderRadius.circular(4),
+          border: Border.all(color: CupertinoColors.activeBlue.withOpacity(0.3), width: 0.5),
         ),
         child: Text(
           label,
-          style: TextStyle(fontSize: 12, color: CupertinoColors.activeBlue),
+          style: TextStyle(fontSize: 11, color: CupertinoColors.activeBlue, fontWeight: FontWeight.w500),
         ),
       ),
     );
