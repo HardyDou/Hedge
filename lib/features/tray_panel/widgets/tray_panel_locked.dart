@@ -40,13 +40,14 @@ class _TrayPanelLockedState extends ConsumerState<TrayPanelLocked> {
     });
 
     try {
-      final success = await ref.read(vaultProvider.notifier).unlock(_passwordController.text);
+      final success = await ref.read(vaultProvider.notifier).unlockVault(_passwordController.text);
 
       if (!success && mounted) {
         setState(() {
           _errorMessage = AppLocalizations.of(context)?.incorrectPassword ?? 'Incorrect password';
           _isUnlocking = false;
         });
+        _passwordController.clear();
       }
     } catch (e) {
       if (mounted) {
@@ -65,11 +66,11 @@ class _TrayPanelLockedState extends ConsumerState<TrayPanelLocked> {
     });
 
     try {
-      // TODO: 实现生物识别解锁
-      // final success = await ref.read(vaultProvider.notifier).unlockWithBiometric();
+      final success = await ref.read(vaultProvider.notifier).unlockWithBiometrics();
 
-      if (mounted) {
+      if (!success && mounted) {
         setState(() {
+          _errorMessage = 'Biometric authentication failed';
           _isUnlocking = false;
         });
       }
@@ -84,7 +85,7 @@ class _TrayPanelLockedState extends ConsumerState<TrayPanelLocked> {
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     if (l10n == null) {
       return const Center(child: CupertinoActivityIndicator());
@@ -100,7 +101,7 @@ class _TrayPanelLockedState extends ConsumerState<TrayPanelLocked> {
 
         // 中间内容区域
         Expanded(
-          child: _buildContent(context, l10n, isDark, ref),
+          child: _buildContent(context, l10n, isDark),
         ),
       ],
     );
@@ -167,84 +168,90 @@ class _TrayPanelLockedState extends ConsumerState<TrayPanelLocked> {
   }
 
   /// 构建内容区域
-  Widget _buildContent(BuildContext context, AppLocalizations l10n, bool isDark, WidgetRef ref) {
+  Widget _buildContent(BuildContext context, AppLocalizations l10n, bool isDark) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 32),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.start,
         children: [
-          const SizedBox(height: 20),
+          const SizedBox(height: 12),
 
-          // Logo/Icon
+          // Logo/Icon - 更小更紧凑
           Container(
-            width: 64,
-            height: 64,
+            width: 56,
+            height: 56,
             decoration: BoxDecoration(
               color: CupertinoColors.activeBlue.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(14),
             ),
             child: const Icon(
               CupertinoIcons.lock_shield_fill,
-              size: 36,
+              size: 32,
               color: CupertinoColors.activeBlue,
             ),
           ),
-          const SizedBox(height: 32),
+          const SizedBox(height: 24),
 
-          // 密码输入框 + 解锁按钮
-          Row(
-            children: [
-              // 输入框
-              Expanded(
-                child: CupertinoTextField(
-                  controller: _passwordController,
-                  placeholder: l10n.enterMasterPassword,
-                  obscureText: true,
-                  enabled: !_isUnlocking,
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: isDark ? CupertinoColors.white : CupertinoColors.black,
+          // 密码输入框 + 解锁按钮 - 整体设计
+          Container(
+            decoration: BoxDecoration(
+              color: isDark ? const Color(0xFF2C2C2E) : const Color(0xFFF2F2F7),
+              borderRadius: BorderRadius.circular(8),
+              border: _errorMessage != null
+                  ? Border.all(color: CupertinoColors.systemRed, width: 1)
+                  : null,
+            ),
+            child: Row(
+              children: [
+                // 输入框
+                Expanded(
+                  child: CupertinoTextField(
+                    controller: _passwordController,
+                    placeholder: l10n.enterMasterPassword,
+                    obscureText: true,
+                    enabled: !_isUnlocking,
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: isDark ? CupertinoColors.white : CupertinoColors.black,
+                    ),
+                    placeholderStyle: TextStyle(
+                      fontSize: 13,
+                      color: isDark ? CupertinoColors.systemGrey : CupertinoColors.systemGrey2,
+                    ),
+                    decoration: const BoxDecoration(),
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    onSubmitted: (value) => _unlock(),
                   ),
-                  placeholderStyle: TextStyle(
-                    fontSize: 13,
-                    color: isDark ? CupertinoColors.systemGrey : CupertinoColors.systemGrey2,
-                  ),
-                  decoration: BoxDecoration(
-                    color: isDark ? const Color(0xFF2C2C2E) : const Color(0xFFF2F2F7),
-                    borderRadius: BorderRadius.circular(8),
-                    border: _errorMessage != null
-                        ? Border.all(color: CupertinoColors.systemRed, width: 1)
-                        : null,
-                  ),
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                  onSubmitted: (value) => _unlock(),
                 ),
-              ),
-              const SizedBox(width: 8),
 
-              // 解锁按钮
-              CupertinoButton(
-                padding: EdgeInsets.zero,
-                onPressed: _isUnlocking ? null : _unlock,
-                child: Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: _isUnlocking
-                        ? CupertinoColors.systemGrey
-                        : CupertinoColors.activeBlue,
-                    borderRadius: BorderRadius.circular(8),
+                // 解锁按钮
+                CupertinoButton(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  minSize: 0,
+                  onPressed: _isUnlocking ? null : _unlock,
+                  child: Container(
+                    width: 32,
+                    height: 32,
+                    decoration: BoxDecoration(
+                      color: _isUnlocking
+                          ? CupertinoColors.systemGrey
+                          : CupertinoColors.activeBlue,
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: _isUnlocking
+                        ? const CupertinoActivityIndicator(
+                            color: CupertinoColors.white,
+                            radius: 8,
+                          )
+                        : const Icon(
+                            CupertinoIcons.arrow_right,
+                            size: 16,
+                            color: CupertinoColors.white,
+                          ),
                   ),
-                  child: _isUnlocking
-                      ? const CupertinoActivityIndicator(color: CupertinoColors.white)
-                      : const Icon(
-                          CupertinoIcons.arrow_right,
-                          size: 20,
-                          color: CupertinoColors.white,
-                        ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
 
           // 错误提示
@@ -253,21 +260,21 @@ class _TrayPanelLockedState extends ConsumerState<TrayPanelLocked> {
             Text(
               _errorMessage!,
               style: const TextStyle(
-                fontSize: 12,
+                fontSize: 11,
                 color: CupertinoColors.systemRed,
               ),
             ),
           ],
 
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
 
-          // 生物识别按钮
+          // 生物识别按钮 - 更紧凑
           CupertinoButton(
             padding: EdgeInsets.zero,
             onPressed: _isUnlocking ? null : _unlockWithBiometric,
             child: Container(
               width: double.infinity,
-              height: 40,
+              height: 36,
               decoration: BoxDecoration(
                 color: isDark
                     ? const Color(0xFF2C2C2E)
@@ -279,14 +286,14 @@ class _TrayPanelLockedState extends ConsumerState<TrayPanelLocked> {
                 children: [
                   Icon(
                     CupertinoIcons.hand_raised_fill,
-                    size: 18,
+                    size: 16,
                     color: isDark ? CupertinoColors.white : CupertinoColors.black,
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: 6),
                   Text(
                     l10n.useBiometricUnlock,
                     style: TextStyle(
-                      fontSize: 13,
+                      fontSize: 12,
                       fontWeight: FontWeight.w500,
                       color: isDark ? CupertinoColors.white : CupertinoColors.black,
                     ),
