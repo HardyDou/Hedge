@@ -10,6 +10,7 @@ import 'package:hedge/domain/use_cases/search_vault_items_usecase.dart';
 import 'package:hedge/domain/services/importer/csv_import_service.dart';
 import 'package:hedge/domain/services/importer/import_strategy.dart';
 import 'package:hedge/domain/services/sort_service.dart';
+import 'package:hedge/domain/models/sync_config.dart';
 import 'package:hedge/l10n/generated/app_localizations.dart';
 import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
@@ -39,6 +40,8 @@ class VaultState {
   final Set<String> selectedIds;
   final BiometricType? biometricType;
   final List<VaultItem>? filteredVaultItems;
+  final SyncMode syncMode;
+  final WebDAVConfig? webdavConfig;
 
   VaultState({
     this.vault,
@@ -54,6 +57,8 @@ class VaultState {
     this.selectedIds = const {},
     this.biometricType,
     this.filteredVaultItems = const [],
+    this.syncMode = SyncMode.local,
+    this.webdavConfig,
   });
 
   VaultState copyWith({
@@ -70,6 +75,8 @@ class VaultState {
     Set<String>? selectedIds,
     BiometricType? biometricType,
     List<VaultItem>? filteredVaultItems,
+    SyncMode? syncMode,
+    WebDAVConfig? webdavConfig,
   }) {
     return VaultState(
       vault: vault ?? this.vault,
@@ -85,6 +92,8 @@ class VaultState {
       selectedIds: selectedIds ?? this.selectedIds,
       biometricType: biometricType ?? this.biometricType,
       filteredVaultItems: filteredVaultItems ?? this.filteredVaultItems,
+      syncMode: syncMode ?? this.syncMode,
+      webdavConfig: webdavConfig ?? this.webdavConfig,
     );
   }
 }
@@ -134,6 +143,9 @@ class VaultNotifier extends StateNotifier<VaultState> {
 Future<void> checkInitialStatus() async {
     state = state.copyWith(isLoading: true);
     try {
+      // 加载同步配置
+      await _loadSyncConfig();
+
       // 检查 iCloud Drive 是否可用
       final iCloudAvailable = await isICloudDriveAvailable();
 
@@ -162,9 +174,12 @@ Future<void> checkInitialStatus() async {
         filteredVaultItems: [], // Initialize empty, will be populated on unlock/setup
       );
 
-      // 显示 iCloud Drive 状态
-      if (iCloudAvailable) {
+      // 显示同步状态
+      print('[Vault] Sync mode: ${state.syncMode.name}');
+      if (iCloudAvailable && state.syncMode == SyncMode.icloud) {
         print('[Vault] Using iCloud Drive: $path');
+      } else if (state.syncMode == SyncMode.webdav) {
+        print('[Vault] Using WebDAV: ${state.webdavConfig?.serverUrl}');
       } else {
         print('[Vault] Using local storage: $path');
       }
@@ -648,6 +663,50 @@ Future<void> deleteSelectedItems() async {
       (item) => item.id == id,
       orElse: () => throw Exception('Item not found'),
     );
+  }
+
+  /// 设置同步模式
+  Future<void> setSyncMode(SyncMode mode, {WebDAVConfig? webdavConfig}) async {
+    await _storage.write(key: 'sync_mode', value: mode.name);
+
+    if (mode == SyncMode.webdav && webdavConfig != null) {
+      // 保存 WebDAV 配置
+      final config = webdavConfig.toJson();
+      await _storage.write(key: 'webdav_server_url', value: config['serverUrl']);
+      await _storage.write(key: 'webdav_username', value: config['username']);
+      await _storage.write(key: 'webdav_password', value: config['password']);
+      await _storage.write(key: 'webdav_remote_path', value: config['remotePath']);
+    }
+
+    state = state.copyWith(syncMode: mode, webdavConfig: webdavConfig);
+    print('[Vault] Sync mode changed to: ${mode.name}');
+  }
+
+  /// 加载同步配置
+  Future<void> _loadSyncConfig() async {
+    final modeStr = await _storage.read(key: 'sync_mode');
+    final mode = modeStr != null
+        ? SyncMode.values.firstWhere((e) => e.name == modeStr, orElse: () => SyncMode.local)
+        : SyncMode.local;
+
+    WebDAVConfig? webdavConfig;
+    if (mode == SyncMode.webdav) {
+      final serverUrl = await _storage.read(key: 'webdav_server_url');
+      final username = await _storage.read(key: 'webdav_username');
+      final password = await _storage.read(key: 'webdav_password');
+      final remotePath = await _storage.read(key: 'webdav_remote_path');
+
+      if (serverUrl != null && username != null && password != null) {
+        webdavConfig = WebDAVConfig(
+          serverUrl: serverUrl,
+          username: username,
+          password: password,
+          remotePath: remotePath ?? 'Hedge/vault.db',
+        );
+      }
+    }
+
+    state = state.copyWith(syncMode: mode, webdavConfig: webdavConfig);
   }
 
   List<VaultItem> getSortedItems() {
