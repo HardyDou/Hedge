@@ -16,7 +16,13 @@ class TrayPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = AppLocalizations.of(context);
+    if (l10n == null) {
+      return const Center(
+        child: CupertinoActivityIndicator(),
+      );
+    }
+
     final brightness = MediaQuery.platformBrightnessOf(context);
     final isDark = brightness == Brightness.dark;
 

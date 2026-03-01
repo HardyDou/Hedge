@@ -1,8 +1,10 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:window_manager/window_manager.dart';
 import 'package:hedge/main.dart' as app;
+import 'package:hedge/l10n/generated/app_localizations.dart';
 import 'package:hedge/features/tray_panel/tray_panel.dart';
 
 /// 带托盘功能的主入口
@@ -120,6 +122,16 @@ class _TrayEnabledAppState extends State<TrayEnabledApp> with WindowListener {
             theme: const CupertinoThemeData(
               brightness: Brightness.light,
             ),
+            localizationsDelegates: const [
+              AppLocalizations.delegate,
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+            ],
+            supportedLocales: const [
+              Locale('en'),
+              Locale('zh'),
+            ],
             home: CupertinoPageScaffold(
               child: TrayPanel(
                 panelWindowService: _panelWindowService,
