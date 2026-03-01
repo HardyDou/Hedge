@@ -270,8 +270,77 @@
 
 ---
 
+## 9. 已完成功能归档 (Completed Features Archive)
+
+### 9.1 同步功能 (v1.3.0 - 2026-03-01)
+
+**实施状态**: ✅ 已完成并发布
+
+**功能概述**:
+- 支持三种同步模式：本地存储（默认）、iCloud Drive（iOS/macOS）、WebDAV（所有平台）
+- WebDAV 支持坚果云、Nextcloud、Synology NAS 等标准 WebDAV 服务
+- 自动冲突检测和备份机制（Keep Both 策略）
+- 30 秒轮询检测远程变化
+- 配置安全存储（FlutterSecureStorage）
+
+**技术实现**:
+- `lib/platform/webdav_sync_service.dart` - WebDAV 同步服务
+- `lib/platform/ios_sync_service.dart` - iOS/macOS iCloud Drive 支持
+- `lib/domain/models/sync_config.dart` - 同步配置模型
+- `lib/presentation/pages/sync_settings_page.dart` - 同步设置界面
+
+**用户价值**:
+- 跨设备自动同步密码库
+- 用户完全掌控数据（Local-First 理念）
+- 零成本方案（WebDAV 可使用免费服务）
+
+### 9.2 桌面版常驻图标快速访问 (v1.3.0 - 2026-03-01)
+
+**实施状态**: ✅ 已完成并发布
+
+**功能概述**:
+- 系统托盘/菜单栏常驻图标
+- 点击弹出 360x480 紧凑型快速访问面板
+- 实时搜索和过滤
+- 快速复制密码（无需打开主窗口）
+- 完整键盘导航支持（上下键、Enter、ESC）
+
+**技术实现**:
+- 使用 `tray_manager` 插件实现系统托盘
+- 使用 `window_manager` 插件管理独立窗口
+- MethodChannel + EventChannel 实现多窗口状态同步
+- 热启动 < 200ms，冷启动 < 500ms
+
+**用户价值**:
+- 显著提升桌面端使用效率
+- 对齐 1Password 等行业标杆体验
+- 减少操作步骤，快速访问密码
+
+### 9.3 拼音排序和字母索引 (v1.3.0 - 2026-03-01)
+
+**实施状态**: ✅ 已完成并发布
+
+**功能概述**:
+- 统一排序规则：数字优先 → 英文/中文按拼音混排
+- 移动端右侧字母索引栏（密码数 >= 20 时显示）
+- 拖动索引实时跳转
+- 预计算拼音优化性能（1000 条 < 100ms）
+
+**技术实现**:
+- `lib/domain/services/sort_service.dart` - 排序服务
+- `lib/presentation/widgets/alphabet_index_bar.dart` - 字母索引组件
+- 使用 `lpinyin` 包进行中文拼音转换
+- `VaultItem.titlePinyin` 字段预存拼音
+
+**用户价值**:
+- 快速定位目标密码（大列表场景）
+- 自然的排序体验（中英文混排）
+- 流畅的滚动性能（60fps）
+
+---
+
 **文档状态:**
 *   ✅ Product Strategy: Approved
 *   ✅ Engineering: Approved (with notes on Sync & Key Derivation)
-*   ⏳ UX Design: In Progress
-*   **Version 1.3 (Draft Final)**
+*   ✅ UX Design: Approved
+*   **Version 1.4 (2026-03-02) - 添加已完成功能归档**
