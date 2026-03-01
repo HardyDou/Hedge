@@ -332,6 +332,10 @@ Future<bool> unlockVault(String masterPassword) async {
         vaultPath: path,
         filteredVaultItems: SortService.sort(vault?.items ?? []),
       );
+
+      // 检查是否有待同步的数据
+      _checkAndUploadPendingSync();
+
       return true;
     } catch (e) {
       state = state.copyWith(isLoading: false, error: "Incorrect master password");
@@ -565,14 +569,60 @@ Future<void> deleteItem(String id) async {
 
     // 如果是 WebDAV 模式，上传到服务器
     if (state.syncMode == SyncMode.webdav && state.webdavConfig != null) {
-      try {
-        print('[Vault] Uploading to WebDAV after save...');
-        final webdavService = await SyncServiceFactory.createWebDAVService(state.webdavConfig!);
-        await webdavService.uploadVault(path);
-        print('[Vault] Upload to WebDAV completed');
-      } catch (e) {
-        print('[Vault] Failed to upload to WebDAV: $e');
-        // 不抛出异常，让用户继续使用
+      _uploadToWebDAVWithRetry(path);
+    }
+  }
+
+  /// 上传到 WebDAV，支持后台重试
+  Future<void> _uploadToWebDAVWithRetry(String path, {int retryCount = 0}) async {
+    if (state.webdavConfig == null) return;
+
+    try {
+      print('[Vault] Uploading to WebDAV after save... (attempt ${retryCount + 1})');
+      final webdavService = await SyncServiceFactory.createWebDAVService(state.webdavConfig!);
+      await webdavService.uploadVault(path);
+      print('[Vault] Upload to WebDAV completed');
+
+      // 标记需要同步的标志为 false
+      await _storage.write(key: 'needs_webdav_sync', value: 'false');
+    } catch (e) {
+      print('[Vault] Failed to upload to WebDAV: $e');
+
+      // 标记需要同步
+      await _storage.write(key: 'needs_webdav_sync', value: 'true');
+
+      // 如果是网络错误，尝试重试（最多 3 次）
+      if (retryCount < 2 && _isNetworkError(e)) {
+        print('[Vault] Will retry upload in 5 seconds...');
+        Future.delayed(const Duration(seconds: 5), () {
+          _uploadToWebDAVWithRetry(path, retryCount: retryCount + 1);
+        });
+      } else {
+        print('[Vault] Upload failed after ${retryCount + 1} attempts, will retry on next save');
+      }
+    }
+  }
+
+  /// 检查是否是网络错误
+  bool _isNetworkError(dynamic error) {
+    final errorStr = error.toString().toLowerCase();
+    return errorStr.contains('network') ||
+        errorStr.contains('connection') ||
+        errorStr.contains('timeout') ||
+        errorStr.contains('unreachable');
+  }
+
+  /// 检查并上传待同步的数据
+  Future<void> _checkAndUploadPendingSync() async {
+    if (state.syncMode != SyncMode.webdav || state.webdavConfig == null) return;
+
+    final needsSync = await _storage.read(key: 'needs_webdav_sync');
+    if (needsSync == 'true') {
+      final path = state.vaultPath ?? await _getDefaultVaultPath();
+      final file = File(path);
+      if (await file.exists()) {
+        print('[Vault] Found pending sync, uploading...');
+        _uploadToWebDAVWithRetry(path);
       }
     }
   }
