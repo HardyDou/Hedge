@@ -46,12 +46,57 @@ class WebDAVSyncService implements SyncService {
     if (_client == null || _remotePath == null) return;
 
     try {
-      final dirPath = _remotePath!.substring(0, _remotePath!.lastIndexOf('/'));
-      await _client!.mkdir(dirPath);
-      print('[WebDAV] Created remote directory: $dirPath');
+      final lastSlashIndex = _remotePath!.lastIndexOf('/');
+
+      // 如果路径中没有 /，说明文件在根目录，不需要创建目录
+      if (lastSlashIndex == -1) {
+        print('[WebDAV] File is in root directory, no need to create directory');
+        return;
+      }
+
+      final dirPath = _remotePath!.substring(0, lastSlashIndex);
+
+      // 如果目录路径为空，说明文件在根目录
+      if (dirPath.isEmpty) {
+        print('[WebDAV] File is in root directory, no need to create directory');
+        return;
+      }
+
+      // 递归创建所有父目录
+      await _createDirectoryRecursive(dirPath);
+      print('[WebDAV] Ensured remote directory exists: $dirPath');
     } catch (e) {
-      // 目录可能已存在，忽略错误
-      print('[WebDAV] Directory might already exist: $e');
+      print('[WebDAV] Failed to ensure directory: $e');
+      // 不抛出异常，继续尝试上传
+    }
+  }
+
+  /// 递归创建目录
+  Future<void> _createDirectoryRecursive(String path) async {
+    if (_client == null || path.isEmpty) return;
+
+    try {
+      // 尝试创建目录
+      await _client!.mkdir(path);
+      print('[WebDAV] Created directory: $path');
+    } catch (e) {
+      // 如果失败，可能是父目录不存在，先创建父目录
+      final lastSlashIndex = path.lastIndexOf('/');
+      if (lastSlashIndex > 0) {
+        final parentPath = path.substring(0, lastSlashIndex);
+        await _createDirectoryRecursive(parentPath);
+        // 再次尝试创建当前目录
+        try {
+          await _client!.mkdir(path);
+          print('[WebDAV] Created directory: $path');
+        } catch (e2) {
+          // 目录可能已存在，忽略
+          print('[WebDAV] Directory might already exist: $path');
+        }
+      } else {
+        // 已经是顶级目录，忽略错误
+        print('[WebDAV] Directory might already exist: $path');
+      }
     }
   }
 
