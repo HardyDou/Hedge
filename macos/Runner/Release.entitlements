@@ -16,9 +16,5 @@
 	<array>
 		<string>$(AppIdentifierPrefix)com.hardydou.hedge</string>
 	</array>
-	<key>com.apple.developer.ubiquity-container-identifiers</key>
-	<array>
-		<string>iCloud.com.hardydou.hedge</string>
-	</array>
 </dict>
 </plist>

@@ -28,12 +28,5 @@
 	<string>MainMenu</string>
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
-	<key>LSSupportsOpeningDocumentsInPlace</key>
-	<true/>
-	<key>NSUbiquitousContainers</key>
-	<dict>
-		<key>NSUbiquitousContainerIsDocumentScopePublic</key>
-		<true/>
-	</dict>
 </dict>
 </plist>

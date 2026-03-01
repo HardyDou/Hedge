@@ -79,14 +79,14 @@ class IOSSyncService implements SyncService {
   @override
   Future<SyncStatus> getSyncStatus() async {
     // iCloud Drive 同步状态检测
-    if (_vaultPath == null) return SyncStatus.unknown;
+    if (_vaultPath == null) return SyncStatus.idle;
 
     try {
       final file = File(_vaultPath!);
       if (await file.exists()) {
         return SyncStatus.synced;
       }
-      return SyncStatus.unknown;
+      return SyncStatus.idle;
     } catch (e) {
       return SyncStatus.error;
     }
