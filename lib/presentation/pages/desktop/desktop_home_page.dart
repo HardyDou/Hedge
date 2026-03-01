@@ -23,7 +23,6 @@ class _DesktopHomePageState extends ConsumerState<DesktopHomePage> {
   final _searchController = TextEditingController();
   final _searchFocusNode = FocusNode();
   final _scrollController = ScrollController();
-  final _menuChannel = const MethodChannel('app.menu');
   VaultItem? _selectedItem;
   bool _showSettings = false;
   bool _showAddItem = false;
@@ -38,29 +37,6 @@ class _DesktopHomePageState extends ConsumerState<DesktopHomePage> {
     _searchFocusNode.addListener(() {
       // Don't clear search on blur - user may want to keep search while browsing
       // The search will only be cleared when user explicitly clears it
-    });
-    _setupMenuChannel();
-  }
-
-  void _setupMenuChannel() {
-    _menuChannel.setMethodCallHandler((call) async {
-      switch (call.method) {
-        case 'openSettings':
-          setState(() => _showSettings = true);
-          break;
-        case 'showSettings':
-          setState(() => _showSettings = true);
-          break;
-        case 'newEntry':
-          setState(() => _showAddItem = true);
-          break;
-        case 'lockVault':
-          ref.read(vaultProvider.notifier).lock();
-          break;
-        case 'showAbout':
-          _showAboutDialog();
-          break;
-      }
     });
   }
 

@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_app_lock/flutter_app_lock.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -18,6 +19,7 @@ import 'package:hedge/presentation/pages/shared/unlock_page.dart';
 import 'package:hedge/presentation/pages/shared/onboarding_page.dart';
 import 'package:hedge/presentation/pages/mobile/add_item_page.dart';
 import 'package:hedge/presentation/pages/desktop/desktop_home_page.dart';
+import 'package:hedge/presentation/pages/desktop/settings_panel.dart';
 import 'package:hedge/presentation/widgets/alphabet_index_bar.dart';
 
 class SlideFromLeftRoute<T> extends PageRouteBuilder<T> {
@@ -85,14 +87,25 @@ class NotePasswordApp extends ConsumerWidget {
           initiallyEnabled: false,
           initialBackgroundLockLatency: Duration(seconds: vaultState.autoLockTimeout),
           builder: (context, arg) => child ?? const AuthGuard(),
-          lockScreenBuilder: (lockContext) => Builder(
-            builder: (builderContext) => UnlockPage(
-              isLockOverlay: true,
-              onUnlocked: () {
-                AppLock.of(builderContext)!.didUnlock();
-              },
-            ),
-          ),
+          lockScreenBuilder: (lockContext) {
+            // Disable menu when AppLock is showing
+            if (PlatformUtils.isDesktop) {
+              const MethodChannel('app.menu').invokeMethod('setMenuEnabled', false);
+            }
+
+            return Builder(
+              builder: (builderContext) => UnlockPage(
+                isLockOverlay: true,
+                onUnlocked: () {
+                  AppLock.of(builderContext)!.didUnlock();
+                  // Re-enable menu when unlocked
+                  if (PlatformUtils.isDesktop) {
+                    const MethodChannel('app.menu').invokeMethod('setMenuEnabled', true);
+                  }
+                },
+              ),
+            );
+          },
         );
       },
       home: const AuthGuard(),
@@ -107,28 +120,123 @@ class AuthGuard extends ConsumerStatefulWidget {
   ConsumerState<AuthGuard> createState() => _AuthGuardState();
 }
 
-class _AuthGuardState extends ConsumerState<AuthGuard> {
+class _AuthGuardState extends ConsumerState<AuthGuard> with WidgetsBindingObserver {
+  static const _menuChannel = MethodChannel('app.menu');
+  bool _isAppInBackground = false;
+
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     Future.microtask(() => ref.read(vaultProvider.notifier).checkInitialStatus());
+
+    // Setup menu channel for desktop
+    if (PlatformUtils.isDesktop) {
+      _setupMenuChannel();
+    }
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.paused || state == AppLifecycleState.inactive) {
+      _isAppInBackground = true;
+    } else if (state == AppLifecycleState.resumed) {
+      // When app comes back, wait a bit to see if AppLock will show
+      Future.delayed(const Duration(milliseconds: 100), () {
+        if (mounted) {
+          setState(() => _isAppInBackground = false);
+        }
+      });
+    }
+  }
+
+  void _setupMenuChannel() {
+    _menuChannel.setMethodCallHandler((call) async {
+      if (call.method == 'openSettings' || call.method == 'showSettings') {
+        _handleOpenSettings();
+      }
+    });
+  }
+
+  void _handleOpenSettings() {
+    final vaultState = ref.read(vaultProvider);
+
+    // If not authenticated, show a message
+    if (!vaultState.isAuthenticated) {
+      showCupertinoDialog(
+        context: context,
+        builder: (ctx) => CupertinoAlertDialog(
+          title: const Text('需要解锁'),
+          content: const Text('请先解锁密码库才能访问设置'),
+          actions: [
+            CupertinoDialogAction(
+              isDefaultAction: true,
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('确定'),
+            ),
+          ],
+        ),
+      );
+      return;
+    }
+
+    // If authenticated, show settings dialog
+    final brightness = CupertinoTheme.of(context).brightness;
+    final isDark = brightness == Brightness.dark;
+
+    showCupertinoDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (dialogContext) => Center(
+        child: Container(
+          width: 450,
+          height: 380,
+          decoration: BoxDecoration(
+            color: isDark ? const Color(0xFF1C1C1E) : CupertinoColors.white,
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: [
+              BoxShadow(
+                color: CupertinoColors.black.withValues(alpha: 0.3),
+                blurRadius: 20,
+                offset: const Offset(0, 10),
+              ),
+            ],
+          ),
+          child: SettingsPanel(
+            isModal: true,
+            onClose: () => Navigator.of(dialogContext).pop(),
+          ),
+        ),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     final vaultState = ref.watch(vaultProvider);
-    
-    // Listen for state changes to enable/disable AppLock
+
+    // Listen for state changes to enable/disable AppLock and menu
     ref.listen<VaultState>(vaultProvider, (previous, next) {
       if (next.hasVaultFile && !next.isLoading) {
         // AppLock won't auto-update if initially disabled, so we force enable it
         if (previous == null || !previous.hasVaultFile || previous.isLoading) {
           AppLock.of(context)?.setEnabled(true);
         }
-        
+
         // Update timeout if changed
         if (previous?.autoLockTimeout != next.autoLockTimeout) {
           AppLock.of(context)?.setBackgroundLockLatency(Duration(seconds: next.autoLockTimeout));
+        }
+
+        // Enable menu when authenticated
+        if (next.isAuthenticated && PlatformUtils.isDesktop) {
+          _menuChannel.invokeMethod('setMenuEnabled', true);
         }
       } else if (!next.hasVaultFile) {
         AppLock.of(context)?.setEnabled(false);
@@ -136,6 +244,11 @@ class _AuthGuardState extends ConsumerState<AuthGuard> {
         if (previous != null && previous.hasVaultFile) {
           Navigator.of(context).popUntil((route) => route.isFirst);
         }
+      }
+
+      // Disable menu when not authenticated
+      if (!next.isAuthenticated && PlatformUtils.isDesktop) {
+        _menuChannel.invokeMethod('setMenuEnabled', false);
       }
     });
 

@@ -58,61 +58,117 @@ class _SettingsPanelState extends ConsumerState<SettingsPanel> {
   }
 
   Widget _buildTabBar(bool isDark, AppLocalizations l10n) {
+    final vaultState = ref.watch(vaultProvider);
+    final isAuthenticated = vaultState.isAuthenticated;
+
     final tabs = [
-      {'icon': CupertinoIcons.paintbrush, 'label': l10n.appearance},
-      {'icon': CupertinoIcons.lock, 'label': l10n.security},
-      {'icon': CupertinoIcons.arrow_down_doc, 'label': l10n.data}, // Added Data tab
-      {'icon': CupertinoIcons.info, 'label': '关于'},
+      {'icon': CupertinoIcons.paintbrush, 'label': l10n.appearance, 'requiresAuth': false},
+      {'icon': CupertinoIcons.lock, 'label': l10n.security, 'requiresAuth': true},
+      {'icon': CupertinoIcons.arrow_down_doc, 'label': l10n.data, 'requiresAuth': true},
+      {'icon': CupertinoIcons.info, 'label': '关于', 'requiresAuth': false},
     ];
 
     return Container(
       height: 36,
       padding: const EdgeInsets.symmetric(horizontal: 8),
       child: Row(
-        children: tabs.asMap().entries.map((entry) => _buildTabItem(
-          index: entry.key,
-          icon: entry.value['icon'] as IconData,
-          label: entry.value['label'] as String,
-          isDark: isDark,
-        )).toList(),
+        children: tabs.asMap().entries.map((entry) {
+          final requiresAuth = entry.value['requiresAuth'] as bool;
+          final isDisabled = requiresAuth && !isAuthenticated;
+
+          return _buildTabItem(
+            index: entry.key,
+            icon: entry.value['icon'] as IconData,
+            label: entry.value['label'] as String,
+            isDark: isDark,
+            isDisabled: isDisabled,
+          );
+        }).toList(),
       ),
     );
   }
 
-  Widget _buildTabItem({required int index, required IconData icon, required String label, required bool isDark}) {
+  Widget _buildTabItem({
+    required int index,
+    required IconData icon,
+    required String label,
+    required bool isDark,
+    bool isDisabled = false,
+  }) {
     final isSelected = _selectedTab == index;
     return GestureDetector(
-      onTap: () => setState(() => _selectedTab = index),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-        margin: const EdgeInsets.only(right: 4),
-        decoration: BoxDecoration(
-          color: isSelected ? (isDark ? const Color(0xFF2C2C2E) : CupertinoColors.systemGrey6) : CupertinoColors.transparent,
-          borderRadius: BorderRadius.circular(6),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              icon,
-              size: 14,
-              color: isSelected 
-                  ? CupertinoColors.activeBlue 
-                  : (isDark ? CupertinoColors.white.withValues(alpha: 0.6) : CupertinoColors.black.withValues(alpha: 0.6)),
-            ),
-            const SizedBox(width: 4),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-                color: isSelected 
+      onTap: isDisabled
+          ? () => _showUnlockRequiredDialog()
+          : () => setState(() => _selectedTab = index),
+      child: Opacity(
+        opacity: isDisabled ? 0.4 : 1.0,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+          margin: const EdgeInsets.only(right: 4),
+          decoration: BoxDecoration(
+            color: isSelected ? (isDark ? const Color(0xFF2C2C2E) : CupertinoColors.systemGrey6) : CupertinoColors.transparent,
+            borderRadius: BorderRadius.circular(6),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                icon,
+                size: 14,
+                color: isSelected
                     ? CupertinoColors.activeBlue
                     : (isDark ? CupertinoColors.white.withValues(alpha: 0.6) : CupertinoColors.black.withValues(alpha: 0.6)),
               ),
-            ),
-          ],
+              const SizedBox(width: 4),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                  color: isSelected
+                      ? CupertinoColors.activeBlue
+                      : (isDark ? CupertinoColors.white.withValues(alpha: 0.6) : CupertinoColors.black.withValues(alpha: 0.6)),
+                ),
+              ),
+              if (isDisabled) ...[
+                const SizedBox(width: 4),
+                Icon(
+                  CupertinoIcons.lock_fill,
+                  size: 10,
+                  color: isDark ? CupertinoColors.white.withValues(alpha: 0.4) : CupertinoColors.black.withValues(alpha: 0.4),
+                ),
+              ],
+            ],
+          ),
         ),
+      ),
+    );
+  }
+
+  void _showUnlockRequiredDialog() {
+    final l10n = AppLocalizations.of(context)!;
+    showCupertinoDialog(
+      context: context,
+      builder: (ctx) => CupertinoAlertDialog(
+        title: const Text('需要解锁'),
+        content: const Text('此功能需要先解锁密码库才能访问'),
+        actions: [
+          CupertinoDialogAction(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text(l10n.cancel),
+          ),
+          CupertinoDialogAction(
+            isDefaultAction: true,
+            onPressed: () {
+              Navigator.pop(ctx);
+              if (widget.onClose != null) {
+                widget.onClose!();
+              }
+              ref.read(vaultProvider.notifier).lock();
+            },
+            child: const Text('立即解锁'),
+          ),
+        ],
       ),
     );
   }
