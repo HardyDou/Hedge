@@ -356,4 +356,25 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get importResult => '导入结果';
+
+  @override
+  String get trayPanelTitle => '快捷访问';
+
+  @override
+  String get openMainWindow => '打开主窗口';
+
+  @override
+  String get exitApp => '退出应用';
+
+  @override
+  String get recentPasswords => '最近使用';
+
+  @override
+  String get noRecentPasswords => '暂无最近使用的密码';
+
+  @override
+  String get quickSearch => '快速搜索...';
+
+  @override
+  String get viewAll => '查看全部';
 }

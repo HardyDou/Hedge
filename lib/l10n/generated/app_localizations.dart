@@ -769,6 +769,48 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Import Result'**
   String get importResult;
+
+  /// No description provided for @trayPanelTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Quick Access'**
+  String get trayPanelTitle;
+
+  /// No description provided for @openMainWindow.
+  ///
+  /// In en, this message translates to:
+  /// **'Open Main Window'**
+  String get openMainWindow;
+
+  /// No description provided for @exitApp.
+  ///
+  /// In en, this message translates to:
+  /// **'Exit Application'**
+  String get exitApp;
+
+  /// No description provided for @recentPasswords.
+  ///
+  /// In en, this message translates to:
+  /// **'Recent Passwords'**
+  String get recentPasswords;
+
+  /// No description provided for @noRecentPasswords.
+  ///
+  /// In en, this message translates to:
+  /// **'No recent passwords'**
+  String get noRecentPasswords;
+
+  /// No description provided for @quickSearch.
+  ///
+  /// In en, this message translates to:
+  /// **'Quick Search...'**
+  String get quickSearch;
+
+  /// No description provided for @viewAll.
+  ///
+  /// In en, this message translates to:
+  /// **'View All'**
+  String get viewAll;
 }
 
 class _AppLocalizationsDelegate

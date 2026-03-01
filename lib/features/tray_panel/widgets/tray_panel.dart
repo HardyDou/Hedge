@@ -1,5 +1,5 @@
 import 'package:flutter/cupertino.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:hedge/l10n/generated/app_localizations.dart';
 import '../services/panel_window_service.dart';
 import '../services/tray_service.dart';
 

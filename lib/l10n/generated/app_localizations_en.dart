@@ -368,4 +368,25 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get importResult => 'Import Result';
+
+  @override
+  String get trayPanelTitle => 'Quick Access';
+
+  @override
+  String get openMainWindow => 'Open Main Window';
+
+  @override
+  String get exitApp => 'Exit Application';
+
+  @override
+  String get recentPasswords => 'Recent Passwords';
+
+  @override
+  String get noRecentPasswords => 'No recent passwords';
+
+  @override
+  String get quickSearch => 'Quick Search...';
+
+  @override
+  String get viewAll => 'View All';
 }

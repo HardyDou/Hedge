@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/foundation.dart';
 import 'package:window_manager/window_manager.dart';
 import '../models/panel_state.dart';
@@ -26,7 +27,7 @@ class PanelWindowService extends ChangeNotifier {
     notifyListeners();
 
     // 配置窗口为 Panel 样式
-    await windowManager.setSize(const Size(panelWidth, panelHeight));
+    await windowManager.setSize(Size(panelWidth, panelHeight));
     await windowManager.setAlwaysOnTop(true);
     await windowManager.setSkipTaskbar(true);
     await windowManager.setResizable(false);
@@ -82,7 +83,7 @@ class PanelWindowService extends ChangeNotifier {
     await windowManager.setAlwaysOnTop(false);
     await windowManager.setResizable(true);
     await windowManager.setMovable(true);
-    await windowManager.setSize(const Size(mainWindowWidth, mainWindowHeight));
+    await windowManager.setSize(Size(mainWindowWidth, mainWindowHeight));
     await windowManager.center();
     await windowManager.setTitle('Hedge');
     await windowManager.setTitleBarStyle(
