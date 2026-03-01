@@ -84,7 +84,7 @@ class VaultState {
       isSelectionMode: isSelectionMode ?? this.isSelectionMode,
       selectedIds: selectedIds ?? this.selectedIds,
       biometricType: biometricType ?? this.biometricType,
-      filteredVaultItems: filteredVaultItems ?? [],
+      filteredVaultItems: filteredVaultItems ?? this.filteredVaultItems,
     );
   }
 }

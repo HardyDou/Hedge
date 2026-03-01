@@ -216,6 +216,8 @@ class _DesktopHomePageState extends ConsumerState<DesktopHomePage> {
   }
 
   Widget _buildNavBar(bool isDark, AppLocalizations l10n) {
+    final vaultState = ref.watch(vaultProvider);
+
     return Container(
       height: 52,
       padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -237,18 +239,36 @@ class _DesktopHomePageState extends ConsumerState<DesktopHomePage> {
             style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: isDark ? CupertinoColors.white : CupertinoColors.black),
           ),
           const Spacer(),
-          _buildNavButton('新建', CupertinoIcons.add, () => setState(() { _showAddItem = true; _selectedItem = null; _showSettings = false; _editingItem = null; })),
-          const SizedBox(width: 8),
-          _buildNavButton('锁定', CupertinoIcons.lock_open, () => ref.read(vaultProvider.notifier).lock()),
+          if (vaultState.isSelectionMode) ...[
+            if (vaultState.selectedIds.isNotEmpty)
+              _buildNavButton(
+                l10n.deleteSelected,
+                CupertinoIcons.trash,
+                () => _handleBatchDelete(l10n),
+                color: CupertinoColors.destructiveRed,
+              ),
+            const SizedBox(width: 8),
+            _buildNavButton('取消', CupertinoIcons.xmark, () {
+              ref.read(vaultProvider.notifier).toggleSelectionMode();
+            }),
+          ] else ...[
+            _buildNavButton('删除', CupertinoIcons.trash, () {
+              ref.read(vaultProvider.notifier).toggleSelectionMode();
+            }),
+            const SizedBox(width: 8),
+            _buildNavButton('新建', CupertinoIcons.add, () => setState(() { _showAddItem = true; _selectedItem = null; _showSettings = false; _editingItem = null; })),
+            const SizedBox(width: 8),
+            _buildNavButton('锁定', CupertinoIcons.lock_open, () => ref.read(vaultProvider.notifier).lock()),
+          ],
         ],
       ),
     );
   }
 
-  Widget _buildNavButton(String label, IconData icon, VoidCallback onPressed) {
+  Widget _buildNavButton(String label, IconData icon, VoidCallback onPressed, {Color? color}) {
     return CupertinoButton(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      color: CupertinoColors.activeBlue,
+      color: color ?? CupertinoColors.activeBlue,
       borderRadius: BorderRadius.circular(6),
       minSize: 0,
       onPressed: onPressed,
@@ -437,20 +457,44 @@ class _DesktopHomePageState extends ConsumerState<DesktopHomePage> {
     String displayChar = item.title.isNotEmpty ? item.title[0].toUpperCase() : (domain != null && domain.isNotEmpty ? domain[0].toUpperCase() : '?');
     String? subtitle = item.username?.isNotEmpty == true ? item.username : (domain ?? null);
     final isSelected = _selectedItem?.id == item.id;
+    final isChecked = vaultState.selectedIds.contains(item.id);
     final color = _getColorForChar(displayChar);
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 2),
       child: GestureDetector(
-        onTap: () => setState(() { _selectedItem = item; _showSettings = false; _showAddItem = false; _editingItem = null; }),
+        onTap: () {
+          if (vaultState.isSelectionMode) {
+            ref.read(vaultProvider.notifier).toggleItemSelection(item.id);
+          } else {
+            setState(() { _selectedItem = item; _showSettings = false; _showAddItem = false; _editingItem = null; });
+          }
+        },
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           decoration: BoxDecoration(
-            color: isSelected ? CupertinoColors.activeBlue.withValues(alpha: 0.2) : Colors.transparent,
+            color: isSelected && !vaultState.isSelectionMode
+                ? CupertinoColors.activeBlue.withValues(alpha: 0.2)
+                : (isChecked ? CupertinoColors.activeBlue.withValues(alpha: 0.1) : Colors.transparent),
             borderRadius: BorderRadius.circular(8),
+            border: isChecked
+                ? Border.all(color: CupertinoColors.activeBlue, width: 1)
+                : null,
           ),
           child: Row(
             children: [
+              if (vaultState.isSelectionMode) ...[
+                Icon(
+                  isChecked
+                      ? CupertinoIcons.check_mark_circled_solid
+                      : CupertinoIcons.circle,
+                  color: isChecked
+                      ? CupertinoColors.activeBlue
+                      : isDark ? CupertinoColors.white.withValues(alpha: 0.4) : CupertinoColors.black.withValues(alpha: 0.4),
+                  size: 20,
+                ),
+                const SizedBox(width: 10),
+              ],
               _buildIcon(color, displayChar, domain),
               const SizedBox(width: 10),
               Expanded(
@@ -551,6 +595,39 @@ class _DesktopHomePageState extends ConsumerState<DesktopHomePage> {
         actions: [CupertinoDialogAction(onPressed: () => Navigator.pop(context), child: const Text("OK"))],
       ),
     );
+  }
+
+  Future<void> _handleBatchDelete(AppLocalizations l10n) async {
+    final vaultState = ref.read(vaultProvider);
+    final count = vaultState.selectedIds.length;
+    if (count == 0) return;
+
+    final confirmed = await showCupertinoDialog<bool>(
+      context: context,
+      builder: (context) => CupertinoAlertDialog(
+        title: Text(l10n.deleteSelected),
+        content: Text(l10n.deleteSelectedConfirm(count)),
+        actions: [
+          CupertinoDialogAction(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text(l10n.cancel),
+          ),
+          CupertinoDialogAction(
+            isDestructiveAction: true,
+            onPressed: () => Navigator.pop(context, true),
+            child: Text(l10n.delete),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      await ref.read(vaultProvider.notifier).deleteSelectedItems();
+      // Clear selected item if it was deleted
+      if (_selectedItem != null && vaultState.selectedIds.contains(_selectedItem!.id)) {
+        setState(() => _selectedItem = null);
+      }
+    }
   }
 }
 
