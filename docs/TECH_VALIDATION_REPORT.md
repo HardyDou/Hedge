@@ -16,10 +16,13 @@
 | 1. 托盘图标创建 | ✅ 通过 | 托盘图标成功显示在菜单栏 |
 | 2. 主窗口关闭进入托盘 | ✅ 通过 | 关闭主窗口后应用不退出，进入托盘状态 |
 | 3. Dock 图标隐藏 | ✅ 通过 | 进入托盘状态后 Dock 图标自动隐藏 |
-| 4. 点击托盘弹出面板 | ✅ 通过 | 点击托盘图标可以触发事件 |
-| 5. 托盘图标位置获取 | ✅ 通过 | 可以获取托盘图标位置用于计算 Panel 位置 |
-| 6. 从托盘打开主窗口 | ✅ 通过 | 点击托盘菜单可以重新显示主窗口和 Dock 图标 |
-| 7. 从托盘退出应用 | ✅ 通过 | 点击"退出应用"可以完全退出 |
+| 4. 点击托盘切换 Panel | ✅ 通过 | 点击托盘图标可以切换 Panel 显示/隐藏 |
+| 5. Panel 窗口样式 | ✅ 通过 | 无边框、不可移动、置顶、固定尺寸 240x320 |
+| 6. Panel 主题支持 | ✅ 通过 | 支持深色/浅色主题，自动跟随系统 |
+| 7. Panel 失焦隐藏 | ✅ 通过 | 点击外部区域自动隐藏 |
+| 8. 从 Panel 打开主窗口 | ✅ 通过 | 点击按钮可以恢复主窗口和 Dock 图标 |
+| 9. 从 Panel 退出应用 | ✅ 通过 | 点击"退出应用"可以完全退出 |
+| 10. Panel 位置定位 | ⚠️ 待优化 | Panel 与托盘图标有间距，无法紧贴显示 |
 
 ---
 
@@ -62,6 +65,7 @@ await trayManager.setToolTip('Hedge 密码管理器');
 
 // 设置托盘菜单
 Menu menu = Menu(items: [
+    MenuItem(key: 'show_panel', label: '显示快捷面板'),
     MenuItem(key: 'show_main', label: '打开主窗口'),
     MenuItem.separator(),
     MenuItem(key: 'exit', label: '退出应用'),
@@ -69,54 +73,111 @@ Menu menu = Menu(items: [
 await trayManager.setContextMenu(menu);
 ```
 
-### 4. 托盘位置获取 ✅
+### 4. 点击托盘切换 Panel ✅
 
 **实现方式**:
 ```dart
-final trayBounds = await trayManager.getBounds();
-// 返回: left, top, width, height
-// 可用于计算 Panel 窗口弹出位置
-```
+@override
+void onTrayIconMouseDown() {
+    _togglePanel();
+}
 
-### 5. 重新显示主窗口 ✅
-
-**实现方式**:
-```dart
-void _showMainWindow() async {
-    await windowManager.setSkipTaskbar(false);  // 恢复 Dock 图标
-    await windowManager.show();
-    await windowManager.focus();
+Future<void> _togglePanel() async {
+    if (_isPanelMode) {
+        final isVisible = await windowManager.isVisible();
+        if (isVisible) {
+            await windowManager.hide();
+        } else {
+            await windowManager.show();
+        }
+    } else {
+        _showPanel();
+    }
 }
 ```
 
+### 5. Panel 窗口样式 ✅
+
+**实现方式**:
+```dart
+// 配置 Panel 窗口
+await windowManager.setSize(const Size(240, 320));
+await windowManager.setAlwaysOnTop(true);
+await windowManager.setSkipTaskbar(true);
+await windowManager.setResizable(false);
+await windowManager.setMovable(false);  // 禁止移动
+await windowManager.setTitleBarStyle(
+    TitleBarStyle.hidden,
+    windowButtonVisibility: false,  // 隐藏窗口按钮
+);
+```
+
+### 6. Panel 主题支持 ✅
+
+**实现方式**:
+```dart
+Widget _buildPanelWindow() {
+    final brightness = MediaQuery.platformBrightnessOf(context);
+    final isDark = brightness == Brightness.dark;
+
+    return Container(
+        decoration: BoxDecoration(
+            color: isDark
+                ? CupertinoColors.darkBackgroundGray
+                : CupertinoColors.systemBackground,
+            // ...
+        ),
+        // ...
+    );
+}
+```
+
+### 7. Panel 位置定位 ⚠️
+
+**问题**: Panel 窗口与托盘图标之间有约一个托盘高度的间距
+
+**已尝试的方法**:
+- 使用 `trayBounds.bottom`
+- 使用 `trayBounds.top + height`
+- 使用固定菜单栏高度
+- 使用负偏移补偿标题栏高度
+
+**待解决**: 需要进一步研究 window_manager 的坐标系统或使用原生 API
+
 ---
 
-## 验证日志
+## 验证代码
 
-```
-flutter: ✅ 验证 1: 托盘图标已创建
-flutter: 托盘图标位置: 999.0, 0.0
-flutter: 托盘图标尺寸: 34.0, 37.0
-flutter: ✅ 验证 2: 主窗口关闭，应用进入托盘状态（不退出）
-flutter: ✅ 验证 5: 主窗口显示
-flutter: ✅ 验证 6: 退出应用
+验证代码位于：
+- `lib/tech_validation_panel.dart` - Panel 窗口验证
+- `lib/main_validation_panel.dart` - 验证入口
+
+运行命令：
+```bash
+fvm flutter run -d macos -t lib/main_validation_panel.dart
 ```
 
 ---
 
 ## 结论
 
-✅ **所有核心功能验证通过**
+✅ **核心功能验证通过**
 
 关键成果：
 1. ✅ 托盘图标可以正常创建和显示
 2. ✅ 主窗口关闭后应用继续运行，不退出
 3. ✅ Dock 图标可以在托盘状态下隐藏
-4. ✅ 可以获取托盘图标位置用于 Panel 定位
-5. ✅ 可以从托盘重新打开主窗口
-6. ✅ 可以从托盘完全退出应用
+4. ✅ 点击托盘图标可以切换 Panel 显示/隐藏
+5. ✅ Panel 窗口样式符合要求（无边框、不可移动、置顶）
+6. ✅ Panel 支持深色/浅色主题
+7. ✅ Panel 失焦自动隐藏
+8. ✅ 可以从 Panel 重新打开主窗口
+9. ✅ 可以从 Panel 完全退出应用
 
-**技术验证完成，可以继续进行后续开发任务。**
+待优化：
+- ⚠️ Panel 窗口位置定位需要进一步优化
+
+**技术验证基本完成，可以继续进行后续开发任务。**
 
 ---
 
@@ -124,9 +185,10 @@ flutter: ✅ 验证 6: 退出应用
 
 ### 已完成 ✅
 - [x] 任务 1: 添加项目依赖
-- [x] 任务 2: 技术验证
+- [x] 任务 2: 技术验证（核心功能）
 
 ### 待完成 🔄
+- [ ] 优化 Panel 窗口位置定位
 - [ ] 任务 3: 创建项目结构
 - [ ] 任务 4: 实现托盘管理服务
 - [ ] 任务 5: 实现窗口管理服务
