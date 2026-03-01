@@ -128,9 +128,9 @@ class _TechValidationPanelAppState extends State<TechValidationPanelApp>
     debugPrint('托盘位置: (${trayBounds.left}, ${trayBounds.top})');
     debugPrint('托盘尺寸: ${trayBounds.width} x ${trayBounds.height}');
 
-    // Panel 尺寸
-    const panelWidth = 350.0;
-    const panelHeight = 500.0;
+    // Panel 尺寸（类似托盘菜单，稍大一点）
+    const panelWidth = 280.0;
+    const panelHeight = 400.0;
 
     // 计算 Panel 位置（从托盘图标下方弹出，居中对齐）
     double panelX = trayBounds.left - panelWidth / 2 + trayBounds.width / 2;
@@ -250,48 +250,22 @@ class _TechValidationPanelAppState extends State<TechValidationPanelApp>
     return Container(
       decoration: BoxDecoration(
         color: CupertinoColors.systemBackground,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(8),
         border: Border.all(
           color: CupertinoColors.separator,
           width: 1,
         ),
+        boxShadow: [
+          BoxShadow(
+            color: CupertinoColors.black.withOpacity(0.2),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Column(
         children: [
-          // 标题栏
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: const BoxDecoration(
-              border: Border(
-                bottom: BorderSide(
-                  color: CupertinoColors.separator,
-                  width: 0.5,
-                ),
-              ),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text(
-                  '快捷面板',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                CupertinoButton(
-                  padding: EdgeInsets.zero,
-                  onPressed: () async {
-                    await windowManager.hide();
-                    await windowManager.setSkipTaskbar(true);
-                  },
-                  child: const Icon(CupertinoIcons.xmark, size: 20),
-                ),
-              ],
-            ),
-          ),
-
-          // 内容区域
+          // 内容区域（无标题栏）
           Expanded(
             child: Padding(
               padding: const EdgeInsets.all(16),
@@ -300,25 +274,24 @@ class _TechValidationPanelAppState extends State<TechValidationPanelApp>
                 children: [
                   const Icon(
                     CupertinoIcons.checkmark_circle_fill,
-                    size: 64,
+                    size: 48,
                     color: CupertinoColors.systemGreen,
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 16),
                   const Text(
-                    '这是独立的 Panel 窗口',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    '快捷面板',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                   ),
-                  const SizedBox(height: 20),
-                  const Text('✅ 无边框窗口'),
-                  const Text('✅ 置顶显示'),
-                  const Text('✅ 固定尺寸 350x500'),
-                  const Text('✅ 从托盘位置弹出'),
-                  const Text('✅ 失焦自动隐藏'),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 16),
+                  const Text('✅ 无标题栏', style: TextStyle(fontSize: 12)),
+                  const Text('✅ 无窗口按钮', style: TextStyle(fontSize: 12)),
+                  const Text('✅ 不可移动', style: TextStyle(fontSize: 12)),
+                  const Text('✅ 280x400 尺寸', style: TextStyle(fontSize: 12)),
+                  const SizedBox(height: 16),
                   const Text(
-                    '点击窗口外部测试自动隐藏',
+                    '点击外部自动隐藏',
                     style: TextStyle(
-                      fontSize: 12,
+                      fontSize: 11,
                       color: CupertinoColors.systemGrey,
                     ),
                   ),
@@ -329,7 +302,7 @@ class _TechValidationPanelAppState extends State<TechValidationPanelApp>
 
           // 底部按钮
           Container(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(12),
             decoration: const BoxDecoration(
               border: Border(
                 top: BorderSide(
@@ -343,17 +316,19 @@ class _TechValidationPanelAppState extends State<TechValidationPanelApp>
                 SizedBox(
                   width: double.infinity,
                   child: CupertinoButton.filled(
+                    padding: const EdgeInsets.symmetric(vertical: 10),
                     onPressed: _showMainWindow,
-                    child: const Text('打开主窗口'),
+                    child: const Text('打开主窗口', style: TextStyle(fontSize: 14)),
                   ),
                 ),
                 const SizedBox(height: 8),
                 SizedBox(
                   width: double.infinity,
                   child: CupertinoButton(
+                    padding: const EdgeInsets.symmetric(vertical: 10),
                     color: CupertinoColors.systemRed,
                     onPressed: _exitApp,
-                    child: const Text('退出应用'),
+                    child: const Text('退出应用', style: TextStyle(fontSize: 14)),
                   ),
                 ),
               ],
