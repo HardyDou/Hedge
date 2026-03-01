@@ -151,17 +151,20 @@ class _TechValidationPanelAppState extends State<TechValidationPanelApp>
 
     // Panel 尺寸（类似托盘菜单，稍大一点）
     const panelWidth = 240.0;
-    const panelHeight = 400.0;
+    const panelHeight = 320.0;
 
     // 计算 Panel 位置（紧贴托盘图标下方，居中对齐）
-    // macOS 菜单栏高度通常是 24-25，托盘图标在菜单栏中
     double panelX = trayBounds.left - panelWidth / 2 + trayBounds.width / 2;
-    double panelY = trayBounds.bottom;  // 使用 bottom 而不是 top + height
+    // 修正：向上偏移一个托盘高度，使其紧贴托盘图标
+    double panelY = trayBounds.top + trayBounds.height;
 
     // 边界检查
     if (panelX < 0) panelX = 0;
 
-    debugPrint('✅ 验证 2: Panel 位置计算完成: ($panelX, $panelY) - 紧贴托盘');
+    debugPrint('✅ 验证 2: Panel 位置计算完成:');
+    debugPrint('   托盘 top: ${trayBounds.top}, bottom: ${trayBounds.bottom}, height: ${trayBounds.height}');
+    debugPrint('   Panel X: $panelX, Y: $panelY (紧贴托盘)');
+    debugPrint('   Panel 尺寸: ${panelWidth}x$panelHeight');
 
     // 切换到 Panel 模式
     setState(() {
@@ -351,7 +354,7 @@ class _TechValidationPanelAppState extends State<TechValidationPanelApp>
                     ),
                   ),
                   Text(
-                    '✅ 240x400 尺寸',
+                    '✅ 240x320 尺寸',
                     style: TextStyle(
                       fontSize: 12,
                       color: isDark
