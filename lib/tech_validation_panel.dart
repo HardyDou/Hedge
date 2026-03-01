@@ -153,15 +153,15 @@ class _TechValidationPanelAppState extends State<TechValidationPanelApp>
     const panelWidth = 240.0;
     const panelHeight = 320.0;
 
-    // 计算 Panel 位置（从托盘图标下方弹出，居中对齐）
+    // 计算 Panel 位置（紧贴托盘图标下方，居中对齐）
     double panelX = trayBounds.left - panelWidth / 2 + trayBounds.width / 2;
-    double panelY = trayBounds.top + trayBounds.height + 5;
+    double panelY = trayBounds.top + trayBounds.height;  // 紧贴，无间距
 
     // 边界检查（简单处理）
     if (panelX < 0) panelX = 0;
     if (panelY < 0) panelY = 0;
 
-    debugPrint('✅ 验证 2: Panel 位置计算完成: ($panelX, $panelY)');
+    debugPrint('✅ 验证 2: Panel 位置计算完成: ($panelX, $panelY) - 紧贴托盘');
 
     // 切换到 Panel 模式
     setState(() {
