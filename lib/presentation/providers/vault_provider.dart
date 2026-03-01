@@ -562,6 +562,19 @@ Future<void> deleteItem(String id) async {
     state = state.copyWith(vault: newVault, isLoading: false);
     // Re-run search with current query
     await searchItems(_currentSearchQuery);
+
+    // 如果是 WebDAV 模式，上传到服务器
+    if (state.syncMode == SyncMode.webdav && state.webdavConfig != null) {
+      try {
+        print('[Vault] Uploading to WebDAV after save...');
+        final webdavService = await SyncServiceFactory.createWebDAVService(state.webdavConfig!);
+        await webdavService.uploadVault(path);
+        print('[Vault] Upload to WebDAV completed');
+      } catch (e) {
+        print('[Vault] Failed to upload to WebDAV: $e');
+        // 不抛出异常，让用户继续使用
+      }
+    }
   }
 
   Future<void> _startSyncWatch(String path, String masterPassword) async {
@@ -680,6 +693,33 @@ Future<void> deleteSelectedItems() async {
 
     state = state.copyWith(syncMode: mode, webdavConfig: webdavConfig);
     print('[Vault] Sync mode changed to: ${mode.name}');
+
+    // 如果切换到 WebDAV 模式，立即上传当前 vault
+    if (mode == SyncMode.webdav && webdavConfig != null && state.vault != null) {
+      try {
+        final vaultPath = state.vaultPath ?? await _getDefaultVaultPath();
+        final file = File(vaultPath);
+        if (await file.exists()) {
+          print('[Vault] Uploading existing vault to WebDAV...');
+
+          // 初始化 WebDAV 服务
+          final webdavService = await SyncServiceFactory.createWebDAVService(webdavConfig);
+          await webdavService.uploadVault(vaultPath);
+
+          print('[Vault] Initial upload to WebDAV completed');
+
+          // 重新启动同步监听
+          await _stopSyncWatch();
+          final masterPassword = state.currentPassword;
+          if (masterPassword != null) {
+            await _startSyncWatch(vaultPath, masterPassword);
+          }
+        }
+      } catch (e) {
+        print('[Vault] Failed to upload to WebDAV: $e');
+        // 不抛出异常，让用户继续使用
+      }
+    }
   }
 
   /// 加载同步配置

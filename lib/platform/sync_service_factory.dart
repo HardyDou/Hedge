@@ -2,13 +2,15 @@ import 'dart:io';
 import 'package:hedge/services/sync_service.dart';
 import 'package:hedge/platform/ios_sync_service.dart';
 import 'package:hedge/platform/android_sync_service.dart';
+import 'package:hedge/platform/webdav_sync_service.dart';
+import 'package:hedge/domain/models/sync_config.dart';
 
 class SyncServiceFactory {
   static SyncService? _service;
-  
+
   static SyncService getService() {
     if (_service != null) return _service!;
-    
+
     if (Platform.isIOS || Platform.isMacOS) {
       _service = IOSSyncService();
     } else if (Platform.isAndroid) {
@@ -17,10 +19,22 @@ class SyncServiceFactory {
       // Fallback for other platforms - no sync
       _service = _DummySyncService();
     }
-    
+
     return _service!;
   }
-  
+
+  /// 创建 WebDAV 同步服务实例
+  static Future<WebDAVSyncService> createWebDAVService(WebDAVConfig config) async {
+    final service = WebDAVSyncService();
+    await service.initialize(
+      serverUrl: config.serverUrl,
+      username: config.username,
+      password: config.password,
+      remotePath: config.remotePath,
+    );
+    return service;
+  }
+
   static void dispose() {
     (_service as dynamic)?.dispose();
     _service = null;
