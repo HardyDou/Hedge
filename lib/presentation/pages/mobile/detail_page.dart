@@ -154,32 +154,39 @@ class _DetailPageState extends ConsumerState<DetailPage> {
             
             const SizedBox(height: 20),
             
-            _buildiOSSection(
-              context: context,
-              header: l10n.credentials.toUpperCase(),
-              children: [
-                _buildListTile(
+            Builder(builder: (_) {
+              final hasUsername = _item.username != null && _item.username!.isNotEmpty;
+              final hasPassword = _item.password != null && _item.password!.isNotEmpty;
+              if (!hasUsername && !hasPassword) return const SizedBox.shrink();
+              final children = <Widget>[];
+              if (hasUsername) {
+                children.add(_buildListTile(
                   icon: CupertinoIcons.person,
                   title: l10n.username,
-                  value: _item.username ?? l10n.notSet,
+                  value: _item.username!,
                   isDark: isDark,
-                  onCopy: _item.username != null ? () => _copyToClipboard(_item.username!, l10n.username) : null,
-                ),
-                _buildDivider(isDark),
-                _buildPasswordTile(
+                  onCopy: () => _copyToClipboard(_item.username!, l10n.username),
+                ));
+              }
+              if (hasPassword) {
+                if (children.isNotEmpty) children.add(_buildDivider(isDark));
+                children.add(_buildPasswordTile(
                   icon: CupertinoIcons.lock,
                   title: l10n.password,
-                  value: _item.password ?? l10n.notSet,
+                  value: _item.password!,
                   isDark: isDark,
                   isObscured: _obscurePassword,
                   onToggleObscure: () => setState(() => _obscurePassword = !_obscurePassword),
-                  onCopy: _item.password != null ? () => _copyToClipboard(_item.password!, l10n.password) : null,
-                  onEnlarge: _item.password != null ? () {
-                    LargePasswordPage.show(context, _item.password!);
-                  } : null,
-                ),
-              ],
-            ),
+                  onCopy: () => _copyToClipboard(_item.password!, l10n.password),
+                  onEnlarge: () => LargePasswordPage.show(context, _item.password!),
+                ));
+              }
+              return _buildiOSSection(
+                context: context,
+                header: l10n.credentials.toUpperCase(),
+                children: children,
+              );
+            }),
             
             if (_item.notes != null && _item.notes!.isNotEmpty) ...[
               const SizedBox(height: 20),
