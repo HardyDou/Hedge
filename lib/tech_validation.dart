@@ -33,7 +33,8 @@ class _TechValidationAppState extends State<TechValidationApp>
     trayManager.addListener(this);
     windowManager.addListener(this);
 
-    // 配置主窗口
+    // 配置主窗口 - 阻止默认关闭行为
+    await windowManager.setPreventClose(true);
     await windowManager.setTitle('技术验证 - 主窗口');
     await windowManager.setSize(const Size(800, 600));
     await windowManager.center();
