@@ -132,7 +132,7 @@ class _TrayEnabledAppState extends State<TrayEnabledApp> with WindowListener {
                       : (themeMode == ThemeModeOption.light ? Brightness.light : null),
                   primaryColor: CupertinoColors.activeBlue,
                   scaffoldBackgroundColor: themeMode == ThemeModeOption.dark
-                      ? CupertinoColors.black
+                      ? const Color(0xFF1C1C1E)
                       : CupertinoColors.systemGroupedBackground,
                 ),
                 locale: locale,
