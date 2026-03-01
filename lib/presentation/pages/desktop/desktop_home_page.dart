@@ -10,6 +10,7 @@ import 'package:hedge/presentation/pages/desktop/detail_panel.dart';
 import 'package:hedge/presentation/pages/desktop/settings_panel.dart';
 import 'package:hedge/presentation/pages/desktop/add_item_panel.dart';
 import 'package:hedge/presentation/pages/desktop/edit_panel.dart';
+import 'package:hedge/presentation/widgets/alphabet_index_bar.dart';
 
 class DesktopHomePage extends ConsumerStatefulWidget {
   const DesktopHomePage({super.key});
@@ -21,6 +22,7 @@ class DesktopHomePage extends ConsumerStatefulWidget {
 class _DesktopHomePageState extends ConsumerState<DesktopHomePage> {
   final _searchController = TextEditingController();
   final _searchFocusNode = FocusNode();
+  final _scrollController = ScrollController();
   final _menuChannel = const MethodChannel('app.menu');
   VaultItem? _selectedItem;
   bool _showSettings = false;
@@ -66,6 +68,7 @@ class _DesktopHomePageState extends ConsumerState<DesktopHomePage> {
   void dispose() {
     _searchController.dispose();
     _searchFocusNode.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 
@@ -332,14 +335,50 @@ class _DesktopHomePageState extends ConsumerState<DesktopHomePage> {
 
   Widget _buildListView(List<VaultItem> items, bool isDark, VaultState vaultState) {
     final groupedList = _buildGroupedList(items);
-    return ListView.builder(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      itemCount: groupedList.length,
-      itemBuilder: (context, index) {
-        final element = groupedList[index];
-        if (element is String) return _buildGroupHeader(element, isDark);
-        return _buildListItem(element as VaultItem, isDark, vaultState);
-      },
+    return Row(
+      children: [
+        Expanded(
+          child: ListView.builder(
+            controller: _scrollController,
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            itemCount: groupedList.length,
+            itemBuilder: (context, index) {
+              final element = groupedList[index];
+              if (element is String) return _buildGroupHeader(element, isDark);
+              return _buildListItem(element as VaultItem, isDark, vaultState);
+            },
+          ),
+        ),
+        if (items.length >= 10)
+          AlphabetIndexBar(
+            letters: _getAvailableLetters(items),
+            onLetterSelected: (letter) => _scrollToLetter(letter, groupedList),
+            isDark: isDark,
+          ),
+      ],
+    );
+  }
+
+  List<String> _getAvailableLetters(List<VaultItem> items) {
+    final letters = <String>{};
+    for (final item in items) {
+      letters.add(_getIndexLetter(item));
+    }
+    return letters.toList()..sort();
+  }
+
+  void _scrollToLetter(String letter, List<Object> groupedList) {
+    const double itemHeight = 52.0;
+    const double headerHeight = 25.0;
+    double offset = 8.0;
+    for (final element in groupedList) {
+      if (element is String && element == letter) break;
+      offset += element is String ? headerHeight : itemHeight;
+    }
+    _scrollController.animateTo(
+      offset,
+      duration: const Duration(milliseconds: 250),
+      curve: Curves.easeInOut,
     );
   }
 
