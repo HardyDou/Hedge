@@ -27,6 +27,15 @@ class _TrayPanelUnlockedState extends ConsumerState<TrayPanelUnlocked> {
   Timer? _hoverTimer;
 
   @override
+  void initState() {
+    super.initState();
+    // 初始化时清空搜索，确保显示所有数据
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(vaultProvider.notifier).searchItems('');
+    });
+  }
+
+  @override
   void dispose() {
     _searchController.dispose();
     _hoverTimer?.cancel();
