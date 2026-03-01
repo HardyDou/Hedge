@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hedge/l10n/generated/app_localizations.dart';
@@ -22,10 +23,13 @@ class TrayPanelUnlocked extends ConsumerStatefulWidget {
 
 class _TrayPanelUnlockedState extends ConsumerState<TrayPanelUnlocked> {
   final _searchController = TextEditingController();
+  String? _hoveredItemId;
+  Timer? _hoverTimer;
 
   @override
   void dispose() {
     _searchController.dispose();
+    _hoverTimer?.cancel();
     super.dispose();
   }
 
@@ -144,9 +148,8 @@ class _TrayPanelUnlockedState extends ConsumerState<TrayPanelUnlocked> {
   /// 构建内容区域
   Widget _buildContent(BuildContext context, AppLocalizations l10n, bool isDark, VaultState vaultState) {
     final items = vaultState.filteredVaultItems ?? [];
-    final recentItems = items.take(5).toList(); // 显示最近 5 个
 
-    if (recentItems.isEmpty) {
+    if (items.isEmpty) {
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -169,34 +172,13 @@ class _TrayPanelUnlockedState extends ConsumerState<TrayPanelUnlocked> {
       );
     }
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // 分组标题
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-          child: Text(
-            l10n.recentlyUsed,
-            style: TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w600,
-              color: isDark ? CupertinoColors.systemGrey : CupertinoColors.systemGrey2,
-            ),
-          ),
-        ),
-
-        // 列表
-        Expanded(
-          child: ListView.builder(
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            itemCount: recentItems.length,
-            itemBuilder: (context, index) {
-              final item = recentItems[index];
-              return _buildPasswordItem(context, l10n, isDark, item);
-            },
-          ),
-        ),
-      ],
+    return ListView.builder(
+      padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 4),
+      itemCount: items.length,
+      itemBuilder: (context, index) {
+        final item = items[index];
+        return _buildPasswordItem(context, l10n, isDark, item);
+      },
     );
   }
 
@@ -205,26 +187,41 @@ class _TrayPanelUnlockedState extends ConsumerState<TrayPanelUnlocked> {
     final title = item.title ?? '';
     final subtitle = item.username ?? item.url ?? '';
     final displayChar = title.isNotEmpty ? title[0].toUpperCase() : '?';
+    final itemId = item.id ?? '';
+    final isHovered = _hoveredItemId == itemId;
 
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 4),
+    return MouseRegion(
+      onEnter: (_) {
+        setState(() => _hoveredItemId = itemId);
+
+        // 悬浮 2 秒后显示详情
+        _hoverTimer?.cancel();
+        _hoverTimer = Timer(const Duration(seconds: 2), () {
+          if (_hoveredItemId == itemId) {
+            // TODO: 显示详情面板
+            debugPrint('显示详情: $title');
+          }
+        });
+      },
+      onExit: (_) {
+        setState(() => _hoveredItemId = null);
+        _hoverTimer?.cancel();
+      },
       child: CupertinoButton(
         padding: EdgeInsets.zero,
         onPressed: () {
           // TODO: 复制密码到剪贴板
-          // 显示"已复制"提示
+          debugPrint('点击: $title');
         },
         child: Container(
-          padding: const EdgeInsets.all(8),
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           decoration: BoxDecoration(
-            color: isDark ? const Color(0xFF2C2C2E) : CupertinoColors.white,
-            borderRadius: BorderRadius.circular(6),
-            border: Border.all(
-              color: isDark
-                  ? const Color(0xFF38383A)
-                  : const Color(0xFFC6C6C8),
-              width: 0.5,
-            ),
+            color: isHovered
+                ? (isDark
+                    ? const Color(0xFF3A3A3C)
+                    : const Color(0xFFE5E5EA))
+                : (isDark ? const Color(0xFF1C1C1E) : CupertinoColors.white),
           ),
           child: Row(
             children: [
@@ -247,7 +244,7 @@ class _TrayPanelUnlockedState extends ConsumerState<TrayPanelUnlocked> {
                   ),
                 ),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: 10),
 
               // 文字
               Expanded(
