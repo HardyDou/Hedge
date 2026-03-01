@@ -10,7 +10,7 @@ void main() async {
   // 初始化 window_manager
   await windowManager.ensureInitialized();
 
-  // 配置窗口选项
+  // 配置窗口选项 - 关键：阻止默认关闭行为
   WindowOptions windowOptions = const WindowOptions(
     size: Size(800, 600),
     center: true,
@@ -20,6 +20,8 @@ void main() async {
   );
 
   windowManager.waitUntilReadyToShow(windowOptions, () async {
+    // 必须在这里设置 preventClose
+    await windowManager.setPreventClose(true);
     await windowManager.show();
     await windowManager.focus();
   });
