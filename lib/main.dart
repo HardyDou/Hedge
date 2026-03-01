@@ -90,7 +90,10 @@ class NotePasswordApp extends ConsumerWidget {
           lockScreenBuilder: (lockContext) {
             // Disable menu when AppLock is showing
             if (PlatformUtils.isDesktop) {
-              const MethodChannel('app.menu').invokeMethod('setMenuEnabled', false);
+              const MethodChannel('app.menu').invokeMethod('setMenuEnabled', false).catchError((e) {
+                // Ignore error during hot reload
+                debugPrint('[Menu] Failed to disable menu: $e');
+              });
             }
 
             return Builder(
@@ -100,7 +103,10 @@ class NotePasswordApp extends ConsumerWidget {
                   AppLock.of(builderContext)!.didUnlock();
                   // Re-enable menu when unlocked
                   if (PlatformUtils.isDesktop) {
-                    const MethodChannel('app.menu').invokeMethod('setMenuEnabled', true);
+                    const MethodChannel('app.menu').invokeMethod('setMenuEnabled', true).catchError((e) {
+                      // Ignore error during hot reload
+                      debugPrint('[Menu] Failed to enable menu: $e');
+                    });
                   }
                 },
               ),
@@ -236,7 +242,10 @@ class _AuthGuardState extends ConsumerState<AuthGuard> with WidgetsBindingObserv
 
         // Enable menu when authenticated
         if (next.isAuthenticated && PlatformUtils.isDesktop) {
-          _menuChannel.invokeMethod('setMenuEnabled', true);
+          _menuChannel.invokeMethod('setMenuEnabled', true).catchError((e) {
+            // Ignore error during hot reload
+            debugPrint('[Menu] Failed to enable menu: $e');
+          });
         }
       } else if (!next.hasVaultFile) {
         AppLock.of(context)?.setEnabled(false);
@@ -248,7 +257,10 @@ class _AuthGuardState extends ConsumerState<AuthGuard> with WidgetsBindingObserv
 
       // Disable menu when not authenticated
       if (!next.isAuthenticated && PlatformUtils.isDesktop) {
-        _menuChannel.invokeMethod('setMenuEnabled', false);
+        _menuChannel.invokeMethod('setMenuEnabled', false).catchError((e) {
+          // Ignore error during hot reload
+          debugPrint('[Menu] Failed to disable menu: $e');
+        });
       }
     });
 
