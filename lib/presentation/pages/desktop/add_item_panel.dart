@@ -150,16 +150,15 @@ class _AddItemPanelState extends ConsumerState<AddItemPanel> {
           children: [
             Text('备注', style: TextStyle(fontSize: 13, color: isDark ? CupertinoColors.white.withValues(alpha: 0.6) : CupertinoColors.black.withValues(alpha: 0.6))),
             const Spacer(),
-            if (_notesController.text.isNotEmpty)
-              CupertinoButton(
-                padding: EdgeInsets.zero,
-                minSize: 0,
-                onPressed: () => setState(() => _notesPreview = !_notesPreview),
-                child: Text(
-                  _notesPreview ? '编辑' : '预览',
-                  style: const TextStyle(color: CupertinoColors.activeBlue, fontSize: 13),
-                ),
+            CupertinoButton(
+              padding: EdgeInsets.zero,
+              minSize: 0,
+              onPressed: () => setState(() => _notesPreview = !_notesPreview),
+              child: Text(
+                _notesPreview ? '编辑' : '预览',
+                style: const TextStyle(color: CupertinoColors.activeBlue, fontSize: 13),
               ),
+            ),
           ],
         ),
         const SizedBox(height: 8),
