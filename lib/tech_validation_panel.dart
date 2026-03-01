@@ -153,15 +153,19 @@ class _TechValidationPanelAppState extends State<TechValidationPanelApp>
     await windowManager.setAlwaysOnTop(true);
     await windowManager.setSkipTaskbar(true);
     await windowManager.setResizable(false);
+    await windowManager.setMovable(false);  // 禁止移动
     await windowManager.setTitle('');
 
-    // 设置无边框样式（macOS）
-    await windowManager.setTitleBarStyle(TitleBarStyle.hidden);
+    // 设置无边框样式（macOS）- 隐藏标题栏和窗口按钮
+    await windowManager.setTitleBarStyle(
+      TitleBarStyle.hidden,
+      windowButtonVisibility: false,  // 隐藏关闭/最小化/最大化按钮
+    );
 
     await windowManager.show();
     await windowManager.focus();
 
-    debugPrint('✅ 验证 3: Panel 窗口已显示（350x500，无边框，置顶）');
+    debugPrint('✅ 验证 3: Panel 窗口已显示（350x500，无边框，置顶，不可移动）');
   }
 
   Future<void> _showMainWindow() async {
@@ -175,10 +179,14 @@ class _TechValidationPanelAppState extends State<TechValidationPanelApp>
     // 恢复主窗口样式
     await windowManager.setAlwaysOnTop(false);
     await windowManager.setResizable(true);
+    await windowManager.setMovable(true);  // 允许移动
     await windowManager.setSize(const Size(800, 600));
     await windowManager.center();
     await windowManager.setTitle('技术验证 - 主窗口');
-    await windowManager.setTitleBarStyle(TitleBarStyle.normal);
+    await windowManager.setTitleBarStyle(
+      TitleBarStyle.normal,
+      windowButtonVisibility: true,  // 显示窗口按钮
+    );
     await windowManager.setSkipTaskbar(false);
     await windowManager.show();
     await windowManager.focus();
