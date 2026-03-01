@@ -162,5 +162,13 @@
   "recentPasswords": "Recent Passwords",
   "noRecentPasswords": "No recent passwords",
   "quickSearch": "Quick Search...",
-  "viewAll": "View All"
+  "viewAll": "View All",
+  "trayPanelLocked": "Vault is Locked",
+  "unlockVault": "Unlock Vault",
+  "useBiometricUnlock": "Use Biometric",
+  "quickAccess": "Quick Access",
+  "recentlyUsed": "Recently Used",
+  "lockNow": "Lock Now",
+  "quickSettings": "Quick Settings",
+  "passwordCopied": "Password Copied"
 }
