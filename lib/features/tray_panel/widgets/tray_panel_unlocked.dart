@@ -3,6 +3,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart' show SelectableText;
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:window_manager/window_manager.dart';
 import 'package:hedge/l10n/generated/app_localizations.dart';
 import 'package:hedge/presentation/providers/vault_provider.dart';
 import 'package:hedge/src/dart/vault.dart';
@@ -68,6 +69,42 @@ class _TrayPanelUnlockedState extends ConsumerState<TrayPanelUnlocked> {
     setState(() {
       _showPasswordLarge = !_showPasswordLarge;
     });
+
+    // 动态调整窗口大小
+    if (_showPasswordLarge) {
+      _resizeWindowForPasswordLarge();
+    } else {
+      _resizeWindowToNormal();
+    }
+  }
+
+  /// 调整窗口大小以显示放大密码
+  Future<void> _resizeWindowForPasswordLarge() async {
+    try {
+      final password = _detailItem?.password ?? '';
+      // 计算所需宽度：每个字符32px + 间距4px，最大600px
+      final charWidth = 32.0;
+      final spacing = 4.0;
+      final padding = 32.0; // 左右padding
+      final calculatedWidth = (password.length * (charWidth + spacing)) + padding;
+      final width = calculatedWidth.clamp(300.0, 600.0);
+      final height = 180.0; // 固定高度
+
+      await windowManager.setSize(Size(width, height));
+      debugPrint('窗口调整为放大模式: ${width}x$height');
+    } catch (e) {
+      debugPrint('调整窗口大小失败: $e');
+    }
+  }
+
+  /// 恢复窗口到正常大小
+  Future<void> _resizeWindowToNormal() async {
+    try {
+      await windowManager.setSize(const Size(240, 320));
+      debugPrint('窗口恢复正常大小: 240x320');
+    } catch (e) {
+      debugPrint('恢复窗口大小失败: $e');
+    }
   }
 
   @override
