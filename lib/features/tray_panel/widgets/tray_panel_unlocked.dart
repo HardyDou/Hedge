@@ -713,45 +713,44 @@ class _TrayPanelUnlockedState extends ConsumerState<TrayPanelUnlocked> {
 
         // 密码显示区域
         Expanded(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                // 密码字符网格
-                Wrap(
-                  alignment: WrapAlignment.center,
-                  spacing: 4,
-                  runSpacing: 6,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              // 密码字符横向滚动
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
                   children: List.generate(password.length, (index) {
                     return _buildCharWithIndex(password[index], index + 1, isDark);
                   }),
                 ),
-                const SizedBox(height: 20),
+              ),
+              const SizedBox(height: 20),
 
-                // 复制按钮
-                SizedBox(
-                  width: 120,
-                  child: CupertinoButton(
-                    color: CupertinoColors.activeBlue,
-                    borderRadius: BorderRadius.circular(8),
-                    padding: const EdgeInsets.symmetric(vertical: 10),
-                    onPressed: () {
-                      Clipboard.setData(ClipboardData(text: password));
-                      // TODO: 显示复制成功提示
-                    },
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: const [
-                        Icon(CupertinoIcons.doc_on_doc, size: 16, color: CupertinoColors.white),
-                        SizedBox(width: 6),
-                        Text('复制密码', style: TextStyle(color: CupertinoColors.white, fontSize: 14)),
-                      ],
-                    ),
+              // 复制按钮
+              SizedBox(
+                width: 120,
+                child: CupertinoButton(
+                  color: CupertinoColors.activeBlue,
+                  borderRadius: BorderRadius.circular(8),
+                  padding: const EdgeInsets.symmetric(vertical: 10),
+                  onPressed: () {
+                    Clipboard.setData(ClipboardData(text: password));
+                    // TODO: 显示复制成功提示
+                  },
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: const [
+                      Icon(CupertinoIcons.doc_on_doc, size: 16, color: CupertinoColors.white),
+                      SizedBox(width: 6),
+                      Text('复制密码', style: TextStyle(color: CupertinoColors.white, fontSize: 14)),
+                    ],
                   ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ],
