@@ -28,6 +28,7 @@ class _TrayPanelUnlockedState extends ConsumerState<TrayPanelUnlocked> {
   String? _hoveredItemId;
   Timer? _hoverTimer;
   VaultItem? _detailItem; // 当前显示详情的项目
+  bool _showPassword = false; // 是否显示密码明文
 
   @override
   void initState() {
@@ -48,12 +49,14 @@ class _TrayPanelUnlockedState extends ConsumerState<TrayPanelUnlocked> {
   void _showDetail(VaultItem item) {
     setState(() {
       _detailItem = item;
+      _showPassword = false; // 重置密码显示状态
     });
   }
 
   void _hideDetail() {
     setState(() {
       _detailItem = null;
+      _showPassword = false;
     });
   }
 
@@ -70,7 +73,7 @@ class _TrayPanelUnlockedState extends ConsumerState<TrayPanelUnlocked> {
 
     return Stack(
       children: [
-        // 主内容
+        // 主内容（密码列表）
         Column(
           children: [
             // 标题栏（带右侧按钮）
@@ -86,33 +89,22 @@ class _TrayPanelUnlockedState extends ConsumerState<TrayPanelUnlocked> {
           ],
         ),
 
-        // 详情面板（从右侧滑入）
+        // 详情面板（从右侧滑入，全屏显示）
         if (_detailItem != null)
           Positioned.fill(
-            child: GestureDetector(
-              onTap: _hideDetail,
+            child: TweenAnimationBuilder<double>(
+              tween: Tween(begin: 1.0, end: 0.0),
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeOut,
+              builder: (context, value, child) {
+                return Transform.translate(
+                  offset: Offset(240 * value, 0), // 从右侧滑入
+                  child: child,
+                );
+              },
               child: Container(
-                color: CupertinoColors.black.withOpacity(0.3),
-                child: Align(
-                  alignment: Alignment.centerRight,
-                  child: GestureDetector(
-                    onTap: () {}, // 阻止点击穿透
-                    child: Container(
-                      width: 200,
-                      decoration: BoxDecoration(
-                        color: isDark ? const Color(0xFF1C1C1E) : CupertinoColors.white,
-                        boxShadow: [
-                          BoxShadow(
-                            color: CupertinoColors.black.withOpacity(0.3),
-                            blurRadius: 20,
-                            offset: const Offset(-4, 0),
-                          ),
-                        ],
-                      ),
-                      child: _buildDetailPanel(context, l10n, isDark, _detailItem!),
-                    ),
-                  ),
-                ),
+                color: isDark ? const Color(0xFF1C1C1E) : CupertinoColors.white,
+                child: _buildDetailPanel(context, l10n, isDark, _detailItem!),
               ),
             ),
           ),
@@ -433,13 +425,11 @@ class _TrayPanelUnlockedState extends ConsumerState<TrayPanelUnlocked> {
 
                 // 密码
                 if (item.password != null && item.password!.isNotEmpty)
-                  _buildDetailField(
+                  _buildPasswordField(
                     context: context,
                     label: l10n.password,
-                    value: '••••••••',
-                    icon: CupertinoIcons.lock,
+                    value: item.password!,
                     isDark: isDark,
-                    actualValue: item.password!,
                   ),
 
                 // URL
@@ -470,7 +460,94 @@ class _TrayPanelUnlockedState extends ConsumerState<TrayPanelUnlocked> {
     );
   }
 
-  /// 构建详情字段
+  /// 构建密码字段（带显示/隐藏菜单）
+  Widget _buildPasswordField({
+    required BuildContext context,
+    required String label,
+    required String value,
+    required bool isDark,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // 标签
+          Row(
+            children: [
+              Icon(
+                CupertinoIcons.lock,
+                size: 12,
+                color: isDark ? CupertinoColors.systemGrey : CupertinoColors.systemGrey2,
+              ),
+              const SizedBox(width: 6),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 10,
+                  color: isDark ? CupertinoColors.systemGrey : CupertinoColors.systemGrey2,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+
+          // 值 + 操作按钮
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Text(
+                  _showPassword ? value : '••••••••',
+                  style: TextStyle(
+                    fontSize: _showPassword ? 14 : 12,
+                    color: isDark ? CupertinoColors.white : CupertinoColors.black,
+                    letterSpacing: _showPassword ? 0 : 2,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              const SizedBox(width: 4),
+
+              // 显示/隐藏按钮
+              CupertinoButton(
+                padding: EdgeInsets.zero,
+                minSize: 0,
+                onPressed: () {
+                  setState(() {
+                    _showPassword = !_showPassword;
+                  });
+                },
+                child: Icon(
+                  _showPassword ? CupertinoIcons.eye_slash : CupertinoIcons.eye,
+                  size: 14,
+                  color: CupertinoColors.activeBlue,
+                ),
+              ),
+              const SizedBox(width: 8),
+
+              // 复制按钮
+              CupertinoButton(
+                padding: EdgeInsets.zero,
+                minSize: 0,
+                onPressed: () {
+                  Clipboard.setData(ClipboardData(text: value));
+                  // TODO: 显示复制成功提示
+                },
+                child: Icon(
+                  CupertinoIcons.doc_on_doc,
+                  size: 14,
+                  color: CupertinoColors.activeBlue,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
   Widget _buildDetailField({
     required BuildContext context,
     required String label,
