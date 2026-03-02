@@ -713,60 +713,92 @@ class _TrayPanelUnlockedState extends ConsumerState<TrayPanelUnlocked> {
 
         // 密码显示区域
         Expanded(
-          child: Center(
-            child: Padding(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  // 密码文本（始终显示明文）
-                  SelectableText(
-                    password,
-                    style: TextStyle(
-                      fontSize: 28,
-                      fontWeight: FontWeight.w600,
-                      letterSpacing: 2,
-                      color: isDark ? CupertinoColors.white : CupertinoColors.black,
-                      fontFamily: 'Menlo', // 使用等宽字体
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 30),
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                // 密码字符网格
+                Wrap(
+                  alignment: WrapAlignment.center,
+                  spacing: 4,
+                  runSpacing: 6,
+                  children: List.generate(password.length, (index) {
+                    return _buildCharWithIndex(password[index], index + 1, isDark);
+                  }),
+                ),
+                const SizedBox(height: 20),
 
-                  // 复制按钮
-                  CupertinoButton(
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                // 复制按钮
+                SizedBox(
+                  width: 120,
+                  child: CupertinoButton(
                     color: CupertinoColors.activeBlue,
+                    borderRadius: BorderRadius.circular(8),
+                    padding: const EdgeInsets.symmetric(vertical: 10),
                     onPressed: () {
                       Clipboard.setData(ClipboardData(text: password));
                       // TODO: 显示复制成功提示
                     },
                     child: Row(
-                      mainAxisSize: MainAxisSize.min,
+                      mainAxisAlignment: MainAxisAlignment.center,
                       children: const [
-                        Icon(
-                          CupertinoIcons.doc_on_doc,
-                          size: 18,
-                          color: CupertinoColors.white,
-                        ),
-                        SizedBox(width: 8),
-                        Text(
-                          '复制密码',
-                          style: TextStyle(
-                            color: CupertinoColors.white,
-                            fontSize: 15,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
+                        Icon(CupertinoIcons.doc_on_doc, size: 16, color: CupertinoColors.white),
+                        SizedBox(width: 6),
+                        Text('复制密码', style: TextStyle(color: CupertinoColors.white, fontSize: 14)),
                       ],
                     ),
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
         ),
       ],
+    );
+  }
+
+  /// 构建单个字符方块（带序号）
+  Widget _buildCharWithIndex(String char, int index, bool isDark) {
+    final isEven = index % 2 == 0;
+    final bgColor = isEven
+        ? (isDark ? const Color(0xFF2C2C2E) : const Color(0xFFF2F2F7))
+        : (isDark ? const Color(0xFF3A3A3C) : const Color(0xFFE5E5EA));
+    final textColor = isDark ? CupertinoColors.white : CupertinoColors.black;
+
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 2, vertical: 2),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 28,
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            decoration: BoxDecoration(
+              color: bgColor,
+              borderRadius: BorderRadius.circular(6),
+            ),
+            child: Text(
+              char,
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+                color: textColor,
+                fontFamily: 'monospace',
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            index.toString(),
+            style: TextStyle(
+              fontSize: 9,
+              color: isDark ? CupertinoColors.white.withOpacity(0.5) : CupertinoColors.black.withOpacity(0.5),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
