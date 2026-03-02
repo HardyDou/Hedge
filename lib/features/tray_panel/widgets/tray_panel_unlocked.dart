@@ -29,6 +29,7 @@ class _TrayPanelUnlockedState extends ConsumerState<TrayPanelUnlocked> {
   Timer? _hoverTimer;
   VaultItem? _detailItem; // 当前显示详情的项目
   bool _showPassword = false; // 是否显示密码明文
+  bool _showPasswordLarge = false; // 是否显示放大密码页面
 
   @override
   void initState() {
@@ -50,6 +51,7 @@ class _TrayPanelUnlockedState extends ConsumerState<TrayPanelUnlocked> {
     setState(() {
       _detailItem = item;
       _showPassword = false; // 重置密码显示状态
+      _showPasswordLarge = false; // 重置放大显示状态
     });
   }
 
@@ -57,6 +59,13 @@ class _TrayPanelUnlockedState extends ConsumerState<TrayPanelUnlocked> {
     setState(() {
       _detailItem = null;
       _showPassword = false;
+      _showPasswordLarge = false;
+    });
+  }
+
+  void _togglePasswordLarge() {
+    setState(() {
+      _showPasswordLarge = !_showPasswordLarge;
     });
   }
 
@@ -90,7 +99,7 @@ class _TrayPanelUnlockedState extends ConsumerState<TrayPanelUnlocked> {
         ),
 
         // 详情面板（从右侧滑入，全屏显示）
-        if (_detailItem != null)
+        if (_detailItem != null && !_showPasswordLarge)
           Positioned.fill(
             child: TweenAnimationBuilder<double>(
               tween: Tween(begin: 1.0, end: 0.0),
@@ -105,6 +114,26 @@ class _TrayPanelUnlockedState extends ConsumerState<TrayPanelUnlocked> {
               child: Container(
                 color: isDark ? const Color(0xFF1C1C1E) : CupertinoColors.white,
                 child: _buildDetailPanel(context, l10n, isDark, _detailItem!),
+              ),
+            ),
+          ),
+
+        // 放大密码页面（全屏显示）
+        if (_showPasswordLarge && _detailItem != null)
+          Positioned.fill(
+            child: TweenAnimationBuilder<double>(
+              tween: Tween(begin: 1.0, end: 0.0),
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeOut,
+              builder: (context, value, child) {
+                return Transform.translate(
+                  offset: Offset(240 * value, 0), // 从右侧滑入
+                  child: child,
+                );
+              },
+              child: Container(
+                color: isDark ? const Color(0xFF1C1C1E) : CupertinoColors.white,
+                child: _buildPasswordLargePage(context, l10n, isDark, _detailItem!),
               ),
             ),
           ),
@@ -533,7 +562,7 @@ class _TrayPanelUnlockedState extends ConsumerState<TrayPanelUnlocked> {
                 padding: EdgeInsets.zero,
                 minSize: 0,
                 onPressed: () {
-                  _showPasswordLarge(context, value, isDark);
+                  _togglePasswordLarge();
                 },
                 child: Icon(
                   CupertinoIcons.zoom_in,
@@ -634,6 +663,146 @@ class _TrayPanelUnlockedState extends ConsumerState<TrayPanelUnlocked> {
       ),
     );
   }
+
+  /// 构建放大密码页面
+  Widget _buildPasswordLargePage(BuildContext context, AppLocalizations l10n, bool isDark, VaultItem item) {
+    final password = item.password ?? '';
+
+    return Column(
+      children: [
+        // 顶部栏
+        Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            border: Border(
+              bottom: BorderSide(
+                color: isDark ? const Color(0xFF38383A) : const Color(0xFFC6C6C8),
+                width: 0.5,
+              ),
+            ),
+          ),
+          child: Row(
+            children: [
+              CupertinoButton(
+                padding: EdgeInsets.zero,
+                minSize: 0,
+                onPressed: _togglePasswordLarge,
+                child: Icon(
+                  CupertinoIcons.back,
+                  size: 20,
+                  color: CupertinoColors.activeBlue,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  item.title ?? '',
+                  style: TextStyle(
+                    color: isDark ? CupertinoColors.white : CupertinoColors.black,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
+        ),
+
+        // 密码显示区域
+        Expanded(
+          child: Center(
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  // 密码文本
+                  SelectableText(
+                    _showPassword ? password : '•' * password.length,
+                    style: TextStyle(
+                      fontSize: 32,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: _showPassword ? 2 : 4,
+                      color: isDark ? CupertinoColors.white : CupertinoColors.black,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 30),
+
+                  // 操作按钮
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      // 显示/隐藏按钮
+                      CupertinoButton(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                        color: isDark ? const Color(0xFF3A3A3C) : CupertinoColors.systemGrey5,
+                        onPressed: () {
+                          setState(() {
+                            _showPassword = !_showPassword;
+                          });
+                        },
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              _showPassword ? CupertinoIcons.eye_slash : CupertinoIcons.eye,
+                              size: 18,
+                              color: CupertinoColors.activeBlue,
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              _showPassword ? '隐藏' : '显示',
+                              style: const TextStyle(
+                                color: CupertinoColors.activeBlue,
+                                fontSize: 14,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+
+                      // 复制按钮
+                      CupertinoButton(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                        color: CupertinoColors.activeBlue,
+                        onPressed: () {
+                          Clipboard.setData(ClipboardData(text: password));
+                          // TODO: 显示复制成功提示
+                        },
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: const [
+                            Icon(
+                              CupertinoIcons.doc_on_doc,
+                              size: 18,
+                              color: CupertinoColors.white,
+                            ),
+                            SizedBox(width: 6),
+                            Text(
+                              '复制',
+                              style: TextStyle(
+                                color: CupertinoColors.white,
+                                fontSize: 14,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
   Color _getColorForChar(String char) {
     final colors = [
       const Color(0xFF007AFF),
