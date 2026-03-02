@@ -528,6 +528,21 @@ class _TrayPanelUnlockedState extends ConsumerState<TrayPanelUnlocked> {
               ),
               const SizedBox(width: 8),
 
+              // 放大显示按钮
+              CupertinoButton(
+                padding: EdgeInsets.zero,
+                minSize: 0,
+                onPressed: () {
+                  _showPasswordLarge(context, value, isDark);
+                },
+                child: Icon(
+                  CupertinoIcons.zoom_in,
+                  size: 14,
+                  color: CupertinoColors.activeBlue,
+                ),
+              ),
+              const SizedBox(width: 8),
+
               // 复制按钮
               CupertinoButton(
                 padding: EdgeInsets.zero,
