@@ -769,6 +769,138 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Import Result'**
   String get importResult;
+
+  /// No description provided for @trayPanelTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Quick Access'**
+  String get trayPanelTitle;
+
+  /// No description provided for @openMainWindow.
+  ///
+  /// In en, this message translates to:
+  /// **'Open Main Window'**
+  String get openMainWindow;
+
+  /// No description provided for @exitApp.
+  ///
+  /// In en, this message translates to:
+  /// **'Exit Application'**
+  String get exitApp;
+
+  /// No description provided for @recentPasswords.
+  ///
+  /// In en, this message translates to:
+  /// **'Recent Passwords'**
+  String get recentPasswords;
+
+  /// No description provided for @noRecentPasswords.
+  ///
+  /// In en, this message translates to:
+  /// **'No recent passwords'**
+  String get noRecentPasswords;
+
+  /// No description provided for @quickSearch.
+  ///
+  /// In en, this message translates to:
+  /// **'Quick Search...'**
+  String get quickSearch;
+
+  /// No description provided for @viewAll.
+  ///
+  /// In en, this message translates to:
+  /// **'View All'**
+  String get viewAll;
+
+  /// No description provided for @trayPanelLocked.
+  ///
+  /// In en, this message translates to:
+  /// **'Vault is Locked'**
+  String get trayPanelLocked;
+
+  /// No description provided for @unlockVault.
+  ///
+  /// In en, this message translates to:
+  /// **'Unlock Vault'**
+  String get unlockVault;
+
+  /// No description provided for @useBiometricUnlock.
+  ///
+  /// In en, this message translates to:
+  /// **'Use Biometric'**
+  String get useBiometricUnlock;
+
+  /// No description provided for @quickAccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Quick Access'**
+  String get quickAccess;
+
+  /// No description provided for @recentlyUsed.
+  ///
+  /// In en, this message translates to:
+  /// **'Recently Used'**
+  String get recentlyUsed;
+
+  /// No description provided for @lockNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Lock Now'**
+  String get lockNow;
+
+  /// No description provided for @quickSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Quick Settings'**
+  String get quickSettings;
+
+  /// No description provided for @passwordCopied.
+  ///
+  /// In en, this message translates to:
+  /// **'Password Copied'**
+  String get passwordCopied;
+
+  /// No description provided for @sync.
+  ///
+  /// In en, this message translates to:
+  /// **'Sync'**
+  String get sync;
+
+  /// No description provided for @about.
+  ///
+  /// In en, this message translates to:
+  /// **'About'**
+  String get about;
+
+  /// No description provided for @syncSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Sync Settings'**
+  String get syncSettings;
+
+  /// No description provided for @syncSettingsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Configure WebDAV or iCloud Drive sync'**
+  String get syncSettingsSubtitle;
+
+  /// No description provided for @appSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Hedgehog'**
+  String get appSubtitle;
+
+  /// No description provided for @newItem.
+  ///
+  /// In en, this message translates to:
+  /// **'New'**
+  String get newItem;
+
+  /// No description provided for @lock.
+  ///
+  /// In en, this message translates to:
+  /// **'Lock'**
+  String get lock;
 }
 
 class _AppLocalizationsDelegate

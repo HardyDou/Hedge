@@ -38,6 +38,19 @@ class _DesktopHomePageState extends ConsumerState<DesktopHomePage> {
       // Don't clear search on blur - user may want to keep search while browsing
       // The search will only be cleared when user explicitly clears it
     });
+
+    // 初始化时清空搜索，确保显示所有数据
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        ref.read(vaultProvider.notifier).searchItems('');
+      }
+    });
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // 不在这里刷新，避免频繁调用
   }
 
   @override
@@ -55,7 +68,15 @@ class _DesktopHomePageState extends ConsumerState<DesktopHomePage> {
     final brightness = CupertinoTheme.of(context).brightness;
     final isDark = brightness == Brightness.dark;
 
-    final items = vaultState.filteredVaultItems ?? []; // Use filtered items from provider, default to empty list
+    final items = vaultState.filteredVaultItems ?? [];
+
+    // 如果已解锁但没有数据，触发刷新
+    if (vaultState.isAuthenticated && items.isEmpty && vaultState.vault != null && vaultState.vault!.items.isNotEmpty) {
+      debugPrint('⚠️ 检测到已解锁但列表为空，触发刷新');
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        ref.read(vaultProvider.notifier).searchItems('');
+      });
+    }
 
     return KeyboardListener(
       focusNode: FocusNode(),
@@ -224,17 +245,17 @@ class _DesktopHomePageState extends ConsumerState<DesktopHomePage> {
                 color: CupertinoColors.destructiveRed,
               ),
             const SizedBox(width: 8),
-            _buildNavButton('取消', CupertinoIcons.xmark, () {
+            _buildNavButton(l10n.cancel, CupertinoIcons.xmark, () {
               ref.read(vaultProvider.notifier).toggleSelectionMode();
             }),
           ] else ...[
-            _buildNavButton('删除', CupertinoIcons.trash, () {
+            _buildNavButton(l10n.delete, CupertinoIcons.trash, () {
               ref.read(vaultProvider.notifier).toggleSelectionMode();
             }),
             const SizedBox(width: 8),
-            _buildNavButton('新建', CupertinoIcons.add, () => setState(() { _showAddItem = true; _selectedItem = null; _showSettings = false; _editingItem = null; })),
+            _buildNavButton(l10n.newItem, CupertinoIcons.add, () => setState(() { _showAddItem = true; _selectedItem = null; _showSettings = false; _editingItem = null; })),
             const SizedBox(width: 8),
-            _buildNavButton('锁定', CupertinoIcons.lock_open, () => ref.read(vaultProvider.notifier).lock()),
+            _buildNavButton(l10n.lock, CupertinoIcons.lock_open, () => ref.read(vaultProvider.notifier).lock()),
           ],
         ],
       ),

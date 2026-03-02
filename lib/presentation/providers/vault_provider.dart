@@ -112,16 +112,20 @@ class VaultNotifier extends StateNotifier<VaultState> {
   final _copyAllCredentialsUseCase = CopyAllCredentialsUseCase();
 
   Future<void> searchItems(String query) async {
+    debugPrint('🔍 searchItems 被调用: query="$query", vault=${state.vault != null}, items=${state.vault?.items.length ?? 0}');
     _currentSearchQuery = query;
     final currentVaultState = state;
     if (currentVaultState.vault == null) {
+      debugPrint('⚠️ vault 为 null，返回空列表');
       state = state.copyWith(filteredVaultItems: []);
       return;
     }
 
     if (query.isEmpty) {
+      final sorted = SortService.sort(currentVaultState.vault!.items);
+      debugPrint('✅ 空查询，返回所有项目: ${sorted.length} 个');
       state = state.copyWith(
-        filteredVaultItems: SortService.sort(currentVaultState.vault!.items),
+        filteredVaultItems: sorted,
       );
       return;
     }
@@ -133,6 +137,7 @@ class VaultNotifier extends StateNotifier<VaultState> {
         'items': currentVaultState.vault!.items,
       },
     );
+    debugPrint('✅ 搜索完成，返回 ${filtered.length} 个结果');
     state = state.copyWith(filteredVaultItems: filtered);
   }
 

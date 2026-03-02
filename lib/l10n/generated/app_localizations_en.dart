@@ -368,4 +368,70 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get importResult => 'Import Result';
+
+  @override
+  String get trayPanelTitle => 'Quick Access';
+
+  @override
+  String get openMainWindow => 'Open Main Window';
+
+  @override
+  String get exitApp => 'Exit Application';
+
+  @override
+  String get recentPasswords => 'Recent Passwords';
+
+  @override
+  String get noRecentPasswords => 'No recent passwords';
+
+  @override
+  String get quickSearch => 'Quick Search...';
+
+  @override
+  String get viewAll => 'View All';
+
+  @override
+  String get trayPanelLocked => 'Vault is Locked';
+
+  @override
+  String get unlockVault => 'Unlock Vault';
+
+  @override
+  String get useBiometricUnlock => 'Use Biometric';
+
+  @override
+  String get quickAccess => 'Quick Access';
+
+  @override
+  String get recentlyUsed => 'Recently Used';
+
+  @override
+  String get lockNow => 'Lock Now';
+
+  @override
+  String get quickSettings => 'Quick Settings';
+
+  @override
+  String get passwordCopied => 'Password Copied';
+
+  @override
+  String get sync => 'Sync';
+
+  @override
+  String get about => 'About';
+
+  @override
+  String get syncSettings => 'Sync Settings';
+
+  @override
+  String get syncSettingsSubtitle => 'Configure WebDAV or iCloud Drive sync';
+
+  @override
+  String get appSubtitle => 'Hedgehog';
+
+  @override
+  String get newItem => 'New';
+
+  @override
+  String get lock => 'Lock';
 }

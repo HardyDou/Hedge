@@ -86,8 +86,8 @@ class _SettingsPanelState extends ConsumerState<SettingsPanel> {
       {'icon': CupertinoIcons.paintbrush, 'label': l10n.appearance, 'requiresAuth': false},
       {'icon': CupertinoIcons.lock, 'label': l10n.security, 'requiresAuth': true},
       {'icon': CupertinoIcons.arrow_down_doc, 'label': l10n.data, 'requiresAuth': true},
-      {'icon': CupertinoIcons.cloud, 'label': '同步', 'requiresAuth': false},
-      {'icon': CupertinoIcons.info, 'label': '关于', 'requiresAuth': false},
+      {'icon': CupertinoIcons.cloud, 'label': l10n.sync, 'requiresAuth': false},
+      {'icon': CupertinoIcons.info, 'label': l10n.about, 'requiresAuth': false},
     ];
 
     return Container(

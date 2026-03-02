@@ -142,8 +142,8 @@ class SettingsPage extends ConsumerWidget {
               header: l10n.data,
               children: [
                 _iOSListTile(
-                  title: '同步设置',
-                  subtitle: '配置 WebDAV 或 iCloud Drive 同步',
+                  title: l10n.syncSettings,
+                  subtitle: l10n.syncSettingsSubtitle,
                   leading: const Icon(CupertinoIcons.cloud_upload, color: CupertinoColors.activeBlue),
                   onTap: () => _navigateToSyncSettings(context),
                   isDark: isDark,

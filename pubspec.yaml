@@ -52,6 +52,8 @@ dependencies:
   lpinyin: ^2.0.3
   flutter_markdown: ^0.7.4
   webdav_client: ^1.2.2
+  tray_manager: ^0.2.3
+  window_manager: ^0.4.2
 
 dev_dependencies:
   flutter_test:
@@ -77,6 +79,10 @@ flutter:
   # the material Icons class.
   uses-material-design: true
   generate: true
+
+  # Assets
+  assets:
+    - assets/icons/
 
   # To add assets to your application, add an assets section, like this:
   # assets:

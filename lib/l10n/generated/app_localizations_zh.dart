@@ -356,4 +356,70 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get importResult => '导入结果';
+
+  @override
+  String get trayPanelTitle => '快捷访问';
+
+  @override
+  String get openMainWindow => '打开主窗口';
+
+  @override
+  String get exitApp => '退出应用';
+
+  @override
+  String get recentPasswords => '最近使用';
+
+  @override
+  String get noRecentPasswords => '暂无最近使用的密码';
+
+  @override
+  String get quickSearch => '快速搜索...';
+
+  @override
+  String get viewAll => '查看全部';
+
+  @override
+  String get trayPanelLocked => '密码本已锁定';
+
+  @override
+  String get unlockVault => '解锁密码本';
+
+  @override
+  String get useBiometricUnlock => '使用生物识别';
+
+  @override
+  String get quickAccess => '快捷访问';
+
+  @override
+  String get recentlyUsed => '最近使用';
+
+  @override
+  String get lockNow => '立即锁定';
+
+  @override
+  String get quickSettings => '快速设置';
+
+  @override
+  String get passwordCopied => '密码已复制';
+
+  @override
+  String get sync => '同步';
+
+  @override
+  String get about => '关于';
+
+  @override
+  String get syncSettings => '同步设置';
+
+  @override
+  String get syncSettingsSubtitle => '配置 WebDAV 或 iCloud Drive 同步';
+
+  @override
+  String get appSubtitle => '刺猬';
+
+  @override
+  String get newItem => '新建';
+
+  @override
+  String get lock => '锁定';
 }
