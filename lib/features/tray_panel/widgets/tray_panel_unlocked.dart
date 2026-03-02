@@ -1,12 +1,12 @@
 import 'dart:async';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hedge/l10n/generated/app_localizations.dart';
 import 'package:hedge/presentation/providers/vault_provider.dart';
 import 'package:hedge/src/dart/vault.dart';
 import '../services/panel_window_service.dart';
 import '../services/tray_service.dart';
-import 'password_detail_popup.dart';
 
 /// 托盘面板 - 已解锁状态
 class TrayPanelUnlocked extends ConsumerStatefulWidget {
@@ -28,7 +28,6 @@ class _TrayPanelUnlockedState extends ConsumerState<TrayPanelUnlocked> {
   String? _hoveredItemId;
   Timer? _hoverTimer;
   VaultItem? _detailItem; // 当前显示详情的项目
-  OverlayEntry? _overlayEntry;
 
   @override
   void initState() {
@@ -43,45 +42,19 @@ class _TrayPanelUnlockedState extends ConsumerState<TrayPanelUnlocked> {
   void dispose() {
     _searchController.dispose();
     _hoverTimer?.cancel();
-    _removeOverlay();
     super.dispose();
   }
 
-  void _removeOverlay() {
-    _overlayEntry?.remove();
-    _overlayEntry = null;
-    _detailItem = null;
+  void _showDetail(VaultItem item) {
+    setState(() {
+      _detailItem = item;
+    });
   }
 
-  void _showDetailPopup(BuildContext context, VaultItem item, bool isDark) {
-    _removeOverlay();
-
-    _detailItem = item;
-    _overlayEntry = OverlayEntry(
-      builder: (context) => Positioned(
-        left: 250, // 快捷面板宽度 240 + 10px 间距
-        top: 40, // 从顶部开始
-        child: MouseRegion(
-          onEnter: (_) {
-            // 鼠标进入详情面板，取消关闭
-            _hoverTimer?.cancel();
-          },
-          onExit: (_) {
-            // 鼠标离开详情面板，关闭
-            _removeOverlay();
-            setState(() {
-              _hoveredItemId = null;
-            });
-          },
-          child: PasswordDetailPopup(
-            item: item,
-            isDark: isDark,
-          ),
-        ),
-      ),
-    );
-
-    Overlay.of(context).insert(_overlayEntry!);
+  void _hideDetail() {
+    setState(() {
+      _detailItem = null;
+    });
   }
 
   @override
@@ -95,18 +68,54 @@ class _TrayPanelUnlockedState extends ConsumerState<TrayPanelUnlocked> {
     final isDark = brightness == Brightness.dark;
     final vaultState = ref.watch(vaultProvider);
 
-    return Column(
+    return Stack(
       children: [
-        // 标题栏（带右侧按钮）
-        _buildHeader(context, l10n, isDark),
+        // 主内容
+        Column(
+          children: [
+            // 标题栏（带右侧按钮）
+            _buildHeader(context, l10n, isDark),
 
-        // 搜索框
-        _buildSearchBar(context, l10n, isDark),
+            // 搜索框
+            _buildSearchBar(context, l10n, isDark),
 
-        // 内容区域
-        Expanded(
-          child: _buildContent(context, l10n, isDark, vaultState),
+            // 内容区域
+            Expanded(
+              child: _buildContent(context, l10n, isDark, vaultState),
+            ),
+          ],
         ),
+
+        // 详情面板（从右侧滑入）
+        if (_detailItem != null)
+          Positioned.fill(
+            child: GestureDetector(
+              onTap: _hideDetail,
+              child: Container(
+                color: CupertinoColors.black.withOpacity(0.3),
+                child: Align(
+                  alignment: Alignment.centerRight,
+                  child: GestureDetector(
+                    onTap: () {}, // 阻止点击穿透
+                    child: Container(
+                      width: 200,
+                      decoration: BoxDecoration(
+                        color: isDark ? const Color(0xFF1C1C1E) : CupertinoColors.white,
+                        boxShadow: [
+                          BoxShadow(
+                            color: CupertinoColors.black.withOpacity(0.3),
+                            blurRadius: 20,
+                            offset: const Offset(-4, 0),
+                          ),
+                        ],
+                      ),
+                      child: _buildDetailPanel(context, l10n, isDark, _detailItem!),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
       ],
     );
   }
@@ -253,36 +262,15 @@ class _TrayPanelUnlockedState extends ConsumerState<TrayPanelUnlocked> {
     return MouseRegion(
       onEnter: (_) {
         setState(() => _hoveredItemId = itemId);
-
-        // 悬浮 2 秒后显示详情
-        _hoverTimer?.cancel();
-        _hoverTimer = Timer(const Duration(seconds: 2), () {
-          if (_hoveredItemId == itemId && mounted) {
-            _showDetailPopup(context, item, isDark);
-          }
-        });
       },
       onExit: (_) {
         setState(() => _hoveredItemId = null);
-        _hoverTimer?.cancel();
-
-        // 如果没有显示详情面板，直接返回
-        if (_detailItem?.id != itemId) {
-          return;
-        }
-
-        // 延迟关闭，给用户时间移动到详情面板
-        Future.delayed(const Duration(milliseconds: 200), () {
-          if (_hoveredItemId == null && mounted) {
-            _removeOverlay();
-          }
-        });
       },
       child: CupertinoButton(
         padding: EdgeInsets.zero,
         onPressed: () {
-          // TODO: 复制密码到剪贴板
-          debugPrint('点击: $title');
+          debugPrint('点击密码项: $title');
+          _showDetail(item);
         },
         child: Container(
           width: double.infinity,
@@ -382,7 +370,178 @@ class _TrayPanelUnlockedState extends ConsumerState<TrayPanelUnlocked> {
     );
   }
 
-  /// 获取字符对应的颜色
+  /// 构建详情面板
+  Widget _buildDetailPanel(BuildContext context, AppLocalizations l10n, bool isDark, VaultItem item) {
+    return Column(
+      children: [
+        // 顶部栏
+        Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            border: Border(
+              bottom: BorderSide(
+                color: isDark ? const Color(0xFF38383A) : const Color(0xFFC6C6C8),
+                width: 0.5,
+              ),
+            ),
+          ),
+          child: Row(
+            children: [
+              CupertinoButton(
+                padding: EdgeInsets.zero,
+                minSize: 0,
+                onPressed: _hideDetail,
+                child: Icon(
+                  CupertinoIcons.back,
+                  size: 20,
+                  color: CupertinoColors.activeBlue,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  item.title ?? '',
+                  style: TextStyle(
+                    color: isDark ? CupertinoColors.white : CupertinoColors.black,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
+        ),
+
+        // 详情内容
+        Expanded(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // 用户名
+                if (item.username != null && item.username!.isNotEmpty)
+                  _buildDetailField(
+                    context: context,
+                    label: l10n.username,
+                    value: item.username!,
+                    icon: CupertinoIcons.person,
+                    isDark: isDark,
+                  ),
+
+                // 密码
+                if (item.password != null && item.password!.isNotEmpty)
+                  _buildDetailField(
+                    context: context,
+                    label: l10n.password,
+                    value: '••••••••',
+                    icon: CupertinoIcons.lock,
+                    isDark: isDark,
+                    actualValue: item.password!,
+                  ),
+
+                // URL
+                if (item.url != null && item.url!.isNotEmpty)
+                  _buildDetailField(
+                    context: context,
+                    label: l10n.url,
+                    value: item.url!,
+                    icon: CupertinoIcons.globe,
+                    isDark: isDark,
+                  ),
+
+                // 备注
+                if (item.notes != null && item.notes!.isNotEmpty)
+                  _buildDetailField(
+                    context: context,
+                    label: l10n.notes,
+                    value: item.notes!,
+                    icon: CupertinoIcons.doc_text,
+                    isDark: isDark,
+                    maxLines: 5,
+                  ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// 构建详情字段
+  Widget _buildDetailField({
+    required BuildContext context,
+    required String label,
+    required String value,
+    required IconData icon,
+    required bool isDark,
+    String? actualValue,
+    int maxLines = 1,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // 标签
+          Row(
+            children: [
+              Icon(
+                icon,
+                size: 12,
+                color: isDark ? CupertinoColors.systemGrey : CupertinoColors.systemGrey2,
+              ),
+              const SizedBox(width: 6),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 10,
+                  color: isDark ? CupertinoColors.systemGrey : CupertinoColors.systemGrey2,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+
+          // 值 + 复制按钮
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Text(
+                  value,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: isDark ? CupertinoColors.white : CupertinoColors.black,
+                  ),
+                  maxLines: maxLines,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              const SizedBox(width: 4),
+              // 复制按钮
+              CupertinoButton(
+                padding: EdgeInsets.zero,
+                minSize: 0,
+                onPressed: () {
+                  Clipboard.setData(ClipboardData(text: actualValue ?? value));
+                  // TODO: 显示复制成功提示
+                },
+                child: Icon(
+                  CupertinoIcons.doc_on_doc,
+                  size: 14,
+                  color: CupertinoColors.activeBlue,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
   Color _getColorForChar(String char) {
     final colors = [
       const Color(0xFF007AFF),
