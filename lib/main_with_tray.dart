@@ -48,6 +48,7 @@ class _TrayEnabledAppState extends State<TrayEnabledApp> with WindowListener {
   late PanelWindowService _panelWindowService;
   late TrayService _trayService;
   bool _isInitialized = false;
+  bool _hasRefreshedData = false; // 添加标志，避免重复刷新
 
   @override
   void initState() {
@@ -120,15 +121,18 @@ class _TrayEnabledAppState extends State<TrayEnabledApp> with WindowListener {
       builder: (context, child) {
         final isPanelMode = _panelWindowService.state.isPanelMode;
 
-        // 当从 Panel 切换回主窗口时，刷新数据
-        if (!isPanelMode) {
+        // 当从 Panel 切换回主窗口时，刷新数据（只刷新一次）
+        if (!isPanelMode && !_hasRefreshedData) {
+          _hasRefreshedData = true;
           WidgetsBinding.instance.addPostFrameCallback((_) {
             debugPrint('🔄 从 Panel 切换回主窗口，触发数据刷新');
-            // 使用 ProviderScope 的 container 来访问 provider
             final container = ProviderScope.containerOf(context, listen: false);
             container.read(vaultProvider.notifier).searchItems('');
             debugPrint('✅ 数据刷新已触发');
           });
+        } else if (isPanelMode) {
+          // 切换到 Panel 模式时，重置标志
+          _hasRefreshedData = false;
         }
 
         if (isPanelMode) {
