@@ -775,7 +775,7 @@ class _TrayPanelUnlockedState extends ConsumerState<TrayPanelUnlocked> {
                   onPressed: () async {
                     Clipboard.setData(ClipboardData(text: password));
                     // 复制后隐藏快捷面板
-                    await PanelWindowService.hide();
+                    await windowManager.hide();
                   },
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
