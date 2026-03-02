@@ -68,7 +68,15 @@ class _DesktopHomePageState extends ConsumerState<DesktopHomePage> {
     final brightness = CupertinoTheme.of(context).brightness;
     final isDark = brightness == Brightness.dark;
 
-    final items = vaultState.filteredVaultItems ?? []; // Use filtered items from provider, default to empty list
+    final items = vaultState.filteredVaultItems ?? [];
+
+    // 如果已解锁但没有数据，触发刷新
+    if (vaultState.isAuthenticated && items.isEmpty && vaultState.vault != null && vaultState.vault!.items.isNotEmpty) {
+      debugPrint('⚠️ 检测到已解锁但列表为空，触发刷新');
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        ref.read(vaultProvider.notifier).searchItems('');
+      });
+    }
 
     return KeyboardListener(
       focusNode: FocusNode(),
