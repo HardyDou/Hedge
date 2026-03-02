@@ -123,9 +123,11 @@ class _TrayEnabledAppState extends State<TrayEnabledApp> with WindowListener {
         // 当从 Panel 切换回主窗口时，刷新数据
         if (!isPanelMode) {
           WidgetsBinding.instance.addPostFrameCallback((_) {
+            debugPrint('🔄 从 Panel 切换回主窗口，触发数据刷新');
             // 使用 ProviderScope 的 container 来访问 provider
             final container = ProviderScope.containerOf(context, listen: false);
             container.read(vaultProvider.notifier).searchItems('');
+            debugPrint('✅ 数据刷新已触发');
           });
         }
 
