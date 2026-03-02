@@ -4,6 +4,8 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_app_lock/flutter_app_lock.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:window_manager/window_manager.dart';
+import 'package:hedge/features/tray_panel/tray_panel.dart';
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:hedge/core/platform/platform_utils.dart';
@@ -17,6 +19,7 @@ import 'package:hedge/presentation/pages/mobile/detail_page.dart';
 import 'package:hedge/presentation/pages/mobile/settings_page.dart';
 import 'package:hedge/presentation/pages/shared/unlock_page.dart';
 import 'package:hedge/presentation/pages/shared/onboarding_page.dart';
+import 'package:hedge/presentation/pages/shared/splash_page.dart';
 import 'package:hedge/presentation/pages/mobile/add_item_page.dart';
 import 'package:hedge/presentation/pages/desktop/desktop_home_page.dart';
 import 'package:hedge/presentation/pages/desktop/settings_panel.dart';
@@ -45,7 +48,29 @@ class SlideFromLeftRoute<T> extends PageRouteBuilder<T> {
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  runApp(const ProviderScope(child: NotePasswordApp()));
+
+  // 桌面平台：初始化窗口管理器和托盘
+  if (PlatformUtils.isDesktop) {
+    await windowManager.ensureInitialized();
+
+    WindowOptions windowOptions = const WindowOptions(
+      size: Size(800, 600),
+      center: true,
+      backgroundColor: CupertinoColors.systemBackground,
+      skipTaskbar: false,
+      titleBarStyle: TitleBarStyle.normal,
+    );
+
+    windowManager.waitUntilReadyToShow(windowOptions, () async {
+      await windowManager.show();
+      await windowManager.focus();
+    });
+
+    runApp(const ProviderScope(child: TrayEnabledApp()));
+  } else {
+    // 移动平台：直接运行应用
+    runApp(const ProviderScope(child: NotePasswordApp()));
+  }
 }
 
 class NotePasswordApp extends ConsumerWidget {
@@ -115,6 +140,145 @@ class NotePasswordApp extends ConsumerWidget {
         );
       },
       home: const AuthGuard(),
+    );
+  }
+}
+
+/// 带托盘功能的应用包装器（桌面版）
+class TrayEnabledApp extends StatefulWidget {
+  const TrayEnabledApp({super.key});
+
+  @override
+  State<TrayEnabledApp> createState() => _TrayEnabledAppState();
+}
+
+class _TrayEnabledAppState extends State<TrayEnabledApp> with WindowListener {
+  late PanelWindowService _panelWindowService;
+  late TrayService _trayService;
+  bool _isInitialized = false;
+  bool _hasRefreshedData = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _initializeTray();
+    windowManager.addListener(this);
+  }
+
+  @override
+  void dispose() {
+    windowManager.removeListener(this);
+    _trayService.dispose();
+    super.dispose();
+  }
+
+  Future<void> _initializeTray() async {
+    try {
+      _panelWindowService = PanelWindowService();
+      _trayService = TrayService(panelWindowService: _panelWindowService);
+      await _trayService.initialize();
+      await windowManager.setPreventClose(true);
+
+      setState(() {
+        _isInitialized = true;
+      });
+
+      debugPrint('托盘功能初始化完成');
+    } catch (e) {
+      debugPrint('托盘功能初始化失败: $e');
+    }
+  }
+
+  @override
+  void onWindowClose() async {
+    debugPrint('窗口关闭事件');
+    await _panelWindowService.onWindowClose();
+  }
+
+  @override
+  void onWindowBlur() async {
+    await _panelWindowService.onPanelBlur();
+  }
+
+  @override
+  void onWindowEvent(String eventName) {
+    debugPrint('窗口事件: $eventName');
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (!_isInitialized) {
+      return const CupertinoApp(
+        debugShowCheckedModeBanner: false,
+        home: CupertinoPageScaffold(
+          child: Center(
+            child: CupertinoActivityIndicator(),
+          ),
+        ),
+      );
+    }
+
+    return ListenableBuilder(
+      listenable: _panelWindowService,
+      builder: (context, child) {
+        final isPanelMode = _panelWindowService.state.isPanelMode;
+
+        // 从 Panel 切换回主窗口时刷新数据
+        if (!isPanelMode && !_hasRefreshedData) {
+          _hasRefreshedData = true;
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            debugPrint('🔄 从 Panel 切换回主窗口，触发数据刷新');
+            final container = ProviderScope.containerOf(context, listen: false);
+            container.read(vaultProvider.notifier).searchItems('');
+            debugPrint('✅ 数据刷新已触发');
+          });
+        } else if (isPanelMode) {
+          _hasRefreshedData = false;
+        }
+
+        if (isPanelMode) {
+          // Panel 模式：显示快捷面板
+          return Consumer(
+            builder: (context, ref, child) {
+              final themeMode = ref.watch(themeProvider);
+              final locale = ref.watch(localeProvider);
+
+              return CupertinoApp(
+                debugShowCheckedModeBanner: false,
+                theme: CupertinoThemeData(
+                  brightness: themeMode == ThemeModeOption.dark
+                      ? Brightness.dark
+                      : (themeMode == ThemeModeOption.light ? Brightness.light : null),
+                  primaryColor: CupertinoColors.activeBlue,
+                  scaffoldBackgroundColor: themeMode == ThemeModeOption.dark
+                      ? CupertinoColors.black
+                      : CupertinoColors.systemGroupedBackground,
+                ),
+                locale: locale,
+                localizationsDelegates: const [
+                  AppLocalizations.delegate,
+                  GlobalMaterialLocalizations.delegate,
+                  GlobalWidgetsLocalizations.delegate,
+                  GlobalCupertinoLocalizations.delegate,
+                ],
+                supportedLocales: const [
+                  Locale('en'),
+                  Locale('zh'),
+                ],
+                home: CupertinoPageScaffold(
+                  child: TrayPanel(
+                    panelWindowService: _panelWindowService,
+                    trayService: _trayService,
+                  ),
+                ),
+              );
+            },
+          );
+        } else {
+          // 主窗口模式：显示主应用
+          return const NotePasswordApp();
+        }
+      },
     );
   }
 }
@@ -264,10 +428,9 @@ class _AuthGuardState extends ConsumerState<AuthGuard> with WidgetsBindingObserv
       }
     });
 
+    // 显示启动页面（加载中）
     if (vaultState.isLoading && vaultState.vault == null) {
-      return const CupertinoPageScaffold(
-        child: Center(child: CupertinoActivityIndicator()),
-      );
+      return const SplashPage();
     }
 
     if (!vaultState.hasVaultFile) {

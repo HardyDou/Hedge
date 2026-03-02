@@ -199,7 +199,12 @@ class _TrayPanelLockedState extends ConsumerState<TrayPanelLocked> {
               borderRadius: BorderRadius.circular(8),
               border: _errorMessage != null
                   ? Border.all(color: CupertinoColors.systemRed, width: 1)
-                  : null,
+                  : Border.all(
+                      color: isDark
+                          ? const Color(0xFF38383A)
+                          : const Color(0xFFD1D1D6),
+                      width: 0.5,
+                    ),
             ),
             child: Row(
               children: [

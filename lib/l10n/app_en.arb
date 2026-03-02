@@ -170,5 +170,12 @@
   "recentlyUsed": "Recently Used",
   "lockNow": "Lock Now",
   "quickSettings": "Quick Settings",
-  "passwordCopied": "Password Copied"
+  "passwordCopied": "Password Copied",
+  "sync": "Sync",
+  "about": "About",
+  "syncSettings": "Sync Settings",
+  "syncSettingsSubtitle": "Configure WebDAV or iCloud Drive sync",
+  "appSubtitle": "Hedgehog",
+  "newItem": "New",
+  "lock": "Lock"
 }

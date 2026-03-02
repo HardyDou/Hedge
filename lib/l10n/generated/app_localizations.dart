@@ -859,6 +859,48 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Password Copied'**
   String get passwordCopied;
+
+  /// No description provided for @sync.
+  ///
+  /// In en, this message translates to:
+  /// **'Sync'**
+  String get sync;
+
+  /// No description provided for @about.
+  ///
+  /// In en, this message translates to:
+  /// **'About'**
+  String get about;
+
+  /// No description provided for @syncSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Sync Settings'**
+  String get syncSettings;
+
+  /// No description provided for @syncSettingsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Configure WebDAV or iCloud Drive sync'**
+  String get syncSettingsSubtitle;
+
+  /// No description provided for @appSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Hedgehog'**
+  String get appSubtitle;
+
+  /// No description provided for @newItem.
+  ///
+  /// In en, this message translates to:
+  /// **'New'**
+  String get newItem;
+
+  /// No description provided for @lock.
+  ///
+  /// In en, this message translates to:
+  /// **'Lock'**
+  String get lock;
 }
 
 class _AppLocalizationsDelegate

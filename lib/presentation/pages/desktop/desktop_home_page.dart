@@ -245,17 +245,17 @@ class _DesktopHomePageState extends ConsumerState<DesktopHomePage> {
                 color: CupertinoColors.destructiveRed,
               ),
             const SizedBox(width: 8),
-            _buildNavButton('取消', CupertinoIcons.xmark, () {
+            _buildNavButton(l10n.cancel, CupertinoIcons.xmark, () {
               ref.read(vaultProvider.notifier).toggleSelectionMode();
             }),
           ] else ...[
-            _buildNavButton('删除', CupertinoIcons.trash, () {
+            _buildNavButton(l10n.delete, CupertinoIcons.trash, () {
               ref.read(vaultProvider.notifier).toggleSelectionMode();
             }),
             const SizedBox(width: 8),
-            _buildNavButton('新建', CupertinoIcons.add, () => setState(() { _showAddItem = true; _selectedItem = null; _showSettings = false; _editingItem = null; })),
+            _buildNavButton(l10n.newItem, CupertinoIcons.add, () => setState(() { _showAddItem = true; _selectedItem = null; _showSettings = false; _editingItem = null; })),
             const SizedBox(width: 8),
-            _buildNavButton('锁定', CupertinoIcons.lock_open, () => ref.read(vaultProvider.notifier).lock()),
+            _buildNavButton(l10n.lock, CupertinoIcons.lock_open, () => ref.read(vaultProvider.notifier).lock()),
           ],
         ],
       ),

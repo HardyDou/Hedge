@@ -787,10 +787,10 @@ class _TrayPanelUnlockedState extends ConsumerState<TrayPanelUnlocked> {
                   },
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
-                    children: const [
-                      Icon(CupertinoIcons.doc_on_doc, size: 16, color: CupertinoColors.white),
-                      SizedBox(width: 6),
-                      Text('复制密码', style: TextStyle(color: CupertinoColors.white, fontSize: 14)),
+                    children: [
+                      const Icon(CupertinoIcons.doc_on_doc, size: 16, color: CupertinoColors.white),
+                      const SizedBox(width: 6),
+                      Text(l10n.copyPassword, style: const TextStyle(color: CupertinoColors.white, fontSize: 14)),
                     ],
                   ),
                 ),

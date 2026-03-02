@@ -413,4 +413,25 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get passwordCopied => 'Password Copied';
+
+  @override
+  String get sync => 'Sync';
+
+  @override
+  String get about => 'About';
+
+  @override
+  String get syncSettings => 'Sync Settings';
+
+  @override
+  String get syncSettingsSubtitle => 'Configure WebDAV or iCloud Drive sync';
+
+  @override
+  String get appSubtitle => 'Hedgehog';
+
+  @override
+  String get newItem => 'New';
+
+  @override
+  String get lock => 'Lock';
 }

@@ -401,4 +401,25 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get passwordCopied => '密码已复制';
+
+  @override
+  String get sync => '同步';
+
+  @override
+  String get about => '关于';
+
+  @override
+  String get syncSettings => '同步设置';
+
+  @override
+  String get syncSettingsSubtitle => '配置 WebDAV 或 iCloud Drive 同步';
+
+  @override
+  String get appSubtitle => '刺猬';
+
+  @override
+  String get newItem => '新建';
+
+  @override
+  String get lock => '锁定';
 }

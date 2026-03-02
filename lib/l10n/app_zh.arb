@@ -144,5 +144,12 @@
   "recentlyUsed": "最近使用",
   "lockNow": "立即锁定",
   "quickSettings": "快速设置",
-  "passwordCopied": "密码已复制"
+  "passwordCopied": "密码已复制",
+  "sync": "同步",
+  "about": "关于",
+  "syncSettings": "同步设置",
+  "syncSettingsSubtitle": "配置 WebDAV 或 iCloud Drive 同步",
+  "appSubtitle": "刺猬",
+  "newItem": "新建",
+  "lock": "锁定"
 }

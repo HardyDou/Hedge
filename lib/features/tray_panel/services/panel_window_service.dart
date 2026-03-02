@@ -8,6 +8,7 @@ import '../models/panel_state.dart';
 class PanelWindowService extends ChangeNotifier {
   PanelState _state = const PanelState();
   VoidCallback? onShowMainWindow;
+  bool _isSwitchingMode = false; // 是否正在切换模式
 
   PanelState get state => _state;
 
@@ -76,7 +77,10 @@ class PanelWindowService extends ChangeNotifier {
   Future<void> showMainWindow() async {
     debugPrint('显示主窗口');
 
-    // 切换回主窗口模式
+    // 设置切换标志，防止 onPanelBlur 误判
+    _isSwitchingMode = true;
+
+    // 切换回主窗口模式（先切换状态，UI 会立即切换到主应用）
     _state = const PanelState();
     notifyListeners();
 
@@ -98,11 +102,20 @@ class PanelWindowService extends ChangeNotifier {
     // 触发回调，通知主窗口刷新数据
     onShowMainWindow?.call();
 
+    // 清除切换标志
+    _isSwitchingMode = false;
+
     debugPrint('主窗口已显示');
   }
 
   /// Panel 失焦处理
   Future<void> onPanelBlur() async {
+    // 如果正在切换模式，忽略失焦事件
+    if (_isSwitchingMode) {
+      debugPrint('正在切换模式，忽略失焦事件');
+      return;
+    }
+
     if (_state.isPanelMode && _state.isVisible) {
       debugPrint('Panel 失焦，自动隐藏');
       await Future.delayed(const Duration(milliseconds: 100));
