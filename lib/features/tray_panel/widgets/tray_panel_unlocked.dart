@@ -719,81 +719,47 @@ class _TrayPanelUnlockedState extends ConsumerState<TrayPanelUnlocked> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  // 密码文本
+                  // 密码文本（始终显示明文）
                   SelectableText(
-                    _showPassword ? password : '•' * password.length,
+                    password,
                     style: TextStyle(
-                      fontSize: 32,
+                      fontSize: 28,
                       fontWeight: FontWeight.w600,
-                      letterSpacing: _showPassword ? 2 : 4,
+                      letterSpacing: 2,
                       color: isDark ? CupertinoColors.white : CupertinoColors.black,
+                      fontFamily: 'Menlo', // 使用等宽字体
                     ),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 30),
 
-                  // 操作按钮
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      // 显示/隐藏按钮
-                      CupertinoButton(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                        color: isDark ? const Color(0xFF3A3A3C) : CupertinoColors.systemGrey5,
-                        onPressed: () {
-                          setState(() {
-                            _showPassword = !_showPassword;
-                          });
-                        },
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              _showPassword ? CupertinoIcons.eye_slash : CupertinoIcons.eye,
-                              size: 18,
-                              color: CupertinoColors.activeBlue,
-                            ),
-                            const SizedBox(width: 6),
-                            Text(
-                              _showPassword ? '隐藏' : '显示',
-                              style: const TextStyle(
-                                color: CupertinoColors.activeBlue,
-                                fontSize: 14,
-                              ),
-                            ),
-                          ],
+                  // 复制按钮
+                  CupertinoButton(
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                    color: CupertinoColors.activeBlue,
+                    onPressed: () {
+                      Clipboard.setData(ClipboardData(text: password));
+                      // TODO: 显示复制成功提示
+                    },
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: const [
+                        Icon(
+                          CupertinoIcons.doc_on_doc,
+                          size: 18,
+                          color: CupertinoColors.white,
                         ),
-                      ),
-                      const SizedBox(width: 12),
-
-                      // 复制按钮
-                      CupertinoButton(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                        color: CupertinoColors.activeBlue,
-                        onPressed: () {
-                          Clipboard.setData(ClipboardData(text: password));
-                          // TODO: 显示复制成功提示
-                        },
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: const [
-                            Icon(
-                              CupertinoIcons.doc_on_doc,
-                              size: 18,
-                              color: CupertinoColors.white,
-                            ),
-                            SizedBox(width: 6),
-                            Text(
-                              '复制',
-                              style: TextStyle(
-                                color: CupertinoColors.white,
-                                fontSize: 14,
-                              ),
-                            ),
-                          ],
+                        SizedBox(width: 8),
+                        Text(
+                          '复制密码',
+                          style: TextStyle(
+                            color: CupertinoColors.white,
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ],
               ),
