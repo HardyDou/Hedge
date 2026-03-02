@@ -3,8 +3,10 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hedge/l10n/generated/app_localizations.dart';
 import 'package:hedge/presentation/providers/vault_provider.dart';
+import 'package:hedge/src/dart/vault.dart';
 import '../services/panel_window_service.dart';
 import '../services/tray_service.dart';
+import 'password_detail_popup.dart';
 
 /// 托盘面板 - 已解锁状态
 class TrayPanelUnlocked extends ConsumerStatefulWidget {
@@ -25,6 +27,8 @@ class _TrayPanelUnlockedState extends ConsumerState<TrayPanelUnlocked> {
   final _searchController = TextEditingController();
   String? _hoveredItemId;
   Timer? _hoverTimer;
+  VaultItem? _detailItem; // 当前显示详情的项目
+  OverlayEntry? _overlayEntry;
 
   @override
   void initState() {
@@ -39,7 +43,45 @@ class _TrayPanelUnlockedState extends ConsumerState<TrayPanelUnlocked> {
   void dispose() {
     _searchController.dispose();
     _hoverTimer?.cancel();
+    _removeOverlay();
     super.dispose();
+  }
+
+  void _removeOverlay() {
+    _overlayEntry?.remove();
+    _overlayEntry = null;
+    _detailItem = null;
+  }
+
+  void _showDetailPopup(BuildContext context, VaultItem item, bool isDark) {
+    _removeOverlay();
+
+    _detailItem = item;
+    _overlayEntry = OverlayEntry(
+      builder: (context) => Positioned(
+        left: 250, // 快捷面板宽度 240 + 10px 间距
+        top: 40, // 从顶部开始
+        child: MouseRegion(
+          onEnter: (_) {
+            // 鼠标进入详情面板，取消关闭
+            _hoverTimer?.cancel();
+          },
+          onExit: (_) {
+            // 鼠标离开详情面板，关闭
+            _removeOverlay();
+            setState(() {
+              _hoveredItemId = null;
+            });
+          },
+          child: PasswordDetailPopup(
+            item: item,
+            isDark: isDark,
+          ),
+        ),
+      ),
+    );
+
+    Overlay.of(context).insert(_overlayEntry!);
   }
 
   @override
@@ -215,15 +257,26 @@ class _TrayPanelUnlockedState extends ConsumerState<TrayPanelUnlocked> {
         // 悬浮 2 秒后显示详情
         _hoverTimer?.cancel();
         _hoverTimer = Timer(const Duration(seconds: 2), () {
-          if (_hoveredItemId == itemId) {
-            // TODO: 显示详情面板
-            debugPrint('显示详情: $title');
+          if (_hoveredItemId == itemId && mounted) {
+            _showDetailPopup(context, item, isDark);
           }
         });
       },
       onExit: (_) {
         setState(() => _hoveredItemId = null);
         _hoverTimer?.cancel();
+
+        // 如果没有显示详情面板，直接返回
+        if (_detailItem?.id != itemId) {
+          return;
+        }
+
+        // 延迟关闭，给用户时间移动到详情面板
+        Future.delayed(const Duration(milliseconds: 200), () {
+          if (_hoveredItemId == null && mounted) {
+            _removeOverlay();
+          }
+        });
       },
       child: CupertinoButton(
         padding: EdgeInsets.zero,
