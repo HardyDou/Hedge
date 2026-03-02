@@ -772,9 +772,10 @@ class _TrayPanelUnlockedState extends ConsumerState<TrayPanelUnlocked> {
                   color: CupertinoColors.activeBlue,
                   borderRadius: BorderRadius.circular(8),
                   padding: const EdgeInsets.symmetric(vertical: 10),
-                  onPressed: () {
+                  onPressed: () async {
                     Clipboard.setData(ClipboardData(text: password));
-                    // TODO: 显示复制成功提示
+                    // 复制后隐藏快捷面板
+                    await PanelWindowService.hide();
                   },
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
