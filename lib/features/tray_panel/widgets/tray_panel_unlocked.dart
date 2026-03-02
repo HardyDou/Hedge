@@ -774,16 +774,16 @@ class _TrayPanelUnlockedState extends ConsumerState<TrayPanelUnlocked> {
                   padding: const EdgeInsets.symmetric(vertical: 10),
                   onPressed: () async {
                     Clipboard.setData(ClipboardData(text: password));
-                    // 复制后重置状态并隐藏快捷面板
+                    // 先隐藏面板，避免闪烁
+                    await windowManager.hide();
+                    // 延迟重置状态和恢复窗口大小
+                    await Future.delayed(const Duration(milliseconds: 100));
                     setState(() {
                       _detailItem = null;
                       _showPassword = false;
                       _showPasswordLarge = false;
                     });
-                    // 恢复窗口大小
                     await _resizeWindowToNormal();
-                    // 隐藏面板
-                    await windowManager.hide();
                   },
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
