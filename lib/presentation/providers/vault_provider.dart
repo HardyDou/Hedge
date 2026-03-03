@@ -298,7 +298,11 @@ Future<bool> setupVault(String masterPassword) async {
       await _storage.write(key: 'bio_enabled', value: 'true');
       await _storage.write(key: 'vault_path', value: path);
 
-      await _startSyncWatch(path, masterPassword);
+      try {
+        await _startSyncWatch(path, masterPassword);
+      } catch (e) {
+        debugPrint('[Vault] Warning: sync watch failed to start: $e');
+      }
 
       state = state.copyWith(
         vault: vault,
@@ -327,7 +331,11 @@ Future<bool> unlockVault(String masterPassword) async {
       await _storage.write(key: 'vault_path', value: path);
 
       // Start watching for file changes
-      await _startSyncWatch(path, masterPassword);
+      try {
+        await _startSyncWatch(path, masterPassword);
+      } catch (e) {
+        debugPrint('[Vault] Warning: sync watch failed to start: $e');
+      }
 
       state = state.copyWith(
         vault: vault,
