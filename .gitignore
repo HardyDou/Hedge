@@ -53,3 +53,9 @@ rust/target/
 # iOS build artifacts
 ios/Frameworks/
 build/releases/
+
+# Release files
+*.apk
+*.zip
+*.dmg
+*.ipa
