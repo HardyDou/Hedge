@@ -3,6 +3,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:local_auth/local_auth.dart';
 import 'package:hedge/src/dart/vault.dart';
 import 'package:hedge/platform/sync_service_factory.dart';
+import 'package:hedge/platform/webdav_sync_service.dart';
 import 'package:hedge/services/sync_service.dart';
 import 'package:hedge/domain/use_cases/copy_password_usecase.dart';
 import 'package:hedge/domain/use_cases/copy_all_credentials_usecase.dart';
@@ -102,7 +103,7 @@ class VaultState {
 class VaultNotifier extends StateNotifier<VaultState> {
   final _storage = const FlutterSecureStorage();
   final _localAuth = LocalAuthentication();
-  final SyncService _syncService = SyncServiceFactory.getService();
+  SyncService _syncService = SyncServiceFactory.getService();
   StreamSubscription? _syncSubscription;
   DateTime? _lastKnownModification;
   String _currentSearchQuery = ""; // Add this line
@@ -325,6 +326,27 @@ Future<bool> unlockVault(String masterPassword) async {
     state = state.copyWith(isLoading: true, error: null);
     try {
       final path = state.vaultPath ?? await _getDefaultVaultPath();
+
+      // WebDAV 模式：创建服务并切换，解锁前先同步远端数据
+      if (state.syncMode == SyncMode.webdav && state.webdavConfig != null) {
+        try {
+          final webdavService = await SyncServiceFactory.createWebDAVService(state.webdavConfig!);
+          _syncService = webdavService;
+
+          // 解锁前先从远端拉取最新数据
+          final remoteMtime = await webdavService.getRemoteModificationTime();
+          if (remoteMtime != null) {
+            final localFile = File(path);
+            if (!await localFile.exists() || remoteMtime.isAfter(await localFile.lastModified())) {
+              debugPrint('[Vault] Pulling from WebDAV before unlock...');
+              await webdavService.downloadVault(path);
+            }
+          }
+        } catch (e) {
+          debugPrint('[Vault] Warning: WebDAV pre-sync failed, using local: $e');
+        }
+      }
+
       final vault = await VaultService.loadVault(path, masterPassword);
 
       await _storage.write(key: 'master_password', value: masterPassword);
@@ -625,6 +647,12 @@ Future<void> deleteItem(String id) async {
         errorStr.contains('unreachable');
   }
 
+  /// App 从后台恢复到前台时调用：立即触发同步检查
+  Future<void> onAppResumed() async {
+    if (!state.isAuthenticated) return;
+    await _syncService.triggerCheck();
+  }
+
   /// 检查并上传待同步的数据
   Future<void> _checkAndUploadPendingSync() async {
     if (state.syncMode != SyncMode.webdav || state.webdavConfig == null) return;
@@ -640,10 +668,11 @@ Future<void> deleteItem(String id) async {
     }
   }
 
+  /// 若远端 vault 比本地更新（或本地不存在），则从 WebDAV 下载
   Future<void> _startSyncWatch(String path, String masterPassword) async {
     // Cancel any existing subscription
     await _syncSubscription?.cancel();
-    
+
     // Start watching for file changes
     await _syncService.startWatching(path, masterPassword: masterPassword);
     
@@ -757,30 +786,66 @@ Future<void> deleteSelectedItems() async {
     state = state.copyWith(syncMode: mode, webdavConfig: webdavConfig);
     print('[Vault] Sync mode changed to: ${mode.name}');
 
-    // 如果切换到 WebDAV 模式，立即上传当前 vault
-    if (mode == SyncMode.webdav && webdavConfig != null && state.vault != null) {
+    // 切换到 WebDAV 模式：创建 WebDAV 服务并切换
+    if (mode == SyncMode.webdav && webdavConfig != null) {
       try {
         final vaultPath = state.vaultPath ?? await _getDefaultVaultPath();
-        final file = File(vaultPath);
-        if (await file.exists()) {
-          print('[Vault] Uploading existing vault to WebDAV...');
+        final webdavService = await SyncServiceFactory.createWebDAVService(webdavConfig);
 
-          // 初始化 WebDAV 服务
-          final webdavService = await SyncServiceFactory.createWebDAVService(webdavConfig);
-          await webdavService.uploadVault(vaultPath);
+        // 切换同步服务为 WebDAV
+        if (_syncService is WebDAVSyncService) {
+          (_syncService as WebDAVSyncService).dispose();
+        }
+        _syncService = webdavService;
 
-          print('[Vault] Initial upload to WebDAV completed');
+        final remoteExists = await webdavService.remoteVaultExists();
 
-          // 重新启动同步监听
-          await _stopSyncWatch();
-          final masterPassword = state.currentPassword;
-          if (masterPassword != null) {
-            await _startSyncWatch(vaultPath, masterPassword);
+        if (remoteExists) {
+          // 远端已有数据（其他设备先配置过）→ 下载远端库到本设备
+          print('[Vault] Remote vault exists, downloading to sync this device...');
+          await webdavService.downloadVault(vaultPath);
+          print('[Vault] Download from WebDAV completed');
+
+          // 若当前已解锁，用下载的文件重新加载内存状态
+          if (state.isAuthenticated && state.currentPassword != null) {
+            final vault = await VaultService.loadVault(vaultPath, state.currentPassword!);
+            state = state.copyWith(
+              vault: vault,
+              filteredVaultItems: SortService.sort(vault.items),
+            );
+            await searchItems(_currentSearchQuery);
+          }
+        } else {
+          // 远端无数据（本设备是第一个配置的）→ 上传本地库
+          final file = File(vaultPath);
+          if (await file.exists()) {
+            print('[Vault] No remote vault found, uploading local vault...');
+            await webdavService.uploadVault(vaultPath);
+            print('[Vault] Initial upload to WebDAV completed');
           }
         }
+
+        // 重新启动同步监听
+        await _stopSyncWatch();
+        if (state.currentPassword != null) {
+          await _startSyncWatch(vaultPath, state.currentPassword!);
+        }
       } catch (e) {
-        print('[Vault] Failed to upload to WebDAV: $e');
+        print('[Vault] Failed to sync with WebDAV during setup: $e');
         // 不抛出异常，让用户继续使用
+      }
+    } else {
+      // 切换回本地或 iCloud 模式：恢复平台服务
+      if (_syncService is WebDAVSyncService) {
+        (_syncService as WebDAVSyncService).dispose();
+        _syncService = SyncServiceFactory.getService();
+
+        // 重启监听
+        await _stopSyncWatch();
+        if (state.isAuthenticated && state.currentPassword != null) {
+          final vaultPath = state.vaultPath ?? await _getDefaultVaultPath();
+          await _startSyncWatch(vaultPath, state.currentPassword!);
+        }
       }
     }
   }

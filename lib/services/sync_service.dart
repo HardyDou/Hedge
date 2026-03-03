@@ -29,4 +29,7 @@ abstract class SyncService {
   Future<SyncStatus> getSyncStatus();
   Future<bool> hasConflict(String vaultPath);
   Future<void> createConflictBackup(String vaultPath);
+
+  /// 立即检查远端是否有变化（WebDAV 等轮询型服务实现；平台服务默认空操作）
+  Future<void> triggerCheck();
 }

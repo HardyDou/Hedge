@@ -52,7 +52,12 @@ class AndroidSyncService implements SyncService {
   Future<void> createConflictBackup(String vaultPath) async {
     await _channel.invokeMethod('createConflictBackup', {'path': vaultPath});
   }
-  
+
+  @override
+  Future<void> triggerCheck() async {
+    // Android 文件系统监听不需要主动触发检查
+  }
+
   void dispose() {
     _eventController.close();
   }

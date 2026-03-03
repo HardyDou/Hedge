@@ -382,6 +382,8 @@ class _AuthGuardState extends ConsumerState<AuthGuard> with WidgetsBindingObserv
       Future.delayed(const Duration(milliseconds: 100), () {
         if (mounted) {
           setState(() => _isAppInBackground = false);
+          // App 已解锁且配置了 WebDAV：立即检查远端是否有更新
+          ref.read(vaultProvider.notifier).onAppResumed();
         }
       });
     }
