@@ -125,6 +125,11 @@ class IOSSyncService implements SyncService {
     print('[iCloud Drive] Created conflict backup: $backupPath');
   }
 
+  @override
+  Future<void> triggerCheck() async {
+    // iOS 文件系统监听不需要主动触发检查
+  }
+
   void dispose() {
     stopWatching();
     _eventController.close();

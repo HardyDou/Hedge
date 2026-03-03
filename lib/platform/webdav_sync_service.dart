@@ -9,7 +9,6 @@ class WebDAVSyncService implements SyncService {
   Timer? _pollTimer;
   String? _vaultPath;
   String? _remotePath;
-  DateTime? _lastRemoteModification;
 
   /// 初始化 WebDAV 客户端
   Future<void> initialize({
@@ -115,7 +114,6 @@ class WebDAVSyncService implements SyncService {
       final bytes = await file.readAsBytes();
       await _client!.write(_remotePath!, bytes);
 
-      _lastRemoteModification = DateTime.now();
       print('[WebDAV] Uploaded vault: $_remotePath (${bytes.length} bytes)');
     } catch (e) {
       print('[WebDAV] Upload failed: $e');
@@ -148,24 +146,30 @@ class WebDAVSyncService implements SyncService {
 
   /// 检查远程文件是否存在
   Future<bool> remoteVaultExists() async {
-    if (_client == null || _remotePath == null) return false;
-
-    try {
-      await _client!.read(_remotePath!);
-      return true;
-    } catch (e) {
-      return false;
-    }
+    // 通过获取修改时间来判断文件是否存在，避免 read() 下载整个文件
+    return await getRemoteModificationTime() != null;
   }
 
   /// 获取远程文件修改时间
+  ///
+  /// webdav_client 的 readDir/readProps 会对路径调用 fixSlashes()，
+  /// 导致文件路径末尾被加上 "/"（如 vault.db/），服务器返回 400。
+  /// 正确做法：对父目录调用 readDir，再从结果中找到目标文件。
   Future<DateTime?> getRemoteModificationTime() async {
     if (_client == null || _remotePath == null) return null;
 
     try {
-      final list = await _client!.readDir(_remotePath!);
-      if (list.isNotEmpty) {
-        return list.first.mTime;
+      final lastSlash = _remotePath!.lastIndexOf('/');
+      final dirPath = lastSlash > 0 ? _remotePath!.substring(0, lastSlash) : '/';
+      final fileName = lastSlash >= 0
+          ? _remotePath!.substring(lastSlash + 1)
+          : _remotePath!;
+
+      final entries = await _client!.readDir(dirPath);
+      for (final entry in entries) {
+        if (entry.name == fileName) {
+          return entry.mTime;
+        }
       }
     } catch (e) {
       print('[WebDAV] Failed to get remote modification time: $e');
@@ -177,36 +181,44 @@ class WebDAVSyncService implements SyncService {
   Future<void> startWatching(String vaultPath, {String? masterPassword}) async {
     _vaultPath = vaultPath;
 
-    // 获取初始远程修改时间
-    _lastRemoteModification = await getRemoteModificationTime();
-
-    // 开始轮询检查远程变化（每 30 秒）
+    // 开始轮询（每 30 秒与远端比较，远端更新则下载）
     _pollTimer?.cancel();
     _pollTimer = Timer.periodic(const Duration(seconds: 30), (_) => _checkRemoteChanges());
 
     print('[WebDAV] Started watching: $vaultPath');
   }
 
-  /// 检查远程文件是否有变化
+  /// 立即触发一次远端检查（供 app 回到前台时调用）
+  @override
+  Future<void> triggerCheck() async => _checkRemoteChanges();
+
+  /// 检查远程文件是否比本地更新；若是则下载并通知
   Future<void> _checkRemoteChanges() async {
     if (_vaultPath == null) return;
 
     try {
-      final currentRemoteMod = await getRemoteModificationTime();
+      final remoteMtime = await getRemoteModificationTime();
+      if (remoteMtime == null) return;
 
-      if (currentRemoteMod != null &&
-          _lastRemoteModification != null &&
-          currentRemoteMod.isAfter(_lastRemoteModification!)) {
-        print('[WebDAV] Remote file changed, downloading...');
-
-        // 下载新版本
+      final localFile = File(_vaultPath!);
+      if (!await localFile.exists()) {
+        print('[WebDAV] Local file missing, downloading from remote...');
         await downloadVault(_vaultPath!);
-        _lastRemoteModification = currentRemoteMod;
+        _eventController.add(FileChangeEvent(
+          type: ChangeType.created,
+          timestamp: remoteMtime,
+          filePath: _vaultPath,
+        ));
+        return;
+      }
 
-        // 通知文件变化
+      final localMtime = await localFile.lastModified();
+      if (remoteMtime.isAfter(localMtime)) {
+        print('[WebDAV] Remote is newer, downloading...');
+        await downloadVault(_vaultPath!);
         _eventController.add(FileChangeEvent(
           type: ChangeType.modified,
-          timestamp: currentRemoteMod,
+          timestamp: remoteMtime,
           filePath: _vaultPath,
         ));
       }
