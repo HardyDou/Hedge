@@ -17,15 +17,18 @@ class IOSSyncService implements SyncService {
       _lastModification = await file.lastModified();
     }
 
-    // 监听文件所在目录的变化
+    // 监听文件所在目录的变化（iOS 真机不支持 Directory.watch，降级处理）
     final directory = file.parent;
-    _fileWatcher = directory.watch(events: FileSystemEvent.all).listen((event) {
-      if (event.path == vaultPath) {
-        _handleFileChange(event);
-      }
-    });
-
-    print('[iCloud Drive] Started watching: $vaultPath');
+    try {
+      _fileWatcher = directory.watch(events: FileSystemEvent.all).listen((event) {
+        if (event.path == vaultPath) {
+          _handleFileChange(event);
+        }
+      });
+      print('[iCloud Drive] Started watching: $vaultPath');
+    } catch (e) {
+      print('[iCloud Drive] Directory.watch() not supported on this platform: $e');
+    }
   }
 
   Future<void> _handleFileChange(FileSystemEvent event) async {
