@@ -194,14 +194,8 @@ class _TrayPanelUnlockedState extends ConsumerState<TrayPanelUnlocked> {
       child: Row(
         children: [
           // 左侧标题
-          Icon(
-            CupertinoIcons.lock_shield_fill,
-            size: 16,
-            color: isDark ? CupertinoColors.systemGrey : CupertinoColors.systemGrey2,
-          ),
-          const SizedBox(width: 8),
           Text(
-            l10n.quickAccess,
+            l10n.appSubtitle,
             style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w600,
@@ -214,21 +208,32 @@ class _TrayPanelUnlockedState extends ConsumerState<TrayPanelUnlocked> {
           // 右侧按钮组
           _buildHeaderIconButton(
             context: context,
-            icon: CupertinoIcons.square_arrow_up_on_square,
+            icon: CupertinoIcons.app_badge,
             tooltip: l10n.openMainWindow,
             isDark: isDark,
             onPressed: () async {
               await widget.panelWindowService.showMainWindow();
             },
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: 4),
           _buildHeaderIconButton(
             context: context,
-            icon: CupertinoIcons.lock,
+            icon: CupertinoIcons.lock_fill,
             tooltip: l10n.lockNow,
             isDark: isDark,
             onPressed: () {
               ref.read(vaultProvider.notifier).lock();
+            },
+          ),
+          const SizedBox(width: 4),
+          _buildHeaderIconButton(
+            context: context,
+            icon: CupertinoIcons.xmark_circle_fill,
+            tooltip: l10n.exitApp,
+            isDark: isDark,
+            isDestructive: true,
+            onPressed: () {
+              widget.trayService.exitApp();
             },
           ),
           const SizedBox(width: 4),
@@ -410,19 +415,22 @@ class _TrayPanelUnlockedState extends ConsumerState<TrayPanelUnlocked> {
     required String tooltip,
     required bool isDark,
     required VoidCallback onPressed,
+    bool isDestructive = false,
   }) {
     return CupertinoButton(
       padding: EdgeInsets.zero,
-      minSize: 32,
+      minSize: 28,
       onPressed: onPressed,
       child: Container(
-        width: 32,
-        height: 32,
+        width: 28,
+        height: 28,
         alignment: Alignment.center,
         child: Icon(
           icon,
-          size: 18,
-          color: isDark ? CupertinoColors.white : CupertinoColors.black,
+          size: 16,
+          color: isDestructive
+              ? CupertinoColors.systemRed
+              : (isDark ? CupertinoColors.white : CupertinoColors.black),
         ),
       ),
     );

@@ -123,14 +123,8 @@ class _TrayPanelLockedState extends ConsumerState<TrayPanelLocked> {
       child: Row(
         children: [
           // 左侧标题
-          Icon(
-            CupertinoIcons.lock_fill,
-            size: 16,
-            color: isDark ? CupertinoColors.systemGrey : CupertinoColors.systemGrey2,
-          ),
-          const SizedBox(width: 8),
           Text(
-            l10n.appTitle,
+            l10n.appSubtitle,
             style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w600,
@@ -143,17 +137,17 @@ class _TrayPanelLockedState extends ConsumerState<TrayPanelLocked> {
           // 右侧按钮组
           _buildHeaderIconButton(
             context: context,
-            icon: CupertinoIcons.square_arrow_up_on_square,
+            icon: CupertinoIcons.app_badge,
             tooltip: l10n.openMainWindow,
             isDark: isDark,
             onPressed: () async {
               await widget.panelWindowService.showMainWindow();
             },
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: 4),
           _buildHeaderIconButton(
             context: context,
-            icon: CupertinoIcons.power,
+            icon: CupertinoIcons.xmark_circle_fill,
             tooltip: l10n.exitApp,
             isDark: isDark,
             isDestructive: true,
@@ -323,15 +317,15 @@ class _TrayPanelLockedState extends ConsumerState<TrayPanelLocked> {
   }) {
     return CupertinoButton(
       padding: EdgeInsets.zero,
-      minSize: 32,
+      minSize: 28,
       onPressed: onPressed,
       child: Container(
-        width: 32,
-        height: 32,
+        width: 28,
+        height: 28,
         alignment: Alignment.center,
         child: Icon(
           icon,
-          size: 18,
+          size: 16,
           color: isDestructive
               ? CupertinoColors.systemRed
               : (isDark ? CupertinoColors.white : CupertinoColors.black),

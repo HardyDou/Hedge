@@ -427,7 +427,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get syncSettingsSubtitle => 'Configure WebDAV or iCloud Drive sync';
 
   @override
-  String get appSubtitle => 'Hedgehog';
+  String get appSubtitle => 'Hedge';
 
   @override
   String get newItem => 'New';

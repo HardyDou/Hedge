@@ -887,7 +887,7 @@ abstract class AppLocalizations {
   /// No description provided for @appSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Hedgehog'**
+  /// **'Hedge'**
   String get appSubtitle;
 
   /// No description provided for @newItem.
