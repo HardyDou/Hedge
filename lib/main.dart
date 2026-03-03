@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
@@ -145,18 +146,19 @@ class NotePasswordApp extends ConsumerWidget {
 }
 
 /// 带托盘功能的应用包装器（桌面版）
-class TrayEnabledApp extends StatefulWidget {
+class TrayEnabledApp extends ConsumerStatefulWidget {
   const TrayEnabledApp({super.key});
 
   @override
-  State<TrayEnabledApp> createState() => _TrayEnabledAppState();
+  ConsumerState<TrayEnabledApp> createState() => _TrayEnabledAppState();
 }
 
-class _TrayEnabledAppState extends State<TrayEnabledApp> with WindowListener {
+class _TrayEnabledAppState extends ConsumerState<TrayEnabledApp> with WindowListener {
   late PanelWindowService _panelWindowService;
   late TrayService _trayService;
   bool _isInitialized = false;
   bool _hasRefreshedData = false;
+  Timer? _lockTimer;
 
   @override
   void initState() {
@@ -167,6 +169,7 @@ class _TrayEnabledAppState extends State<TrayEnabledApp> with WindowListener {
 
   @override
   void dispose() {
+    _lockTimer?.cancel();
     windowManager.removeListener(this);
     _trayService.dispose();
     super.dispose();
@@ -175,6 +178,7 @@ class _TrayEnabledAppState extends State<TrayEnabledApp> with WindowListener {
   Future<void> _initializeTray() async {
     try {
       _panelWindowService = PanelWindowService();
+      _panelWindowService.onCancelLockTimer = _cancelLockTimer;
       _trayService = TrayService(panelWindowService: _panelWindowService);
       await _trayService.initialize();
       await windowManager.setPreventClose(true);
@@ -189,15 +193,72 @@ class _TrayEnabledAppState extends State<TrayEnabledApp> with WindowListener {
     }
   }
 
+  /// 启动自动锁屏计时器
+  void _startLockTimer() {
+    _lockTimer?.cancel();
+
+    final timeout = ref.read(vaultProvider).autoLockTimeout;
+
+    if (timeout == 0) {
+      // 立即锁屏
+      debugPrint('自动锁屏延迟: 立即');
+      ref.read(vaultProvider.notifier).lock();
+    } else {
+      // 延迟锁屏
+      debugPrint('自动锁屏延迟: ${timeout}秒');
+      _lockTimer = Timer(Duration(seconds: timeout), () {
+        debugPrint('自动锁屏计时器触发');
+        ref.read(vaultProvider.notifier).lock();
+      });
+    }
+  }
+
+  /// 取消自动锁屏计时器
+  void _cancelLockTimer() {
+    if (_lockTimer?.isActive ?? false) {
+      debugPrint('取消自动锁屏计时器');
+      _lockTimer?.cancel();
+    }
+  }
+
   @override
   void onWindowClose() async {
     debugPrint('窗口关闭事件');
+    // 启动自动锁屏计时器（根据设置延迟锁屏）
+    _startLockTimer();
     await _panelWindowService.onWindowClose();
   }
 
   @override
+  void onWindowMinimize() {
+    debugPrint('窗口最小化');
+    // 启动自动锁屏计时器（根据设置延迟锁屏）
+    _startLockTimer();
+  }
+
+  @override
+  void onWindowRestore() {
+    debugPrint('窗口恢复');
+    // 取消自动锁屏计时器
+    _cancelLockTimer();
+  }
+
+  @override
+  void onWindowFocus() {
+    debugPrint('窗口获得焦点');
+    // 取消自动锁屏计时器
+    _cancelLockTimer();
+  }
+
+  @override
   void onWindowBlur() async {
+    // Panel 失焦时：隐藏面板 + 启动锁屏计时器
     await _panelWindowService.onPanelBlur();
+
+    // 只有在 Panel 模式下才启动锁屏计时器
+    if (_panelWindowService.state.isPanelMode) {
+      _startLockTimer();
+    }
   }
 
   @override

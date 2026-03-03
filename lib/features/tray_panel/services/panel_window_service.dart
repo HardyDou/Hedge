@@ -8,6 +8,7 @@ import '../models/panel_state.dart';
 class PanelWindowService extends ChangeNotifier {
   PanelState _state = const PanelState();
   VoidCallback? onShowMainWindow;
+  VoidCallback? onCancelLockTimer; // 取消锁屏计时器回调
   bool _isSwitchingMode = false; // 是否正在切换模式
 
   PanelState get state => _state;
@@ -23,6 +24,9 @@ class PanelWindowService extends ChangeNotifier {
   /// 显示 Panel 窗口
   Future<void> showPanel({required double x, required double y}) async {
     debugPrint('显示 Panel 窗口: ($x, $y)');
+
+    // 取消锁屏计时器
+    onCancelLockTimer?.call();
 
     // 切换到 Panel 模式
     _state = _state.copyWith(isPanelMode: true);
@@ -77,6 +81,9 @@ class PanelWindowService extends ChangeNotifier {
   Future<void> showMainWindow() async {
     debugPrint('显示主窗口');
 
+    // 取消锁屏计时器
+    onCancelLockTimer?.call();
+
     // 设置切换标志，防止 onPanelBlur 误判
     _isSwitchingMode = true;
 
@@ -129,7 +136,7 @@ class PanelWindowService extends ChangeNotifier {
       // Panel 模式下，关闭就是隐藏
       await hidePanel();
     } else {
-      // 主窗口模式，关闭进入托盘
+      // 主窗口模式，关闭进入托盘（无 Dock 图标，通过托盘图标重新打开）
       debugPrint('主窗口关闭，进入托盘状态');
       await windowManager.hide();
       await windowManager.setSkipTaskbar(true);
