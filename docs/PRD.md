@@ -294,9 +294,9 @@
 - 用户完全掌控数据（Local-First 理念）
 - 零成本方案（WebDAV 可使用免费服务）
 
-### 9.2 桌面版托盘快捷面板 (计划中)
+### 9.2 桌面版托盘快捷面板 (v1.4.0 - 2026-03-03)
 
-**实施状态**: 📋 需求已确认，待开发
+**实施状态**: ✅ 已完成并发布
 
 **功能概述**:
 - 系统托盘/菜单栏常驻图标
@@ -390,8 +390,11 @@
 - 减少操作步骤，快速复制任意字段
 - 灵活的启动方式，适应不同使用习惯
 
-**开发计划**:
-- 优先级：**P0（最高优先级）**
+**技术文件**:
+- `lib/features/tray_panel/services/tray_service.dart` - 系统托盘管理
+- `lib/features/tray_panel/services/panel_window_service.dart` - 面板窗口管理
+- `lib/features/tray_panel/widgets/tray_panel_unlocked.dart` - 已解锁面板（含悬停冒泡）
+- `lib/features/tray_panel/widgets/tray_panel_locked.dart` - 解锁页面（主密码 + 生物识别）
 
 ### 9.3 拼音排序和字母索引 (v1.3.0 - 2026-03-01)
 

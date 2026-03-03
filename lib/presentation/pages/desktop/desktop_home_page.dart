@@ -384,13 +384,39 @@ class _DesktopHomePageState extends ConsumerState<DesktopHomePage> {
     return letters.toList()..sort();
   }
 
+  /// 根据条目内容动态计算高度，与 [_buildListItem] 布局保持一致：
+  ///   Container(vertical:8)*2 + max(Icon(28), 行高) + Padding(bottom:2)
+  ///   有副标题：title(18) + subtitle(16) = 34 > 28 → 16 + 34 + 2 = 52
+  ///   无副标题：title(18) < 28 → 16 + 28 + 2 = 46
+  double _computeItemHeight(VaultItem item) {
+    const double containerPaddingV = 8.0 * 2; // symmetric(vertical: 8)
+    const double iconSize = 28.0;             // _buildIcon: 28×28
+    const double titleLineH = 18.0;           // fontSize: 14（SF Pro 行高）
+    const double subtitleLineH = 16.0;        // fontSize: 12（SF Pro 行高）
+    const double bottomMargin = 2.0;          // Padding(only(bottom: 2))
+
+    final hasSubtitle =
+        item.username?.isNotEmpty == true || item.url?.isNotEmpty == true;
+    final textH = hasSubtitle ? titleLineH + subtitleLineH : titleLineH;
+    final rowH = textH > iconSize ? textH : iconSize;
+    return containerPaddingV + rowH + bottomMargin;
+  }
+
   void _scrollToLetter(String letter, List<Object> groupedList) {
-    const double itemHeight = 52.0;
-    const double headerHeight = 25.0;
-    double offset = 8.0;
+    // 分组标题高度由 _buildGroupHeader 推导：
+    //   Padding(fromLTRB(4, 10, 4, 2)) + fontSize=13 行高约13px
+    const double headerHeight = 10.0 + 13.0 + 2.0; // = 25.0
+    // 初始偏移来自 ListView padding: symmetric(vertical: 8).top
+    const double listTopPadding = 8.0;
+
+    double offset = listTopPadding;
     for (final element in groupedList) {
       if (element is String && element == letter) break;
-      offset += element is String ? headerHeight : itemHeight;
+      if (element is String) {
+        offset += headerHeight;
+      } else {
+        offset += _computeItemHeight(element as VaultItem);
+      }
     }
     _scrollController.animateTo(
       offset,

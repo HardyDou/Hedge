@@ -823,9 +823,16 @@ class _HomePageState extends ConsumerState<HomePage> {
   }
 
   void _scrollToLetter(String letter, List<Object> groupedList) {
-    const double itemHeight = 79.0;
-    const double headerHeight = 32.0;
-    double offset = 8.0; // SliverPadding top
+    // 条目高度由 _iOSListItem 布局推导：
+    //   Padding(bottom:10) + Container(all:14)*2 + Icon(40) + Border(0.5*2)
+    const double itemHeight = 10.0 + 14.0 * 2 + 40.0 + 0.5 * 2; // = 79.0
+    // 分组标题高度由 _buildGroupHeader 推导：
+    //   Padding(top:12, bottom:4) + fontSize=13 行高约16px
+    const double headerHeight = 12.0 + 16.0 + 4.0; // = 32.0
+    // 初始偏移来自 SliverPadding(fromLTRB(16, 8, 16, 100)).top
+    const double listTopPadding = 8.0;
+
+    double offset = listTopPadding;
     for (final element in groupedList) {
       if (element is String && element == letter) break;
       offset += element is String ? headerHeight : itemHeight;
