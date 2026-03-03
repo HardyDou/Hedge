@@ -228,7 +228,7 @@ class _TrayPanelUnlockedState extends ConsumerState<TrayPanelUnlocked> {
           const SizedBox(width: 4),
           _buildHeaderIconButton(
             context: context,
-            icon: CupertinoIcons.xmark_circle_fill,
+            icon: CupertinoIcons.power,
             tooltip: l10n.exitApp,
             isDark: isDark,
             isDestructive: true,
