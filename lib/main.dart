@@ -87,13 +87,10 @@ class NotePasswordApp extends ConsumerWidget {
       title: 'NotePassword',
       debugShowCheckedModeBanner: false,
       theme: CupertinoThemeData(
-        brightness: themeMode == ThemeModeOption.dark 
-            ? Brightness.dark 
+        brightness: themeMode == ThemeModeOption.dark
+            ? Brightness.dark
             : (themeMode == ThemeModeOption.light ? Brightness.light : null),
         primaryColor: CupertinoColors.activeBlue,
-        scaffoldBackgroundColor: themeMode == ThemeModeOption.dark 
-            ? CupertinoColors.black 
-            : CupertinoColors.systemGroupedBackground,
       ),
       locale: locale,
       localizationsDelegates: const [
@@ -311,9 +308,6 @@ class _TrayEnabledAppState extends ConsumerState<TrayEnabledApp> with WindowList
                       ? Brightness.dark
                       : (themeMode == ThemeModeOption.light ? Brightness.light : null),
                   primaryColor: CupertinoColors.activeBlue,
-                  scaffoldBackgroundColor: themeMode == ThemeModeOption.dark
-                      ? CupertinoColors.black
-                      : CupertinoColors.systemGroupedBackground,
                 ),
                 locale: locale,
                 localizationsDelegates: const [
