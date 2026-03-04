@@ -10,6 +10,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:hedge/domain/services/importer/concrete_strategies.dart';
 import 'package:hedge/domain/services/importer/import_strategy.dart';
 import 'package:hedge/domain/services/importer/smart_csv_strategy.dart';
+import 'package:hedge/presentation/pages/shared/splash_page.dart';
 import 'dart:io';
 
 class SettingsPanel extends ConsumerStatefulWidget {
@@ -833,6 +834,12 @@ class _SettingsPanelState extends ConsumerState<SettingsPanel> {
               subtitle: 'Version 1.0.0',
               isDark: isDark,
               onTap: () => _showAbout(context),
+            ),
+            _buildListTile(
+              title: "引导页",
+              subtitle: "查看应用功能介绍",
+              isDark: isDark,
+              onTap: () => _showSplashPage(context),
               showDivider: false,
             ),
           ], isDark),
@@ -1057,6 +1064,12 @@ class _SettingsPanelState extends ConsumerState<SettingsPanel> {
         content: Text(l10n.aboutDescription),
         actions: [CupertinoDialogAction(onPressed: () => Navigator.pop(context), child: const Text("OK"))],
       ),
+    );
+  }
+
+  void _showSplashPage(BuildContext context) {
+    Navigator.of(context).push(
+      CupertinoPageRoute(builder: (context) => const SplashPage()),
     );
   }
 
