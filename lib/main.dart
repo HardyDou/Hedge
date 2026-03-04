@@ -91,6 +91,11 @@ class NotePasswordApp extends ConsumerWidget {
             ? Brightness.dark
             : (themeMode == ThemeModeOption.light ? Brightness.light : null),
         primaryColor: CupertinoColors.activeBlue,
+        scaffoldBackgroundColor: themeMode == ThemeModeOption.system
+            ? null
+            : (themeMode == ThemeModeOption.dark
+                ? CupertinoColors.black
+                : CupertinoColors.systemGroupedBackground),
       ),
       locale: locale,
       localizationsDelegates: const [
@@ -308,6 +313,11 @@ class _TrayEnabledAppState extends ConsumerState<TrayEnabledApp> with WindowList
                       ? Brightness.dark
                       : (themeMode == ThemeModeOption.light ? Brightness.light : null),
                   primaryColor: CupertinoColors.activeBlue,
+                  scaffoldBackgroundColor: themeMode == ThemeModeOption.system
+                      ? null
+                      : (themeMode == ThemeModeOption.dark
+                          ? CupertinoColors.black
+                          : CupertinoColors.systemGroupedBackground),
                 ),
                 locale: locale,
                 localizationsDelegates: const [
