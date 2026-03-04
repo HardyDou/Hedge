@@ -113,7 +113,8 @@ class _TrayPanelUnlockedState extends ConsumerState<TrayPanelUnlocked> {
       return const Center(child: CupertinoActivityIndicator());
     }
 
-    final brightness = CupertinoTheme.of(context).brightness ?? Brightness.light;
+    final brightness = CupertinoTheme.of(context).brightness ??
+                       MediaQuery.platformBrightnessOf(context);
     final isDark = brightness == Brightness.dark;
     final vaultState = ref.watch(vaultProvider);
 

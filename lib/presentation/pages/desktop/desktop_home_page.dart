@@ -65,7 +65,8 @@ class _DesktopHomePageState extends ConsumerState<DesktopHomePage> {
   Widget build(BuildContext context) {
     final vaultState = ref.watch(vaultProvider);
     final l10n = AppLocalizations.of(context)!;
-    final brightness = CupertinoTheme.of(context).brightness;
+    final brightness = CupertinoTheme.of(context).brightness ??
+                       MediaQuery.platformBrightnessOf(context);
     final isDark = brightness == Brightness.dark;
 
     final items = vaultState.filteredVaultItems ?? [];
@@ -115,7 +116,8 @@ class _DesktopHomePageState extends ConsumerState<DesktopHomePage> {
       }
       
       if (isControlPressed && event.logicalKey == LogicalKeyboardKey.comma) {
-        final brightness = CupertinoTheme.of(context).brightness;
+        final brightness = CupertinoTheme.of(context).brightness ??
+                           MediaQuery.platformBrightnessOf(context);
         final isDark = brightness == Brightness.dark;
         _showSettingsDialog(context, isDark);
       }

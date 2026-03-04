@@ -71,7 +71,8 @@ class _DetailPageState extends ConsumerState<DetailPage> {
 
   Future<void> _handleDelete() async {
     final l10n = AppLocalizations.of(context)!;
-    final brightness = CupertinoTheme.of(context).brightness;
+    final brightness = CupertinoTheme.of(context).brightness ??
+                       MediaQuery.platformBrightnessOf(context);
     final isDark = brightness == Brightness.dark;
     
     final confirmed = await showCupertinoDialog<bool>(
@@ -102,7 +103,8 @@ class _DetailPageState extends ConsumerState<DetailPage> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final brightness = CupertinoTheme.of(context).brightness;
+    final brightness = CupertinoTheme.of(context).brightness ??
+                       MediaQuery.platformBrightnessOf(context);
     final isDark = brightness == Brightness.dark;
     
     return CupertinoPageScaffold(
@@ -302,7 +304,8 @@ class _DetailPageState extends ConsumerState<DetailPage> {
     String? header,
     required List<Widget> children,
   }) {
-    final brightness = CupertinoTheme.of(context).brightness;
+    final brightness = CupertinoTheme.of(context).brightness ??
+                       MediaQuery.platformBrightnessOf(context);
     final isDark = brightness == Brightness.dark;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

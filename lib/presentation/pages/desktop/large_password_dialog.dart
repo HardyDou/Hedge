@@ -3,7 +3,8 @@ import 'package:flutter/services.dart';
 
 class LargePasswordDialog {
   static void show(BuildContext context, String password) {
-    final brightness = CupertinoTheme.of(context).brightness;
+    final brightness = CupertinoTheme.of(context).brightness ??
+                       MediaQuery.platformBrightnessOf(context);
     final isDark = brightness == Brightness.dark;
     final screenWidth = MediaQuery.of(context).size.width;
 

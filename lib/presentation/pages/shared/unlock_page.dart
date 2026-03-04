@@ -163,7 +163,8 @@ class _UnlockPageState extends ConsumerState<UnlockPage> {
   Widget build(BuildContext context) {
     final vaultState = ref.watch(vaultProvider);
     final l10n = AppLocalizations.of(context)!;
-    final brightness = CupertinoTheme.of(context).brightness;
+    final brightness = CupertinoTheme.of(context).brightness ??
+                       MediaQuery.platformBrightnessOf(context);
     final isDark = brightness == Brightness.dark;
 
     return CupertinoPageScaffold(

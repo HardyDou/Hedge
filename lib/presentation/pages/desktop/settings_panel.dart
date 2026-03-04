@@ -54,7 +54,8 @@ class _SettingsPanelState extends ConsumerState<SettingsPanel> {
     final currentLocale = ref.watch(localeProvider);
     final vaultState = ref.watch(vaultProvider);
     final l10n = AppLocalizations.of(context)!;
-    final brightness = CupertinoTheme.of(context).brightness;
+    final brightness = CupertinoTheme.of(context).brightness ??
+                       MediaQuery.platformBrightnessOf(context);
     final isDark = brightness == Brightness.dark;
 
     return Container(
@@ -909,7 +910,8 @@ class _SettingsPanelState extends ConsumerState<SettingsPanel> {
   void _showThemePicker(BuildContext context, WidgetRef ref) {
     final themeMode = ref.read(themeProvider);
     final l10n = AppLocalizations.of(context)!;
-    final brightness = CupertinoTheme.of(context).brightness;
+    final brightness = CupertinoTheme.of(context).brightness ??
+                       MediaQuery.platformBrightnessOf(context);
     final isDark = brightness == Brightness.dark;
 
     showCupertinoDialog(
@@ -967,7 +969,8 @@ class _SettingsPanelState extends ConsumerState<SettingsPanel> {
   void _showLanguagePicker(BuildContext context, WidgetRef ref) {
     final currentLocale = ref.read(localeProvider);
     final l10n = AppLocalizations.of(context)!;
-    final brightness = CupertinoTheme.of(context).brightness;
+    final brightness = CupertinoTheme.of(context).brightness ??
+                       MediaQuery.platformBrightnessOf(context);
     final isDark = brightness == Brightness.dark;
 
     showCupertinoDialog(
@@ -1011,7 +1014,8 @@ class _SettingsPanelState extends ConsumerState<SettingsPanel> {
     final l10n = AppLocalizations.of(context)!;
     final currentTimeout = ref.read(vaultProvider).autoLockTimeout;
     final notifier = ref.read(vaultProvider.notifier);
-    final brightness = CupertinoTheme.of(context).brightness;
+    final brightness = CupertinoTheme.of(context).brightness ??
+                       MediaQuery.platformBrightnessOf(context);
     final isDark = brightness == Brightness.dark;
 
     showCupertinoDialog(

@@ -95,6 +95,7 @@ class PanelWindowService extends ChangeNotifier {
     await windowManager.setAlwaysOnTop(false);
     await windowManager.setResizable(true);
     await windowManager.setMovable(true);
+    await windowManager.setMinimumSize(const Size(600, 500));
     await windowManager.setSize(Size(mainWindowWidth, mainWindowHeight));
     await windowManager.center();
     await windowManager.setTitle('Hedge');

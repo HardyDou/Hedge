@@ -7,7 +7,8 @@ class SplashPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final brightness = CupertinoTheme.of(context).brightness;
+    final brightness = CupertinoTheme.of(context).brightness ??
+                       MediaQuery.platformBrightnessOf(context);
     final isDark = brightness == Brightness.dark;
     final l10n = AppLocalizations.of(context);
 
@@ -34,12 +35,13 @@ class SplashPage extends StatelessWidget {
             const SizedBox(height: 32),
 
             // 应用名称
-            const Text(
+            Text(
               'Hedge',
               style: TextStyle(
                 fontSize: 28,
                 fontWeight: FontWeight.w700,
                 letterSpacing: -0.5,
+                color: isDark ? CupertinoColors.white : CupertinoColors.black,
               ),
             ),
             const SizedBox(height: 8),

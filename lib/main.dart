@@ -56,6 +56,7 @@ Future<void> main() async {
 
     WindowOptions windowOptions = const WindowOptions(
       size: Size(800, 600),
+      minimumSize: Size(600, 500),
       center: true,
       backgroundColor: CupertinoColors.systemBackground,
       skipTaskbar: false,
@@ -63,6 +64,7 @@ Future<void> main() async {
     );
 
     windowManager.waitUntilReadyToShow(windowOptions, () async {
+      await windowManager.setMinimumSize(const Size(600, 500));
       await windowManager.show();
       await windowManager.focus();
     });
@@ -545,7 +547,8 @@ class _HomePageState extends ConsumerState<HomePage> {
   Widget build(BuildContext context) {
     final vaultState = ref.watch(vaultProvider);
     final l10n = AppLocalizations.of(context)!;
-    final brightness = CupertinoTheme.of(context).brightness;
+    final brightness = CupertinoTheme.of(context).brightness ??
+                       MediaQuery.platformBrightnessOf(context);
     final isDark = brightness == Brightness.dark;
 
     final items = vaultState.filteredVaultItems ?? []; // Use filtered items from provider, default to empty list

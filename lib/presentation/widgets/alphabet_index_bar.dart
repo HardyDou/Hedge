@@ -43,32 +43,35 @@ class _AlphabetIndexBarState extends State<AlphabetIndexBar> {
               ),
             ),
           // 字母索引列
-          Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              LayoutBuilder(
-                builder: (context, constraints) {
-                  const double itemHeight = 16.0;
-                  return GestureDetector(
-                    onVerticalDragStart: (details) {
-                      _handleDragStart(details.localPosition.dy, itemHeight);
-                    },
-                    onVerticalDragUpdate: (details) {
-                      _handleDragUpdate(details.localPosition.dy, itemHeight);
-                    },
-                    onVerticalDragEnd: (_) => _handleDragEnd(),
-                    onVerticalDragCancel: _handleDragEnd,
-                    child: Container(
-                      color: CupertinoColors.transparent,
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: _buildIndexItems(itemHeight),
-                      ),
-                    ),
-                  );
+          LayoutBuilder(
+            builder: (context, constraints) {
+              const double minItemHeight = 12.0;
+              const double idealItemHeight = 16.0;
+              final double availableHeight = constraints.maxHeight;
+              final double requiredHeight = _allLetters.length * idealItemHeight;
+              final double itemHeight = requiredHeight > availableHeight
+                  ? (availableHeight / _allLetters.length).clamp(minItemHeight, idealItemHeight)
+                  : idealItemHeight;
+
+              return GestureDetector(
+                onVerticalDragStart: (details) {
+                  _handleDragStart(details.localPosition.dy, itemHeight);
                 },
-              ),
-            ],
+                onVerticalDragUpdate: (details) {
+                  _handleDragUpdate(details.localPosition.dy, itemHeight);
+                },
+                onVerticalDragEnd: (_) => _handleDragEnd(),
+                onVerticalDragCancel: _handleDragEnd,
+                child: Container(
+                  color: CupertinoColors.transparent,
+                  height: constraints.maxHeight,
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: _buildIndexItems(itemHeight),
+                  ),
+                ),
+              );
+            },
           ),
         ],
       ),

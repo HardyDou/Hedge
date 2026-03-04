@@ -10,6 +10,7 @@ import 'package:hedge/presentation/providers/locale_provider.dart';
 import 'package:hedge/presentation/providers/theme_provider.dart';
 import 'package:hedge/presentation/providers/vault_provider.dart';
 import 'package:hedge/presentation/pages/sync_settings_page.dart';
+import 'package:hedge/presentation/pages/shared/splash_page.dart';
 import 'dart:io';
 
 class _CustomNavBar extends StatelessWidget {
@@ -99,10 +100,12 @@ class SettingsPage extends ConsumerWidget {
     final currentLocale = ref.watch(localeProvider);
     final vaultState = ref.watch(vaultProvider);
     final l10n = AppLocalizations.of(context)!;
-    final brightness = CupertinoTheme.of(context).brightness;
+    final brightness = CupertinoTheme.of(context).brightness ??
+                       MediaQuery.platformBrightnessOf(context);
     final isDark = brightness == Brightness.dark;
 
     return CupertinoPageScaffold(
+      backgroundColor: isDark ? CupertinoColors.black : const Color(0xFFF2F2F7),
       child: _CustomNavBar(
         title: l10n.settings,
         isDark: isDark,
@@ -200,6 +203,16 @@ class SettingsPage extends ConsumerWidget {
                   leading: const Icon(CupertinoIcons.info, color: CupertinoColors.activeBlue),
                   onTap: () => _showAbout(context),
                   isDark: isDark,
+                ),
+                _iOSListTile(
+                  title: "引导页",
+                  subtitle: "查看应用功能介绍",
+                  leading: const Icon(CupertinoIcons.book, color: CupertinoColors.activeBlue),
+                  onTap: () => Navigator.push(
+                    context,
+                    CupertinoPageRoute(builder: (context) => SplashPage()),
+                  ),
+                  isDark: isDark,
                   showDivider: false,
                 ),
               ],
@@ -217,7 +230,8 @@ class SettingsPage extends ConsumerWidget {
     required String header,
     required List<Widget> children,
   }) {
-    final brightness = CupertinoTheme.of(context).brightness;
+    final brightness = CupertinoTheme.of(context).brightness ??
+                       MediaQuery.platformBrightnessOf(context);
     final isDark = brightness == Brightness.dark;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -538,7 +552,8 @@ class SettingsPage extends ConsumerWidget {
 
   void _showResetPasswordDialog(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
-    final brightness = CupertinoTheme.of(context).brightness;
+    final brightness = CupertinoTheme.of(context).brightness ??
+                       MediaQuery.platformBrightnessOf(context);
     final isDark = brightness == Brightness.dark;
     
     showCupertinoModalPopup(
