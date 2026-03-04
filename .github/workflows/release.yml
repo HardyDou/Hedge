@@ -38,42 +38,15 @@ jobs:
   #         name: android-apk
   #         path: build/app/outputs/flutter-apk/app-release.apk
 
-  build-linux:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Install Linux dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev libstdc++-12-dev libsecret-1-dev libayatana-appindicator3-dev
-
-      - name: Setup Flutter
-        uses: subosito/flutter-action@v2
-        with:
-          channel: 'stable'
-
-      - name: Install dependencies
-        run: flutter pub get
-
-      - name: Build Linux
-        run: flutter build linux --release
-
-      - name: Package Linux
-        run: |
-          cd build/linux/x64/release/bundle
-          tar -czf ../../../../../hedge-linux-x64.tar.gz *
-
-      - name: Upload Linux build
-        uses: actions/upload-artifact@v4
-        with:
-          name: linux-x64
-          path: hedge-linux-x64.tar.gz
-
-  # build-macos:
-  #   runs-on: macos-latest
+  # build-linux:
+  #   runs-on: ubuntu-latest
   #   steps:
   #     - uses: actions/checkout@v4
+
+  #     - name: Install Linux dependencies
+  #       run: |
+  #         sudo apt-get update
+  #         sudo apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev libstdc++-12-dev libsecret-1-dev libayatana-appindicator3-dev
 
   #     - name: Setup Flutter
   #       uses: subosito/flutter-action@v2
@@ -83,22 +56,49 @@ jobs:
   #     - name: Install dependencies
   #       run: flutter pub get
 
-  #     - name: Build macOS
-  #       run: flutter build macos --release --no-codesign
+  #     - name: Build Linux
+  #       run: flutter build linux --release
 
-  #     - name: Package macOS
+  #     - name: Package Linux
   #       run: |
-  #         cd build/macos/Build/Products/Release
-  #         zip -r ../../../../../hedge-macos.zip hedge.app
+  #         cd build/linux/x64/release/bundle
+  #         tar -czf ../../../../../hedge-linux-x64.tar.gz *
 
-  #     - name: Upload macOS build
+  #     - name: Upload Linux build
   #       uses: actions/upload-artifact@v4
   #       with:
-  #         name: macos
-  #         path: hedge-macos.zip
+  #         name: linux-x64
+  #         path: hedge-linux-x64.tar.gz
+
+  build-macos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Build macOS
+        run: flutter build macos --release --no-codesign
+
+      - name: Package macOS
+        run: |
+          cd build/macos/Build/Products/Release
+          zip -r ../../../../../hedge-macos.zip hedge.app
+
+      - name: Upload macOS build
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos
+          path: hedge-macos.zip
 
   release:
-    needs: [build-linux]
+    needs: [build-macos]
     runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/tags/')
     steps:
@@ -111,7 +111,7 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           files: |
-            linux-x64/hedge-linux-x64.tar.gz
+            macos/hedge-macos.zip
           draft: false
           prerelease: false
         env:
