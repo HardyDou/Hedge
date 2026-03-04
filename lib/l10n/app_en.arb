@@ -188,5 +188,9 @@
   "introCrossTitle": "Cross-Platform",
   "introCrossDesc": "Available on iOS, macOS and more - manage passwords anywhere",
   "introPrivacyTitle": "Privacy First",
-  "introPrivacyDesc": "All data encrypted locally - your passwords belong to you alone"
+  "introPrivacyDesc": "All data encrypted locally - your passwords belong to you alone",
+  "viewIntroduction": "Feature Introduction",
+  "viewIntroductionDesc": "View app feature introduction",
+  "splashScreen": "Splash Screen",
+  "splashScreenDesc": "View startup loading screen"
 }

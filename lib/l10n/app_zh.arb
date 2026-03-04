@@ -162,5 +162,9 @@
   "introCrossTitle": "跨平台支持",
   "introCrossDesc": "支持 iOS、macOS 等多平台，随时随地管理密码",
   "introPrivacyTitle": "隐私优先",
-  "introPrivacyDesc": "所有数据本地加密存储，您的密码只属于您自己"
+  "introPrivacyDesc": "所有数据本地加密存储，您的密码只属于您自己",
+  "viewIntroduction": "功能介绍",
+  "viewIntroductionDesc": "查看应用功能介绍",
+  "splashScreen": "启动页",
+  "splashScreenDesc": "查看启动加载页面"
 }
