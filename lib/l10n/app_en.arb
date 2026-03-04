@@ -177,5 +177,20 @@
   "syncSettingsSubtitle": "Configure WebDAV or iCloud Drive sync",
   "appSubtitle": "Hedge",
   "newItem": "New",
-  "lock": "Lock"
+  "lock": "Lock",
+  "introSkip": "Skip",
+  "introNext": "Next",
+  "introStart": "Get Started",
+  "introSecureTitle": "Secure Encryption",
+  "introSecureDesc": "AES-256 encryption protects your passwords and keeps your data safe",
+  "introSyncTitle": "WebDAV Sync",
+  "introSyncDesc": "Sync across devices seamlessly with WebDAV cloud storage",
+  "introCrossTitle": "Cross-Platform",
+  "introCrossDesc": "Available on iOS, macOS and more - manage passwords anywhere",
+  "introPrivacyTitle": "Privacy First",
+  "introPrivacyDesc": "All data encrypted locally - your passwords belong to you alone",
+  "viewIntroduction": "Feature Introduction",
+  "viewIntroductionDesc": "View app feature introduction",
+  "splashScreen": "Splash Screen",
+  "splashScreenDesc": "View startup loading screen"
 }

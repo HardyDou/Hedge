@@ -11,6 +11,7 @@ import 'package:hedge/presentation/providers/theme_provider.dart';
 import 'package:hedge/presentation/providers/vault_provider.dart';
 import 'package:hedge/presentation/pages/sync_settings_page.dart';
 import 'package:hedge/presentation/pages/shared/splash_page.dart';
+import 'package:hedge/presentation/pages/shared/introduction_page.dart';
 import 'dart:io';
 
 class _CustomNavBar extends StatelessWidget {
@@ -205,12 +206,16 @@ class SettingsPage extends ConsumerWidget {
                   isDark: isDark,
                 ),
                 _iOSListTile(
-                  title: "引导页",
-                  subtitle: "查看应用功能介绍",
+                  title: l10n.viewIntroduction,
+                  subtitle: l10n.viewIntroductionDesc,
                   leading: const Icon(CupertinoIcons.book, color: CupertinoColors.activeBlue),
                   onTap: () => Navigator.push(
                     context,
-                    CupertinoPageRoute(builder: (context) => SplashPage()),
+                    CupertinoPageRoute(
+                      builder: (context) => IntroductionPage(
+                        onComplete: () => Navigator.pop(context),
+                      ),
+                    ),
                   ),
                   isDark: isDark,
                   showDivider: false,

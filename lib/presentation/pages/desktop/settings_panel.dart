@@ -11,6 +11,7 @@ import 'package:hedge/domain/services/importer/concrete_strategies.dart';
 import 'package:hedge/domain/services/importer/import_strategy.dart';
 import 'package:hedge/domain/services/importer/smart_csv_strategy.dart';
 import 'package:hedge/presentation/pages/shared/splash_page.dart';
+import 'package:hedge/presentation/pages/shared/introduction_page.dart';
 import 'dart:io';
 
 class SettingsPanel extends ConsumerStatefulWidget {
@@ -836,10 +837,10 @@ class _SettingsPanelState extends ConsumerState<SettingsPanel> {
               onTap: () => _showAbout(context),
             ),
             _buildListTile(
-              title: "引导页",
-              subtitle: "查看应用功能介绍",
+              title: l10n.viewIntroduction,
+              subtitle: l10n.viewIntroductionDesc,
               isDark: isDark,
-              onTap: () => _showSplashPage(context),
+              onTap: () => _showIntroductionPage(context),
               showDivider: false,
             ),
           ], isDark),
@@ -1070,6 +1071,16 @@ class _SettingsPanelState extends ConsumerState<SettingsPanel> {
   void _showSplashPage(BuildContext context) {
     Navigator.of(context).push(
       CupertinoPageRoute(builder: (context) => const SplashPage()),
+    );
+  }
+
+  void _showIntroductionPage(BuildContext context) {
+    Navigator.of(context).push(
+      CupertinoPageRoute(
+        builder: (context) => IntroductionPage(
+          onComplete: () => Navigator.pop(context),
+        ),
+      ),
     );
   }
 
