@@ -1,0 +1,137 @@
+name: Build Test
+
+on:
+  workflow_dispatch:
+    inputs:
+      platform:
+        description: 'Platform to build'
+        required: true
+        type: choice
+        options:
+          - all
+          - android
+          - linux
+          - windows
+          - macos
+
+jobs:
+  build-android:
+    if: github.event.inputs.platform == 'android' || github.event.inputs.platform == 'all'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Build APK
+        run: flutter build apk --release
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-apk
+          path: build/app/outputs/flutter-apk/app-release.apk
+
+  build-linux:
+    if: github.event.inputs.platform == 'linux' || github.event.inputs.platform == 'all'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Linux dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev libstdc++-12-dev libsecret-1-dev libayatana-appindicator3-dev
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Build Linux
+        run: flutter build linux --release
+
+      - name: Package Linux
+        run: |
+          cd build/linux/x64/release/bundle
+          tar -czf ../../../../../hedge-linux-x64.tar.gz *
+
+      - name: Upload Linux build
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-x64
+          path: hedge-linux-x64.tar.gz
+
+  build-windows:
+    if: github.event.inputs.platform == 'windows' || github.event.inputs.platform == 'all'
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Build Windows
+        run: flutter build windows --release
+
+      - name: Package Windows
+        run: |
+          Compress-Archive -Path build/windows/x64/runner/Release/* -DestinationPath hedge-windows-x64.zip
+
+      - name: Upload Windows build
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-x64
+          path: hedge-windows-x64.zip
+
+  build-macos:
+    if: github.event.inputs.platform == 'macos' || github.event.inputs.platform == 'all'
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Build macOS
+        run: flutter build macos --release
+        env:
+          CODE_SIGN_IDENTITY: ""
+          CODE_SIGNING_REQUIRED: "NO"
+          CODE_SIGNING_ALLOWED: "NO"
+
+      - name: Package macOS
+        run: |
+          cd build/macos/Build/Products/Release
+          zip -r ../../../../../hedge-macos.zip hedge.app
+
+      - name: Upload macOS build
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos
+          path: hedge-macos.zip
