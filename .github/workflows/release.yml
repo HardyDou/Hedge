@@ -67,32 +67,6 @@ jobs:
           name: linux-x64
           path: hedge-linux-x64.tar.gz
 
-  build-windows:
-    runs-on: windows-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup Flutter
-        uses: subosito/flutter-action@v2
-        with:
-          channel: 'stable'
-
-      - name: Install dependencies
-        run: flutter pub get
-
-      - name: Build Windows
-        run: flutter build windows --release
-
-      - name: Package Windows
-        run: |
-          Compress-Archive -Path build/windows/x64/runner/Release/* -DestinationPath hedge-windows-x64.zip
-
-      - name: Upload Windows build
-        uses: actions/upload-artifact@v4
-        with:
-          name: windows-x64
-          path: hedge-windows-x64.zip
-
   build-macos:
     runs-on: macos-latest
     steps:
@@ -107,7 +81,7 @@ jobs:
         run: flutter pub get
 
       - name: Build macOS
-        run: flutter build macos --release
+        run: flutter build macos --release --no-codesign
 
       - name: Package macOS
         run: |
@@ -121,7 +95,7 @@ jobs:
           path: hedge-macos.zip
 
   release:
-    needs: [build-android, build-linux, build-windows, build-macos]
+    needs: [build-android, build-linux, build-macos]
     runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/tags/')
     steps:
@@ -136,7 +110,6 @@ jobs:
           files: |
             android-apk/app-release.apk
             linux-x64/hedge-linux-x64.tar.gz
-            windows-x64/hedge-windows-x64.zip
             macos/hedge-macos.zip
           draft: false
           prerelease: false
