@@ -164,6 +164,8 @@ class _TrayPanelLockedState extends ConsumerState<TrayPanelLocked> {
 
   /// 构建内容区域
   Widget _buildContent(BuildContext context, AppLocalizations l10n, bool isDark) {
+    final vaultState = ref.watch(vaultProvider);
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
       child: Column(
@@ -210,6 +212,7 @@ class _TrayPanelLockedState extends ConsumerState<TrayPanelLocked> {
                     placeholder: l10n.enterMasterPassword,
                     obscureText: true,
                     enabled: !_isUnlocking,
+                    autofocus: !vaultState.isBiometricsEnabled,
                     style: TextStyle(
                       fontSize: 13,
                       color: isDark ? CupertinoColors.white : CupertinoColors.black,
