@@ -21,7 +21,9 @@ import 'package:hedge/presentation/pages/mobile/settings_page.dart';
 import 'package:hedge/presentation/pages/shared/unlock_page.dart';
 import 'package:hedge/presentation/pages/shared/onboarding_page.dart';
 import 'package:hedge/presentation/pages/shared/splash_page.dart';
+import 'package:hedge/presentation/pages/shared/introduction_page.dart';
 import 'package:hedge/presentation/pages/mobile/add_item_page.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:hedge/presentation/pages/desktop/desktop_home_page.dart';
 import 'package:hedge/presentation/pages/desktop/settings_panel.dart';
 import 'package:hedge/presentation/widgets/alphabet_index_bar.dart';
@@ -360,17 +362,26 @@ class AuthGuard extends ConsumerStatefulWidget {
 class _AuthGuardState extends ConsumerState<AuthGuard> with WidgetsBindingObserver {
   static const _menuChannel = MethodChannel('app.menu');
   bool _isAppInBackground = false;
+  bool? _hasSeenIntroduction;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     Future.microtask(() => ref.read(vaultProvider.notifier).checkInitialStatus());
+    _checkIntroductionStatus();
 
     // Setup menu channel for desktop
     if (PlatformUtils.isDesktop) {
       _setupMenuChannel();
     }
+  }
+
+  Future<void> _checkIntroductionStatus() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _hasSeenIntroduction = prefs.getBool('has_seen_introduction') ?? false;
+    });
   }
 
   @override
@@ -459,6 +470,18 @@ class _AuthGuardState extends ConsumerState<AuthGuard> with WidgetsBindingObserv
   @override
   Widget build(BuildContext context) {
     final vaultState = ref.watch(vaultProvider);
+
+    // 显示启动页面（加载中）
+    if (vaultState.isLoading && vaultState.vault == null) {
+      return const SplashPage();
+    }
+
+    // 显示功能介绍页面（首次启动）
+    if (_hasSeenIntroduction == false) {
+      return IntroductionPage(
+        onComplete: () => setState(() => _hasSeenIntroduction = true),
+      );
+    }
 
     // Listen for state changes to enable/disable AppLock and menu
     ref.listen<VaultState>(vaultProvider, (previous, next) {

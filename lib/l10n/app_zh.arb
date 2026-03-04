@@ -151,5 +151,16 @@
   "syncSettingsSubtitle": "配置 WebDAV 或 iCloud Drive 同步",
   "appSubtitle": "刺猬",
   "newItem": "新建",
-  "lock": "锁定"
+  "lock": "锁定",
+  "introSkip": "跳过",
+  "introNext": "下一步",
+  "introStart": "开始使用",
+  "introSecureTitle": "安全加密",
+  "introSecureDesc": "使用 AES-256 加密算法保护您的密码，确保数据安全",
+  "introSyncTitle": "WebDAV 同步",
+  "introSyncDesc": "支持 WebDAV 云同步，多设备无缝访问您的密码库",
+  "introCrossTitle": "跨平台支持",
+  "introCrossDesc": "支持 iOS、macOS 等多平台，随时随地管理密码",
+  "introPrivacyTitle": "隐私优先",
+  "introPrivacyDesc": "所有数据本地加密存储，您的密码只属于您自己"
 }
