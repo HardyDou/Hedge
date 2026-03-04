@@ -901,6 +901,96 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Lock'**
   String get lock;
+
+  /// No description provided for @introSkip.
+  ///
+  /// In en, this message translates to:
+  /// **'Skip'**
+  String get introSkip;
+
+  /// No description provided for @introNext.
+  ///
+  /// In en, this message translates to:
+  /// **'Next'**
+  String get introNext;
+
+  /// No description provided for @introStart.
+  ///
+  /// In en, this message translates to:
+  /// **'Get Started'**
+  String get introStart;
+
+  /// No description provided for @introSecureTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Secure Encryption'**
+  String get introSecureTitle;
+
+  /// No description provided for @introSecureDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'AES-256 encryption protects your passwords and keeps your data safe'**
+  String get introSecureDesc;
+
+  /// No description provided for @introSyncTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'WebDAV Sync'**
+  String get introSyncTitle;
+
+  /// No description provided for @introSyncDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Sync across devices seamlessly with WebDAV cloud storage'**
+  String get introSyncDesc;
+
+  /// No description provided for @introCrossTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Cross-Platform'**
+  String get introCrossTitle;
+
+  /// No description provided for @introCrossDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Available on iOS, macOS and more - manage passwords anywhere'**
+  String get introCrossDesc;
+
+  /// No description provided for @introPrivacyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Privacy First'**
+  String get introPrivacyTitle;
+
+  /// No description provided for @introPrivacyDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'All data encrypted locally - your passwords belong to you alone'**
+  String get introPrivacyDesc;
+
+  /// No description provided for @viewIntroduction.
+  ///
+  /// In en, this message translates to:
+  /// **'Feature Introduction'**
+  String get viewIntroduction;
+
+  /// No description provided for @viewIntroductionDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'View app feature introduction'**
+  String get viewIntroductionDesc;
+
+  /// No description provided for @splashScreen.
+  ///
+  /// In en, this message translates to:
+  /// **'Splash Screen'**
+  String get splashScreen;
+
+  /// No description provided for @splashScreenDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'View startup loading screen'**
+  String get splashScreenDesc;
 }
 
 class _AppLocalizationsDelegate

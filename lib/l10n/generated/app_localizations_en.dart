@@ -434,4 +434,53 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get lock => 'Lock';
+
+  @override
+  String get introSkip => 'Skip';
+
+  @override
+  String get introNext => 'Next';
+
+  @override
+  String get introStart => 'Get Started';
+
+  @override
+  String get introSecureTitle => 'Secure Encryption';
+
+  @override
+  String get introSecureDesc =>
+      'AES-256 encryption protects your passwords and keeps your data safe';
+
+  @override
+  String get introSyncTitle => 'WebDAV Sync';
+
+  @override
+  String get introSyncDesc =>
+      'Sync across devices seamlessly with WebDAV cloud storage';
+
+  @override
+  String get introCrossTitle => 'Cross-Platform';
+
+  @override
+  String get introCrossDesc =>
+      'Available on iOS, macOS and more - manage passwords anywhere';
+
+  @override
+  String get introPrivacyTitle => 'Privacy First';
+
+  @override
+  String get introPrivacyDesc =>
+      'All data encrypted locally - your passwords belong to you alone';
+
+  @override
+  String get viewIntroduction => 'Feature Introduction';
+
+  @override
+  String get viewIntroductionDesc => 'View app feature introduction';
+
+  @override
+  String get splashScreen => 'Splash Screen';
+
+  @override
+  String get splashScreenDesc => 'View startup loading screen';
 }

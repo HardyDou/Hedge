@@ -422,4 +422,49 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get lock => '锁定';
+
+  @override
+  String get introSkip => '跳过';
+
+  @override
+  String get introNext => '下一步';
+
+  @override
+  String get introStart => '开始使用';
+
+  @override
+  String get introSecureTitle => '安全加密';
+
+  @override
+  String get introSecureDesc => '使用 AES-256 加密算法保护您的密码，确保数据安全';
+
+  @override
+  String get introSyncTitle => 'WebDAV 同步';
+
+  @override
+  String get introSyncDesc => '支持 WebDAV 云同步，多设备无缝访问您的密码库';
+
+  @override
+  String get introCrossTitle => '跨平台支持';
+
+  @override
+  String get introCrossDesc => '支持 iOS、macOS 等多平台，随时随地管理密码';
+
+  @override
+  String get introPrivacyTitle => '隐私优先';
+
+  @override
+  String get introPrivacyDesc => '所有数据本地加密存储，您的密码只属于您自己';
+
+  @override
+  String get viewIntroduction => '功能介绍';
+
+  @override
+  String get viewIntroductionDesc => '查看应用功能介绍';
+
+  @override
+  String get splashScreen => '启动页';
+
+  @override
+  String get splashScreenDesc => '查看启动加载页面';
 }
