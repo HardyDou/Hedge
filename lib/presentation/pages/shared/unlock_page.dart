@@ -261,7 +261,7 @@ class _UnlockPageState extends ConsumerState<UnlockPage> {
                       CupertinoTextField(
                         controller: _passwordController,
                         obscureText: !_isPasswordVisible,
-                        autofocus: true,
+                        autofocus: !vaultState.isBiometricsEnabled,
                         padding: const EdgeInsets.all(16),
                         style: TextStyle(color: isDark ? CupertinoColors.white : CupertinoColors.black, fontSize: 18),
                         placeholder: l10n.enterMasterPassword,
