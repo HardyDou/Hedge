@@ -10,6 +10,7 @@ class PanelWindowService extends ChangeNotifier {
   VoidCallback? onShowMainWindow;
   VoidCallback? onCancelLockTimer; // 取消锁屏计时器回调
   bool _isSwitchingMode = false; // 是否正在切换模式
+  bool _isBiometricUnlocking = false; // 是否正在进行生物解锁
 
   PanelState get state => _state;
 
@@ -117,18 +118,28 @@ class PanelWindowService extends ChangeNotifier {
   }
 
   /// Panel 失焦处理
-  Future<void> onPanelBlur() async {
+  /// 返回 true 表示面板被隐藏，false 表示忽略失焦事件
+  Future<bool> onPanelBlur() async {
     // 如果正在切换模式，忽略失焦事件
     if (_isSwitchingMode) {
       debugPrint('正在切换模式，忽略失焦事件');
-      return;
+      return false;
+    }
+
+    // 如果正在进行生物解锁，忽略失焦事件
+    if (_isBiometricUnlocking) {
+      debugPrint('正在进行生物解锁，忽略失焦事件');
+      return false;
     }
 
     if (_state.isPanelMode && _state.isVisible) {
       debugPrint('Panel 失焦，自动隐藏');
       await Future.delayed(const Duration(milliseconds: 100));
       await hidePanel();
+      return true;
     }
+
+    return false;
   }
 
   /// 窗口关闭处理
@@ -171,5 +182,19 @@ class PanelWindowService extends ChangeNotifier {
       'x': panelX,
       'y': panelY,
     };
+  }
+
+  /// 设置生物解锁状态
+  void setBiometricUnlocking(bool isUnlocking) {
+    _isBiometricUnlocking = isUnlocking;
+    debugPrint('设置生物解锁状态: $isUnlocking');
+  }
+
+  /// 重新获取面板焦点
+  Future<void> refocusPanel() async {
+    if (_state.isPanelMode && _state.isVisible) {
+      debugPrint('重新获取面板焦点');
+      await windowManager.focus();
+    }
   }
 }

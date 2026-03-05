@@ -185,7 +185,7 @@ Future<void> checkInitialStatus() async {
       if (iCloudAvailable && state.syncMode == SyncMode.icloud) {
         print('[Vault] Using iCloud Drive: $path');
       } else if (state.syncMode == SyncMode.webdav) {
-        print('[Vault] Using WebDAV: ${state.webdavConfig?.serverUrl}');
+        debugPrint('[Vault] WebDAV: ${state.webdavConfig?.serverUrl}');
       } else {
         print('[Vault] Using local storage: $path');
       }
@@ -613,15 +613,15 @@ Future<void> deleteItem(String id) async {
     if (state.webdavConfig == null) return;
 
     try {
-      print('[Vault] Uploading to WebDAV after save... (attempt ${retryCount + 1})');
+      debugPrint('[Vault] WebDAV after save... (attempt ${retryCount + 1})');
       final webdavService = await SyncServiceFactory.createWebDAVService(state.webdavConfig!);
       await webdavService.uploadVault(path);
-      print('[Vault] Upload to WebDAV completed');
+      debugPrint('[Vault] WebDAV completed');
 
       // 标记需要同步的标志为 false
       await _storage.write(key: 'needs_webdav_sync', value: 'false');
     } catch (e) {
-      print('[Vault] Failed to upload to WebDAV: $e');
+      debugPrint('[Vault] WebDAV: $e');
 
       // 标记需要同步
       await _storage.write(key: 'needs_webdav_sync', value: 'true');
@@ -804,7 +804,7 @@ Future<void> deleteSelectedItems() async {
           // 远端已有数据（其他设备先配置过）→ 下载远端库到本设备
           print('[Vault] Remote vault exists, downloading to sync this device...');
           await webdavService.downloadVault(vaultPath);
-          print('[Vault] Download from WebDAV completed');
+          debugPrint('[Vault] WebDAV completed');
 
           // 若当前已解锁，用下载的文件重新加载内存状态
           if (state.isAuthenticated && state.currentPassword != null) {
@@ -821,7 +821,7 @@ Future<void> deleteSelectedItems() async {
           if (await file.exists()) {
             print('[Vault] No remote vault found, uploading local vault...');
             await webdavService.uploadVault(vaultPath);
-            print('[Vault] Initial upload to WebDAV completed');
+            debugPrint('[Vault] WebDAV completed');
           }
         }
 
@@ -831,7 +831,7 @@ Future<void> deleteSelectedItems() async {
           await _startSyncWatch(vaultPath, state.currentPassword!);
         }
       } catch (e) {
-        print('[Vault] Failed to sync with WebDAV during setup: $e');
+        debugPrint('[Vault] WebDAV during setup: $e');
         // 不抛出异常，让用户继续使用
       }
     } else {

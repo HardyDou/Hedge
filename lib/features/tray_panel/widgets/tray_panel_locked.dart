@@ -60,6 +60,9 @@ class _TrayPanelLockedState extends ConsumerState<TrayPanelLocked> {
   }
 
   Future<void> _unlockWithBiometric() async {
+    // 设置生物解锁标志，防止面板因失焦而隐藏
+    widget.panelWindowService.setBiometricUnlocking(true);
+
     setState(() {
       _isUnlocking = true;
       _errorMessage = null;
@@ -73,6 +76,9 @@ class _TrayPanelLockedState extends ConsumerState<TrayPanelLocked> {
           _errorMessage = 'Biometric authentication failed';
           _isUnlocking = false;
         });
+      } else if (success && mounted) {
+        // 解锁成功后，让面板重新获取焦点，避免触发自动锁屏
+        await widget.panelWindowService.refocusPanel();
       }
     } catch (e) {
       if (mounted) {
@@ -81,6 +87,9 @@ class _TrayPanelLockedState extends ConsumerState<TrayPanelLocked> {
           _isUnlocking = false;
         });
       }
+    } finally {
+      // 清除生物解锁标志
+      widget.panelWindowService.setBiometricUnlocking(false);
     }
   }
 

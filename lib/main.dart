@@ -259,10 +259,11 @@ class _TrayEnabledAppState extends ConsumerState<TrayEnabledApp> with WindowList
   @override
   void onWindowBlur() async {
     // Panel 失焦时：隐藏面板 + 启动锁屏计时器
-    await _panelWindowService.onPanelBlur();
+    final shouldHidePanel = await _panelWindowService.onPanelBlur();
 
-    // 只有在 Panel 模式下才启动锁屏计时器
-    if (_panelWindowService.state.isPanelMode) {
+    // 只有在 Panel 模式下且面板被隐藏时才启动锁屏计时器
+    // 如果正在生物解锁，不启动锁屏计时器
+    if (_panelWindowService.state.isPanelMode && shouldHidePanel) {
       _startLockTimer();
     }
   }

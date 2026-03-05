@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:webdav_client/webdav_client.dart' as webdav;
 import 'package:hedge/services/sync_service.dart';
 
@@ -24,15 +25,15 @@ class WebDAVSyncService implements SyncService {
       serverUrl,
       user: username,
       password: password,
-      debug: true,
+      debug: false, // 关闭调试日志
     );
 
     // 测试连接
     try {
       await _client!.ping();
-      print('[WebDAV] Connection successful: $serverUrl');
+      debugPrint('[WebDAV] Connection successful: $serverUrl');
     } catch (e) {
-      print('[WebDAV] Connection failed: $e');
+      debugPrint('[WebDAV] Connection failed: $e');
       throw Exception('WebDAV connection failed: $e');
     }
 
@@ -49,7 +50,7 @@ class WebDAVSyncService implements SyncService {
 
       // 如果路径中没有 /，说明文件在根目录，不需要创建目录
       if (lastSlashIndex == -1) {
-        print('[WebDAV] File is in root directory, no need to create directory');
+        debugPrint('[WebDAV] File is in root directory, no need to create directory');
         return;
       }
 
@@ -57,15 +58,15 @@ class WebDAVSyncService implements SyncService {
 
       // 如果目录路径为空，说明文件在根目录
       if (dirPath.isEmpty) {
-        print('[WebDAV] File is in root directory, no need to create directory');
+        debugPrint('[WebDAV] File is in root directory, no need to create directory');
         return;
       }
 
       // 递归创建所有父目录
       await _createDirectoryRecursive(dirPath);
-      print('[WebDAV] Ensured remote directory exists: $dirPath');
+      debugPrint('[WebDAV] Ensured remote directory exists: $dirPath');
     } catch (e) {
-      print('[WebDAV] Failed to ensure directory: $e');
+      debugPrint('[WebDAV] Failed to ensure directory: $e');
       // 不抛出异常，继续尝试上传
     }
   }
@@ -77,7 +78,7 @@ class WebDAVSyncService implements SyncService {
     try {
       // 尝试创建目录
       await _client!.mkdir(path);
-      print('[WebDAV] Created directory: $path');
+      debugPrint('[WebDAV] Created directory: $path');
     } catch (e) {
       // 如果失败，可能是父目录不存在，先创建父目录
       final lastSlashIndex = path.lastIndexOf('/');
@@ -87,14 +88,14 @@ class WebDAVSyncService implements SyncService {
         // 再次尝试创建当前目录
         try {
           await _client!.mkdir(path);
-          print('[WebDAV] Created directory: $path');
+          debugPrint('[WebDAV] Created directory: $path');
         } catch (e2) {
           // 目录可能已存在，忽略
-          print('[WebDAV] Directory might already exist: $path');
+          debugPrint('[WebDAV] Directory might already exist: $path');
         }
       } else {
         // 已经是顶级目录，忽略错误
-        print('[WebDAV] Directory might already exist: $path');
+        debugPrint('[WebDAV] Directory might already exist: $path');
       }
     }
   }
@@ -114,9 +115,9 @@ class WebDAVSyncService implements SyncService {
       final bytes = await file.readAsBytes();
       await _client!.write(_remotePath!, bytes);
 
-      print('[WebDAV] Uploaded vault: $_remotePath (${bytes.length} bytes)');
+      debugPrint('[WebDAV] Uploaded vault: $_remotePath (${bytes.length} bytes)');
     } catch (e) {
-      print('[WebDAV] Upload failed: $e');
+      debugPrint('[WebDAV] Upload failed: $e');
       throw Exception('WebDAV upload failed: $e');
     }
   }
@@ -137,9 +138,9 @@ class WebDAVSyncService implements SyncService {
       }
 
       await file.writeAsBytes(bytes);
-      print('[WebDAV] Downloaded vault: $localPath (${bytes.length} bytes)');
+      debugPrint('[WebDAV] Downloaded vault: $localPath (${bytes.length} bytes)');
     } catch (e) {
-      print('[WebDAV] Download failed: $e');
+      debugPrint('[WebDAV] Download failed: $e');
       throw Exception('WebDAV download failed: $e');
     }
   }
@@ -172,7 +173,7 @@ class WebDAVSyncService implements SyncService {
         }
       }
     } catch (e) {
-      print('[WebDAV] Failed to get remote modification time: $e');
+      debugPrint('[WebDAV] Failed to get remote modification time: $e');
     }
     return null;
   }
@@ -185,7 +186,7 @@ class WebDAVSyncService implements SyncService {
     _pollTimer?.cancel();
     _pollTimer = Timer.periodic(const Duration(seconds: 30), (_) => _checkRemoteChanges());
 
-    print('[WebDAV] Started watching: $vaultPath');
+    debugPrint('[WebDAV] Started watching: $vaultPath');
   }
 
   /// 立即触发一次远端检查（供 app 回到前台时调用）
@@ -202,7 +203,7 @@ class WebDAVSyncService implements SyncService {
 
       final localFile = File(_vaultPath!);
       if (!await localFile.exists()) {
-        print('[WebDAV] Local file missing, downloading from remote...');
+        debugPrint('[WebDAV] Local file missing, downloading from remote...');
         await downloadVault(_vaultPath!);
         _eventController.add(FileChangeEvent(
           type: ChangeType.created,
@@ -214,7 +215,7 @@ class WebDAVSyncService implements SyncService {
 
       final localMtime = await localFile.lastModified();
       if (remoteMtime.isAfter(localMtime)) {
-        print('[WebDAV] Remote is newer, downloading...');
+        debugPrint('[WebDAV] Remote is newer, downloading...');
         await downloadVault(_vaultPath!);
         _eventController.add(FileChangeEvent(
           type: ChangeType.modified,
@@ -223,7 +224,7 @@ class WebDAVSyncService implements SyncService {
         ));
       }
     } catch (e) {
-      print('[WebDAV] Error checking remote changes: $e');
+      debugPrint('[WebDAV] Error checking remote changes: $e');
     }
   }
 
@@ -232,7 +233,7 @@ class WebDAVSyncService implements SyncService {
     _pollTimer?.cancel();
     _pollTimer = null;
     _vaultPath = null;
-    print('[WebDAV] Stopped watching');
+    debugPrint('[WebDAV] Stopped watching');
   }
 
   @override
@@ -266,7 +267,7 @@ class WebDAVSyncService implements SyncService {
     final backupPath = vaultPath.replaceAll('.db', '_conflict_$timestamp.db');
 
     await file.copy(backupPath);
-    print('[WebDAV] Created conflict backup: $backupPath');
+    debugPrint('[WebDAV] Created conflict backup: $backupPath');
   }
 
   void dispose() {
