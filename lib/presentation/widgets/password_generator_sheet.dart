@@ -125,16 +125,16 @@ class PasswordGeneratorSheet extends ConsumerWidget {
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                const Icon(
+                                Icon(
                                   CupertinoIcons.refresh,
                                   size: 20,
-                                  color: CupertinoColors.activeBlue,
+                                  color: CupertinoColors.activeBlue.resolveFrom(context),
                                 ),
                                 const SizedBox(width: 8),
                                 Text(
                                   l10n.regenerate,
-                                  style: const TextStyle(
-                                    color: CupertinoColors.activeBlue,
+                                  style: TextStyle(
+                                    color: CupertinoColors.activeBlue.resolveFrom(context),
                                     fontWeight: FontWeight.w600,
                                   ),
                                 ),

@@ -563,6 +563,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get error => 'Error';
 
   @override
+  String get retry => 'Retry';
+
+  @override
   String get addTotpHint => 'Select an image containing a TOTP QR code';
 
   @override

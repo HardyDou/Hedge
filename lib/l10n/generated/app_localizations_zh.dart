@@ -543,6 +543,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get error => '错误';
 
   @override
+  String get retry => '重试';
+
+  @override
   String get addTotpHint => '选择包含 TOTP 二维码的图片';
 
   @override

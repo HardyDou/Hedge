@@ -198,6 +198,7 @@
   "ok": "确定",
   "scanQrCodeHint": "将二维码放入框内即可自动扫描",
   "error": "错误",
+  "retry": "重试",
   "addTotpHint": "选择包含 TOTP 二维码的图片",
   "processing": "处理中...",
   "selectImage": "选择图片",

@@ -224,6 +224,7 @@
   "ok": "OK",
   "scanQrCodeHint": "Place the QR code within the frame to scan automatically",
   "error": "Error",
+  "retry": "Retry",
   "addTotpHint": "Select an image containing a TOTP QR code",
   "processing": "Processing...",
   "selectImage": "Select Image",

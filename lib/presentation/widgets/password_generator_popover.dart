@@ -435,6 +435,7 @@ class PasswordGeneratorPopover extends ConsumerWidget {
                 style: const TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
+                  color: CupertinoColors.white,
                 ),
               ),
             ),

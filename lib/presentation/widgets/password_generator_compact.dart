@@ -18,9 +18,7 @@ class PasswordGeneratorCompact extends ConsumerWidget {
       loading: () => const Center(
         child: CupertinoActivityIndicator(),
       ),
-      error: (error, stack) => Center(
-        child: Text('Error: $error'),
-      ),
+      error: (error, stack) => _buildErrorView(context, ref, l10n, error),
     );
   }
 
@@ -123,9 +121,9 @@ class PasswordGeneratorCompact extends ConsumerWidget {
                         size: 14,
                       ),
                       const SizedBox(width: 4),
-                      const Text(
-                        '复制',
-                        style: TextStyle(fontSize: 12),
+                      Text(
+                        l10n.copy,
+                        style: const TextStyle(fontSize: 12),
                       ),
                     ],
                   ),
@@ -311,5 +309,68 @@ class PasswordGeneratorCompact extends ConsumerWidget {
         Navigator.of(context, rootNavigator: true).pop();
       }
     });
+  }
+
+  Widget _buildErrorView(
+    BuildContext context,
+    WidgetRef ref,
+    AppLocalizations l10n,
+    Object error,
+  ) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: CupertinoColors.systemBackground.resolveFrom(context),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            CupertinoIcons.exclamationmark_triangle_fill,
+            size: 32,
+            color: CupertinoColors.systemRed.resolveFrom(context),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            l10n.error,
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              color: CupertinoColors.label.resolveFrom(context),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            _getErrorMessage(error, l10n),
+            style: TextStyle(
+              fontSize: 13,
+              color: CupertinoColors.secondaryLabel.resolveFrom(context),
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 16),
+          CupertinoButton(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+            color: CupertinoColors.activeBlue,
+            borderRadius: BorderRadius.circular(8),
+            onPressed: () {
+              ref.read(passwordGeneratorProvider.notifier).regenerate();
+            },
+            child: Text(
+              l10n.retry,
+              style: const TextStyle(fontSize: 14),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _getErrorMessage(Object error, AppLocalizations l10n) {
+    if (error is ArgumentError) {
+      return error.message.toString();
+    }
+    return error.toString();
   }
 }
