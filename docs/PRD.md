@@ -192,6 +192,24 @@
 *   **安全性:** 密码默认隐藏，点击可见；剪贴板复制后自动清除 (60秒)。
 *   **无障碍:** 支持 VoiceOver (iOS) 和 TalkBack (Android)。
 
+### 5.4 UI/UX 规范
+
+**Cupertino Only（仅使用 Cupertino）**
+*   ❌ 禁止使用 Material 组件
+*   ✅ 使用 `CupertinoPageScaffold`, `CupertinoNavigationBar`, `CupertinoButton` 等
+*   ✅ 使用自定义 `AppThemeMode` 替代 Material 的 `ThemeMode`
+*   ✅ 所有对话框使用 `CupertinoAlertDialog` 或 `CupertinoActionSheet`
+
+**布局规范**
+*   复杂布局使用 `Stack` + `Positioned`（如底部固定按钮）
+*   使用 `CupertinoActionSheet` 时，重命名 builder context（如 `sheetContext`）避免与父 context 冲突
+*   移动端使用栈式导航，桌面端使用双栏布局
+
+**交互规范**
+*   所有弹窗必须提供明确的取消/确认选项
+*   危险操作（删除）需要二次确认
+*   长按操作提供触觉反馈（移动端）
+
 ---
 
 ## 6. 技术需求 (Technical Requirements)

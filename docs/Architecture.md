@@ -497,7 +497,194 @@ final encryptedData = encryptData(params);
 
 ---
 
-## 6. 未来架构演进 (Future Roadmap)
+## 6. 技术实现细节 (Implementation Details)
+
+### 6.1 生物识别 (Biometric Authentication)
+
+**检测生物识别类型**
+```dart
+import 'package:local_auth/local_auth.dart';
+
+final auth = LocalAuthentication();
+final availableBiometrics = await auth.getAvailableBiometrics();
+
+if (availableBiometrics.contains(BiometricType.face)) {
+  // Face ID
+} else if (availableBiometrics.contains(BiometricType.fingerprint)) {
+  // Touch ID / 指纹
+} else {
+  // 通用"生物识别"
+}
+```
+
+**回退策略**: 如果检测不到具体类型，使用通用文本"生物识别"。
+
+---
+
+### 6.2 VaultNotifier 调用约定
+
+**重要**: 大多数 `VaultNotifier` 方法需要传递 `Ref ref` 参数。
+
+**正确用法**:
+```dart
+// ✅ 从 widget 传递 ref
+ref.read(vaultProvider.notifier).updateItem(item, ref);
+ref.read(vaultProvider.notifier).deleteItem(id, ref);
+ref.read(vaultProvider.notifier).addItemWithDetails(item, ref);
+ref.read(vaultProvider.notifier).copyPassword(id, ref);
+```
+
+**注意**: 内部辅助方法（如 `_saveAndRefresh`, `_startSyncWatch`）使用存储的 `_ref` 字段，**不要**给它们添加 `Ref` 参数。
+
+---
+
+### 6.3 App Lock（自动锁定）
+
+**使用 `flutter_app_lock` 包**:
+```dart
+import 'package:flutter_app_lock/flutter_app_lock.dart';
+
+// ❌ 不要使用本地的 app_lock.dart
+// ✅ 使用 pubspec.yaml 中已配置的包
+```
+
+---
+
+### 6.4 TOTP/2FA 实现
+
+**数据结构**:
+```dart
+class VaultItem {
+  final String? totpSecret;   // TOTP Secret Key（Base32 编码）
+  final String? totpIssuer;   // 发行方名称（如 "Google"）
+}
+```
+
+**生成验证码**:
+```dart
+import 'package:hedge/domain/services/totp_service.dart';
+
+// 生成 6 位验证码
+final code = TotpService.generateTotp(secret);
+
+// 获取剩余秒数
+final remaining = TotpService.getRemainingSeconds();
+
+// 获取进度（0.0 - 1.0）
+final progress = TotpService.getProgress();
+```
+
+**扫描 QR 码**:
+```dart
+import 'package:hedge/domain/services/qr_scanner_service.dart';
+
+// 移动端：使用 mobile_scanner
+// 桌面端：从图片识别
+final uri = await QrScannerService.scanFromImage();
+final parsed = QrScannerService.parseTotpUri(uri);
+```
+
+---
+
+### 6.5 性能优化实践
+
+#### 列表性能
+- 使用 `ListView.builder` 而非 `ListView`
+- 避免在 `build` 方法中进行排序/过滤
+- 使用 `const` 构造函数
+
+#### 搜索性能
+- 搜索在 Isolate 中运行（`compute`）
+- 预计算拼音（`titlePinyin`）
+- 避免重复搜索
+
+#### 加密性能
+- 大文件加密在后台 Isolate 中执行
+- 使用流式加密（避免一次性加载到内存）
+
+---
+
+### 6.6 安全实践
+
+#### 日志安全
+- ❌ **禁止**打印密码、密钥等敏感数据的明文日志
+- ✅ 使用 `debugPrint` 而非 `print`
+- ✅ 生产环境禁用所有日志
+
+#### 内存安全
+- 敏感数据使用后及时清理
+- 避免将密码存储在全局变量
+
+#### 加密规范
+- 使用 AES-256-GCM
+- 密钥派生使用 Argon2id
+- 所有数据写入存储前必须加密
+
+---
+
+### 6.7 国际化（L10n）实现
+
+**规则**:
+1. 修改 `.arb` 文件后，**必须**运行 `flutter gen-l10n`
+2. 添加新功能时，**立即**创建对应的 ARB keys
+3. 使用 `AppLocalizations.of(context)!` 获取本地化字符串
+
+**文件结构**:
+```
+lib/l10n/
+├── app_zh.arb          # 简体中文
+├── app_en.arb          # 英文
+└── app_localizations.dart  # 自动生成
+```
+
+**示例**:
+```dart
+// lib/l10n/app_zh.arb
+{
+  "myVault": "我的密码本",
+  "addPassword": "添加密码",
+  "@addPassword": {
+    "description": "按钮文本：添加新密码"
+  }
+}
+
+// 使用
+final l10n = AppLocalizations.of(context)!;
+Text(l10n.myVault);
+```
+
+**最佳实践**:
+- 所有用户可见文本必须国际化
+- ARB key 使用驼峰命名
+- 添加 `@key` 描述说明用途
+- 避免硬编码文本
+
+---
+
+### 6.8 常见问题与解决方案
+
+#### Q1: 如何添加新的密码字段？
+1. 修改 `lib/src/dart/vault.dart` 中的 `VaultItem` 类
+2. 添加字段到 `toJson()` 和 `fromJson()` 方法
+3. 更新 UI（新增/编辑页面）
+4. 更新国际化文件（`.arb`）
+5. 运行 `flutter gen-l10n`
+
+#### Q2: 如何调试同步问题？
+1. 检查 `VaultNotifier` 的日志输出
+2. 确认同步配置正确（`SyncConfig`）
+3. 检查文件权限（iCloud Drive / WebDAV）
+4. 查看冲突文件（`vault_conflict_*.db`）
+
+#### Q3: 如何添加新的同步方式？
+1. 在 `lib/platform/` 创建新的 `*_sync_service.dart`
+2. 实现 `SyncService` 接口
+3. 在 `SyncServiceFactory` 中注册
+4. 添加配置 UI（`lib/presentation/pages/sync_settings_page.dart`）
+
+---
+
+## 7. 未来架构演进 (Future Roadmap)
 
 ### P2 阶段
 *   **iOS AutoFill Extension:** 实现系统级自动填充，需设计 App Groups 共享代码。
@@ -513,4 +700,4 @@ final encryptedData = encryptData(params);
 *   ✅ System Architect: Approved
 *   ✅ Mobile Performance: Approved (with notes on Isolates)
 *   ⏳ Security & Platform: In Progress
-*   **Version 2.2 (2026-03-01)**
+*   **Version 2.3 (2026-03-06)**
