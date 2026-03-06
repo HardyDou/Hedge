@@ -5,6 +5,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hedge/l10n/generated/app_localizations.dart';
 import 'package:hedge/src/dart/vault.dart';
 import 'package:hedge/presentation/widgets/markdown_toolbar.dart';
+import 'package:hedge/presentation/pages/mobile/qr_scanner_page.dart';
+import 'package:hedge/domain/services/qr_scanner_service.dart';
 import '../../providers/vault_provider.dart';
 import 'dart:io';
 
@@ -23,6 +25,8 @@ class _AddItemPageState extends ConsumerState<AddItemPage> {
   final _notesController = TextEditingController();
   List<Attachment> _attachments = [];
   bool _notesPreview = false;
+  String? _totpSecret;
+  String? _totpIssuer;
 
   @override
   void dispose() {
@@ -73,6 +77,8 @@ class _AddItemPageState extends ConsumerState<AddItemPage> {
       url: _urlController.text.isEmpty ? null : _urlController.text,
       notes: _notesController.text.isEmpty ? null : _notesController.text,
       category: null,
+      totpSecret: _totpSecret,
+      totpIssuer: _totpIssuer,
       attachments: _attachments,
       updatedAt: DateTime.now(),
     );
@@ -148,6 +154,8 @@ class _AddItemPageState extends ConsumerState<AddItemPage> {
               ],
             ),
             const SizedBox(height: 32),
+            _buildTotpSection(context, l10n, isDark),
+            const SizedBox(height: 32),
             _buildNotesSection(context, l10n, isDark),
             const SizedBox(height: 32),
             _buildiOSSection(
@@ -197,6 +205,209 @@ class _AddItemPageState extends ConsumerState<AddItemPage> {
       context,
       CupertinoPageRoute(
         builder: (_) => _FullscreenNotesEditor(controller: _notesController, isDark: isDark),
+      ),
+    );
+  }
+
+  Widget _buildTotpSection(BuildContext context, AppLocalizations l10n, bool isDark) {
+    return _buildiOSSection(
+      context: context,
+      header: l10n.totp.toUpperCase(),
+      children: [
+        if (_totpSecret != null) ...[
+          _iOSListTile(
+            title: l10n.totpSecret,
+            subtitle: '••••••••',
+            leading: CupertinoIcons.timer,
+            isDark: isDark,
+            showDivider: true,
+          ),
+          if (_totpIssuer != null && _totpIssuer!.isNotEmpty)
+            _iOSListTile(
+              title: l10n.totpIssuer,
+              subtitle: _totpIssuer,
+              leading: CupertinoIcons.building_2_fill,
+              isDark: isDark,
+              showDivider: true,
+            ),
+          _iOSListTile(
+            title: l10n.deleteTotp,
+            leading: CupertinoIcons.trash,
+            onTap: () => _showDeleteTotpConfirm(l10n),
+            isDark: isDark,
+            showDivider: false,
+            trailing: const Icon(
+              CupertinoIcons.chevron_forward,
+              color: CupertinoColors.destructiveRed,
+              size: 16,
+            ),
+          ),
+        ] else ...[
+          _iOSListTile(
+            title: l10n.scanQrCode,
+            leading: CupertinoIcons.qrcode_viewfinder,
+            onTap: () => _showQrScanPlaceholder(l10n),
+            isDark: isDark,
+            showDivider: true,
+          ),
+          _iOSListTile(
+            title: l10n.selectImage,
+            leading: CupertinoIcons.photo,
+            onTap: () => _pickImageForQrScan(l10n),
+            isDark: isDark,
+            showDivider: true,
+          ),
+          _iOSListTile(
+            title: l10n.manualInput,
+            leading: CupertinoIcons.keyboard,
+            onTap: () => _showManualInputDialog(l10n, isDark),
+            isDark: isDark,
+            showDivider: false,
+          ),
+        ],
+      ],
+    );
+  }
+
+  Future<void> _showManualInputDialog(AppLocalizations l10n, bool isDark) async {
+    final secretController = TextEditingController(text: _totpSecret ?? '');
+    final issuerController = TextEditingController(text: _totpIssuer ?? '');
+
+    await showCupertinoDialog(
+      context: context,
+      builder: (context) => CupertinoAlertDialog(
+        title: Text(l10n.manualInput),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: 16),
+            CupertinoTextField(
+              controller: secretController,
+              placeholder: l10n.totpSecret,
+              style: TextStyle(
+                color: isDark ? CupertinoColors.white : CupertinoColors.black,
+              ),
+            ),
+            const SizedBox(height: 12),
+            CupertinoTextField(
+              controller: issuerController,
+              placeholder: l10n.totpIssuerHint,
+              style: TextStyle(
+                color: isDark ? CupertinoColors.white : CupertinoColors.black,
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          CupertinoDialogAction(
+            onPressed: () => Navigator.pop(context),
+            child: Text(l10n.cancel),
+          ),
+          CupertinoDialogAction(
+            isDefaultAction: true,
+            onPressed: () {
+              if (secretController.text.isNotEmpty) {
+                setState(() {
+                  _totpSecret = secretController.text.trim().toUpperCase().replaceAll(' ', '');
+                  _totpIssuer = issuerController.text.trim().isEmpty ? null : issuerController.text.trim();
+                });
+              }
+              Navigator.pop(context);
+            },
+            child: Text(l10n.save),
+          ),
+        ],
+      ),
+    );
+
+    secretController.dispose();
+    issuerController.dispose();
+  }
+
+  Future<void> _showDeleteTotpConfirm(AppLocalizations l10n) async {
+    final result = await showCupertinoDialog<bool>(
+      context: context,
+      builder: (context) => CupertinoAlertDialog(
+        title: Text(l10n.deleteTotp),
+        content: Text(l10n.deleteTotpConfirm),
+        actions: [
+          CupertinoDialogAction(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text(l10n.cancel),
+          ),
+          CupertinoDialogAction(
+            isDestructiveAction: true,
+            onPressed: () => Navigator.pop(context, true),
+            child: Text(l10n.delete),
+          ),
+        ],
+      ),
+    );
+
+    if (result == true) {
+      setState(() {
+        _totpSecret = null;
+        _totpIssuer = null;
+      });
+    }
+  }
+
+  Future<void> _showQrScanPlaceholder(AppLocalizations l10n) async {
+    final result = await Navigator.push<Map<String, String>>(
+      context,
+      CupertinoPageRoute(
+        builder: (context) => const QrScannerPage(),
+      ),
+    );
+
+    if (result != null && mounted) {
+      setState(() {
+        _totpSecret = result['secret'];
+        _totpIssuer = result['issuer']?.isEmpty == true ? null : result['issuer'];
+      });
+    }
+  }
+
+  Future<void> _pickImageForQrScan(AppLocalizations l10n) async {
+    try {
+      final result = await QrScannerService.scanFromImage();
+
+      if (result == null) {
+        if (mounted) {
+          _showErrorDialog(l10n.scanFailed, l10n.invalidQrCode);
+        }
+        return;
+      }
+
+      final totpData = QrScannerService.parseTotpUri(result);
+
+      if (totpData != null && mounted) {
+        setState(() {
+          _totpSecret = totpData['secret'];
+          _totpIssuer = totpData['issuer']?.isEmpty == true ? null : totpData['issuer'];
+        });
+      } else if (mounted) {
+        _showErrorDialog(l10n.scanFailed, l10n.invalidQrCode);
+      }
+    } catch (e) {
+      if (mounted) {
+        _showErrorDialog(l10n.error, e.toString());
+      }
+    }
+  }
+
+  void _showErrorDialog(String title, String message) {
+    showCupertinoDialog(
+      context: context,
+      builder: (context) => CupertinoAlertDialog(
+        title: Text(title),
+        content: Text(message),
+        actions: [
+          CupertinoDialogAction(
+            onPressed: () => Navigator.pop(context),
+            child: Text(AppLocalizations.of(context)!.ok),
+          ),
+        ],
       ),
     );
   }
