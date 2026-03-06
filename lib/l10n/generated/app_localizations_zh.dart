@@ -553,4 +553,79 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get manualInputHint => '暂不支持从图片识别，请手动输入 TOTP Secret';
+
+  @override
+  String get passwordGenerator => '密码生成器';
+
+  @override
+  String get generate => '生成';
+
+  @override
+  String get regenerate => '重新生成';
+
+  @override
+  String get useThisPassword => '使用此密码';
+
+  @override
+  String get generatedPassword => '生成的密码';
+
+  @override
+  String get passwordStrength => '密码强度';
+
+  @override
+  String get strengthWeak => '弱';
+
+  @override
+  String get strengthMedium => '中';
+
+  @override
+  String get strengthStrong => '强';
+
+  @override
+  String get strengthVeryStrong => '极强';
+
+  @override
+  String get passwordLength => '长度';
+
+  @override
+  String get includeUppercase => '大写字母 (A-Z)';
+
+  @override
+  String get includeLowercase => '小写字母 (a-z)';
+
+  @override
+  String get includeNumbers => '数字 (0-9)';
+
+  @override
+  String get includeSymbols => '符号 (!@#\$...)';
+
+  @override
+  String get excludeAmbiguous => '排除易混淆字符';
+
+  @override
+  String get excludeAmbiguousHint => '排除 0/O, 1/l/I';
+
+  @override
+  String get passwordCopiedToClipboard => '密码已复制到剪贴板';
+
+  @override
+  String get atLeastOneCharType => '至少选择一种字符类型';
+
+  @override
+  String get suggestionIncreaseLength => '建议增加长度至12位以上';
+
+  @override
+  String get suggestionAddSymbols => '建议添加特殊符号';
+
+  @override
+  String get suggestionMoreTypes => '建议使用更多字符类型';
+
+  @override
+  String get suggestionGood => '密码强度良好';
+
+  @override
+  String get use => '使用';
+
+  @override
+  String get config => '配置';
 }

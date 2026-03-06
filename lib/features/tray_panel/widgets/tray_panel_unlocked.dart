@@ -7,6 +7,7 @@ import 'package:hedge/l10n/generated/app_localizations.dart';
 import 'package:hedge/presentation/providers/vault_provider.dart';
 import 'package:hedge/src/dart/vault.dart';
 import 'package:hedge/domain/services/totp_service.dart';
+import 'package:hedge/presentation/widgets/password_generator_compact.dart';
 import '../services/panel_window_service.dart';
 import '../services/tray_service.dart';
 
@@ -33,6 +34,7 @@ class _TrayPanelUnlockedState extends ConsumerState<TrayPanelUnlocked> {
   VaultItem? _detailItem; // 当前显示详情的项目
   bool _showPassword = false; // 是否显示密码明文
   bool _showPasswordLarge = false; // 是否显示放大密码页面
+  bool _showPasswordGenerator = false; // 是否显示密码生成器
 
   @override
   void initState() {
@@ -191,6 +193,26 @@ class _TrayPanelUnlockedState extends ConsumerState<TrayPanelUnlocked> {
               ),
             ),
           ),
+
+        // 密码生成器面板（从右侧滑入）
+        if (_showPasswordGenerator)
+          Positioned.fill(
+            child: TweenAnimationBuilder<double>(
+              tween: Tween(begin: 1.0, end: 0.0),
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeOut,
+              builder: (context, value, child) {
+                return Transform.translate(
+                  offset: Offset(240 * value, 0),
+                  child: child,
+                );
+              },
+              child: Container(
+                color: isDark ? const Color(0xFF1C1C1E) : CupertinoColors.white,
+                child: _buildPasswordGeneratorPanel(context, l10n, isDark),
+              ),
+            ),
+          ),
       ],
     );
   }
@@ -223,6 +245,18 @@ class _TrayPanelUnlockedState extends ConsumerState<TrayPanelUnlocked> {
           const Spacer(),
 
           // 右侧按钮组
+          _buildHeaderIconButton(
+            context: context,
+            icon: CupertinoIcons.wand_stars,
+            tooltip: l10n.passwordGenerator,
+            isDark: isDark,
+            onPressed: () {
+              setState(() {
+                _showPasswordGenerator = !_showPasswordGenerator;
+              });
+            },
+          ),
+          const SizedBox(width: 4),
           _buildHeaderIconButton(
             context: context,
             icon: CupertinoIcons.app_badge,
@@ -1023,5 +1057,64 @@ class _TrayPanelUnlockedState extends ConsumerState<TrayPanelUnlocked> {
     ];
     final index = char.toUpperCase().codeUnitAt(0) % colors.length;
     return colors[index];
+  }
+
+  /// 构建密码生成器面板
+  Widget _buildPasswordGeneratorPanel(
+    BuildContext context,
+    AppLocalizations l10n,
+    bool isDark,
+  ) {
+    return Column(
+      children: [
+        // 标题栏
+        Container(
+          height: 44,
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          decoration: BoxDecoration(
+            border: Border(
+              bottom: BorderSide(
+                color: isDark ? const Color(0xFF38383A) : const Color(0xFFC6C6C8),
+                width: 0.5,
+              ),
+            ),
+          ),
+          child: Row(
+            children: [
+              CupertinoButton(
+                padding: EdgeInsets.zero,
+                onPressed: () {
+                  setState(() {
+                    _showPasswordGenerator = false;
+                  });
+                },
+                child: Icon(
+                  CupertinoIcons.back,
+                  color: isDark ? CupertinoColors.white : CupertinoColors.black,
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                l10n.passwordGenerator,
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: isDark ? CupertinoColors.white : CupertinoColors.black,
+                ),
+              ),
+            ],
+          ),
+        ),
+
+        // 密码生成器内容
+        Expanded(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(16),
+            child: const PasswordGeneratorCompact(),
+          ),
+        ),
+      ],
+    );
   }
 }

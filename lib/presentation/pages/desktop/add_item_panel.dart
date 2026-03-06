@@ -6,6 +6,7 @@ import 'package:hedge/l10n/generated/app_localizations.dart';
 import 'package:hedge/presentation/providers/vault_provider.dart';
 import 'package:hedge/presentation/widgets/markdown_toolbar.dart';
 import 'package:hedge/presentation/pages/desktop/desktop_qr_scanner_dialog.dart';
+import 'package:hedge/presentation/widgets/password_generator_popover.dart';
 
 class AddItemPanel extends ConsumerStatefulWidget {
   final VoidCallback onClose;
@@ -60,7 +61,7 @@ class _AddItemPanelState extends ConsumerState<AddItemPanel> {
                   const SizedBox(height: 16),
                   _buildTextField('用户名', _usernameController, isDark),
                   const SizedBox(height: 16),
-                  _buildTextField('密码', _passwordController, isDark, isPassword: true),
+                  _buildPasswordField(isDark, l10n),
                   const SizedBox(height: 16),
                   _buildTextField('网址', _urlController, isDark, placeholder: 'https://'),
                   const SizedBox(height: 16),
@@ -129,6 +130,76 @@ class _AddItemPanelState extends ConsumerState<AddItemPanel> {
             color: isDark ? const Color(0xFF1C1C1E) : CupertinoColors.white,
             borderRadius: BorderRadius.circular(8),
             border: Border.all(color: isDark ? CupertinoColors.white.withValues(alpha: 0.2) : CupertinoColors.black.withValues(alpha: 0.1)),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPasswordField(bool isDark, AppLocalizations l10n) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Text(
+              '密码',
+              style: TextStyle(
+                fontSize: 13,
+                color: isDark
+                    ? CupertinoColors.white.withValues(alpha: 0.6)
+                    : CupertinoColors.black.withValues(alpha: 0.6),
+              ),
+            ),
+            const Spacer(),
+            CupertinoButton(
+              padding: EdgeInsets.zero,
+              minSize: 0,
+              onPressed: () async {
+                final password = await PasswordGeneratorPopover.show(context);
+                if (password != null) {
+                  _passwordController.text = password;
+                }
+              },
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(
+                    CupertinoIcons.wand_stars,
+                    size: 16,
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    l10n.generate,
+                    style: const TextStyle(fontSize: 13),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        CupertinoTextField(
+          controller: _passwordController,
+          obscureText: true,
+          placeholder: '密码',
+          style: TextStyle(
+            color: isDark ? CupertinoColors.white : CupertinoColors.black,
+          ),
+          placeholderStyle: TextStyle(
+            color: isDark
+                ? CupertinoColors.white.withValues(alpha: 0.3)
+                : CupertinoColors.black.withValues(alpha: 0.3),
+          ),
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: isDark ? const Color(0xFF1C1C1E) : CupertinoColors.white,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(
+              color: isDark
+                  ? CupertinoColors.white.withValues(alpha: 0.2)
+                  : CupertinoColors.black.withValues(alpha: 0.1),
+            ),
           ),
         ),
       ],
