@@ -30,15 +30,26 @@ class PasswordGeneratorConfigService {
           data.containsKey('includeNumbers') ||
           data.containsKey('includeSymbols')) {
         // 旧版本配置，迁移到新版本
+        print('检测到旧配置，开始迁移: $data');
         final migratedConfig = _migrateOldConfig(data);
+        print('迁移后配置: ${migratedConfig.toJson()}');
         // 立即保存迁移后的配置
         await saveConfig(migratedConfig);
         return migratedConfig;
       }
 
+      // 新版本配置，但可能缺少字段，添加默认值
+      if (!data.containsKey('numbersCount')) {
+        data['numbersCount'] = 2;
+      }
+      if (!data.containsKey('symbolsCount')) {
+        data['symbolsCount'] = 2;
+      }
+
       return PasswordGeneratorConfig.fromJson(data);
     } catch (e) {
       // 如果解析失败，清除旧配置并返回默认配置
+      print('配置解析失败: $e，使用默认配置');
       await prefs.remove(_key);
       final defaultConfig = PasswordGeneratorConfig.defaultConfig();
       await saveConfig(defaultConfig);
