@@ -483,4 +483,95 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get splashScreenDesc => 'View startup loading screen';
+
+  @override
+  String get totp => 'Verification Code';
+
+  @override
+  String get totpCode => 'Code';
+
+  @override
+  String get addTotp => 'Add Verification Code';
+
+  @override
+  String get editTotp => 'Edit Verification Code';
+
+  @override
+  String get deleteTotp => 'Delete Verification Code';
+
+  @override
+  String get deleteTotpConfirm =>
+      'Are you sure you want to delete the verification code?';
+
+  @override
+  String get totpSecret => 'Secret Key';
+
+  @override
+  String get totpIssuer => 'Issuer';
+
+  @override
+  String get totpIssuerHint => 'e.g., Google, GitHub';
+
+  @override
+  String get scanQrCode => 'Scan QR Code';
+
+  @override
+  String get manualInput => 'Manual Input';
+
+  @override
+  String get invalidSecret => 'Invalid Secret Key';
+
+  @override
+  String get secretFormatError =>
+      'Secret Key should be Base32 encoded (16-32 characters)';
+
+  @override
+  String get totpCopied => 'Verification code copied';
+
+  @override
+  String get totpGenerationFailed => 'Failed to generate verification code';
+
+  @override
+  String get qrCodeScanFailed => 'Failed to scan QR code';
+
+  @override
+  String get qrCodeFormatError => 'QR code format is incorrect';
+
+  @override
+  String get timeNotSynced =>
+      'System time may be inaccurate, verification code may be invalid';
+
+  @override
+  String totpRemainingSeconds(int seconds) {
+    return '${seconds}s';
+  }
+
+  @override
+  String get scanFailed => 'Scan Failed';
+
+  @override
+  String get invalidQrCode => 'Invalid QR code, please scan a TOTP QR code';
+
+  @override
+  String get ok => 'OK';
+
+  @override
+  String get scanQrCodeHint =>
+      'Place the QR code within the frame to scan automatically';
+
+  @override
+  String get error => 'Error';
+
+  @override
+  String get addTotpHint => 'Select an image containing a TOTP QR code';
+
+  @override
+  String get processing => 'Processing...';
+
+  @override
+  String get selectImage => 'Select Image';
+
+  @override
+  String get manualInputHint =>
+      'Image recognition not supported yet, please enter TOTP Secret manually';
 }

@@ -803,6 +803,8 @@ class _HomePageState extends ConsumerState<HomePage> {
                                             displayChar: displayChar,
                                             domain: domain,
                                             isDark: isDark,
+                                            hasTOTP: item.totpSecret != null,
+                                            totpSecret: item.totpSecret,
                                             isSelectionMode: vaultState.isSelectionMode,
                                             isSelected: vaultState.selectedIds.contains(item.id),
                                             onSelect: () => ref.read(vaultProvider.notifier).toggleItemSelection(item.id),
@@ -970,13 +972,15 @@ class _HomePageState extends ConsumerState<HomePage> {
   }
 }
 
-class _iOSListItem extends StatelessWidget {
+class _iOSListItem extends StatefulWidget {
   final String title;
   final String? subtitle;
   final DateTime? updatedAt;
   final String displayChar;
   final String? domain;
   final bool isDark;
+  final bool hasTOTP;
+  final String? totpSecret;
   final VoidCallback onTap;
   final Color Function(String) getColorForChar;
   final bool isSelectionMode;
@@ -990,12 +994,42 @@ class _iOSListItem extends StatelessWidget {
     required this.displayChar,
     required this.domain,
     required this.isDark,
+    required this.hasTOTP,
+    this.totpSecret,
     required this.onTap,
     required this.getColorForChar,
     this.isSelectionMode = false,
     this.isSelected = false,
     this.onSelect,
   });
+
+  @override
+  State<_iOSListItem> createState() => _iOSListItemState();
+}
+
+class _iOSListItemState extends State<_iOSListItem> {
+  Timer? _totpTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.hasTOTP && widget.totpSecret != null) {
+      _startTotpTimer();
+    }
+  }
+
+  @override
+  void dispose() {
+    _totpTimer?.cancel();
+    super.dispose();
+  }
+
+  void _startTotpTimer() {
+    _totpTimer?.cancel();
+    _totpTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (mounted) setState(() {});
+    });
+  }
 
   String _formatDate(DateTime? date) {
     if (date == null) return '';
@@ -1015,29 +1049,29 @@ class _iOSListItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = getColorForChar(displayChar);
-    final hasSubtitle = subtitle != null && subtitle!.isNotEmpty;
-    
+    final color = widget.getColorForChar(widget.displayChar);
+    final hasSubtitle = widget.subtitle != null && widget.subtitle!.isNotEmpty;
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
       child: GestureDetector(
-        onTap: isSelectionMode ? onSelect : onTap,
+        onTap: widget.isSelectionMode ? widget.onSelect : widget.onTap,
         child: Container(
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
-            color: isDark 
+            color: widget.isDark
                 ? const Color(0xFF1C1C1E)
                 : CupertinoColors.white,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: isSelected
+              color: widget.isSelected
                   ? CupertinoColors.activeBlue
-                  : isDark 
+                  : widget.isDark
                       ? CupertinoColors.white.withValues(alpha: 0.08)
                       : CupertinoColors.black.withValues(alpha: 0.06),
-              width: isSelected ? 2 : 0.5,
+              width: widget.isSelected ? 2 : 0.5,
             ),
-            boxShadow: isDark ? null : [
+            boxShadow: widget.isDark ? null : [
               BoxShadow(
                 color: CupertinoColors.black.withValues(alpha: 0.04),
                 blurRadius: 8,
@@ -1047,14 +1081,14 @@ class _iOSListItem extends StatelessWidget {
           ),
           child: Row(
             children: [
-              if (isSelectionMode) ...[
+              if (widget.isSelectionMode) ...[
                 Icon(
-                  isSelected 
-                      ? CupertinoIcons.check_mark_circled_solid 
+                  widget.isSelected
+                      ? CupertinoIcons.check_mark_circled_solid
                       : CupertinoIcons.circle,
-                  color: isSelected 
+                  color: widget.isSelected
                       ? CupertinoColors.activeBlue
-                      : isDark ? CupertinoColors.white.withValues(alpha: 0.4) : CupertinoColors.black.withValues(alpha: 0.4),
+                      : widget.isDark ? CupertinoColors.white.withValues(alpha: 0.4) : CupertinoColors.black.withValues(alpha: 0.4),
                   size: 24,
                 ),
                 const SizedBox(width: 12),
@@ -1067,9 +1101,9 @@ class _iOSListItem extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      title,
+                      widget.title,
                       style: TextStyle(
-                        color: isDark ? CupertinoColors.white : CupertinoColors.black,
+                        color: widget.isDark ? CupertinoColors.white : CupertinoColors.black,
                         fontSize: 16,
                         fontWeight: FontWeight.w500,
                         letterSpacing: -0.3,
@@ -1080,21 +1114,21 @@ class _iOSListItem extends StatelessWidget {
                     if (hasSubtitle) ...[
                       const SizedBox(height: 3),
                       Text(
-                        subtitle!,
+                        widget.subtitle!,
                         style: TextStyle(
-                          color: isDark ? CupertinoColors.white.withValues(alpha: 0.6) : CupertinoColors.black.withValues(alpha: 0.6),
+                          color: widget.isDark ? CupertinoColors.white.withValues(alpha: 0.6) : CupertinoColors.black.withValues(alpha: 0.6),
                           fontSize: 14,
                           letterSpacing: -0.2,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
-                    ] else if (updatedAt != null) ...[
+                    ] else if (widget.updatedAt != null) ...[
                       const SizedBox(height: 3),
                       Text(
-                        _formatDate(updatedAt),
+                        _formatDate(widget.updatedAt),
                         style: TextStyle(
-                          color: isDark ? CupertinoColors.white.withValues(alpha: 0.4) : CupertinoColors.black.withValues(alpha: 0.4),
+                          color: widget.isDark ? CupertinoColors.white.withValues(alpha: 0.4) : CupertinoColors.black.withValues(alpha: 0.4),
                           fontSize: 14,
                           letterSpacing: -0.2,
                         ),
@@ -1105,11 +1139,27 @@ class _iOSListItem extends StatelessWidget {
                   ],
                 ),
               ),
-            Icon(
-              CupertinoIcons.chevron_forward,
-              color: isDark ? CupertinoColors.white.withValues(alpha: 0.25) : CupertinoColors.black.withValues(alpha: 0.25),
-              size: 18,
-            ),
+              if (widget.hasTOTP && widget.totpSecret != null) ...[
+                const SizedBox(width: 8),
+                Container(
+                  padding: const EdgeInsets.all(4),
+                  decoration: BoxDecoration(
+                    color: CupertinoColors.activeBlue.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Icon(
+                    CupertinoIcons.timer,
+                    size: 16,
+                    color: CupertinoColors.activeBlue,
+                  ),
+                ),
+              ],
+              const SizedBox(width: 8),
+              Icon(
+                CupertinoIcons.chevron_forward,
+                color: widget.isDark ? CupertinoColors.white.withValues(alpha: 0.25) : CupertinoColors.black.withValues(alpha: 0.25),
+                size: 18,
+              ),
             ],
           ),
         ),
@@ -1118,8 +1168,8 @@ class _iOSListItem extends StatelessWidget {
   }
 
   Widget _buildIcon(Color color) {
-    if (domain != null && domain!.isNotEmpty) {
-      final faviconUrl = 'https://$domain/favicon.ico';
+    if (widget.domain != null && widget.domain!.isNotEmpty) {
+      final faviconUrl = 'https://${widget.domain}/favicon.ico';
       return Container(
         width: 40,
         height: 40,
@@ -1153,7 +1203,7 @@ class _iOSListItem extends StatelessWidget {
       ),
       child: Center(
         child: Text(
-          displayChar[0].toUpperCase(),
+          widget.displayChar[0].toUpperCase(),
           style: TextStyle(
             color: color,
             fontSize: 18,

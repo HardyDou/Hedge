@@ -467,4 +467,90 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get splashScreenDesc => '查看启动加载页面';
+
+  @override
+  String get totp => '验证码';
+
+  @override
+  String get totpCode => '验证码';
+
+  @override
+  String get addTotp => '添加验证码';
+
+  @override
+  String get editTotp => '编辑验证码';
+
+  @override
+  String get deleteTotp => '删除验证码';
+
+  @override
+  String get deleteTotpConfirm => '确定删除验证码吗？';
+
+  @override
+  String get totpSecret => '密钥';
+
+  @override
+  String get totpIssuer => '发行方';
+
+  @override
+  String get totpIssuerHint => '例如：Google、GitHub';
+
+  @override
+  String get scanQrCode => '扫描二维码';
+
+  @override
+  String get manualInput => '手动输入';
+
+  @override
+  String get invalidSecret => '无效的密钥';
+
+  @override
+  String get secretFormatError => '密钥应为 Base32 编码（16-32 个字符）';
+
+  @override
+  String get totpCopied => '验证码已复制';
+
+  @override
+  String get totpGenerationFailed => '验证码生成失败';
+
+  @override
+  String get qrCodeScanFailed => '二维码扫描失败';
+
+  @override
+  String get qrCodeFormatError => '二维码格式不正确';
+
+  @override
+  String get timeNotSynced => '系统时间可能不准确，验证码可能无效';
+
+  @override
+  String totpRemainingSeconds(int seconds) {
+    return '$seconds秒';
+  }
+
+  @override
+  String get scanFailed => '扫描失败';
+
+  @override
+  String get invalidQrCode => '无效的二维码，请扫描 TOTP 二维码';
+
+  @override
+  String get ok => '确定';
+
+  @override
+  String get scanQrCodeHint => '将二维码放入框内即可自动扫描';
+
+  @override
+  String get error => '错误';
+
+  @override
+  String get addTotpHint => '选择包含 TOTP 二维码的图片';
+
+  @override
+  String get processing => '处理中...';
+
+  @override
+  String get selectImage => '选择图片';
+
+  @override
+  String get manualInputHint => '暂不支持从图片识别，请手动输入 TOTP Secret';
 }

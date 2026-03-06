@@ -6,6 +6,7 @@ import 'package:window_manager/window_manager.dart';
 import 'package:hedge/l10n/generated/app_localizations.dart';
 import 'package:hedge/presentation/providers/vault_provider.dart';
 import 'package:hedge/src/dart/vault.dart';
+import 'package:hedge/domain/services/totp_service.dart';
 import '../services/panel_window_service.dart';
 import '../services/tray_service.dart';
 
@@ -28,6 +29,7 @@ class _TrayPanelUnlockedState extends ConsumerState<TrayPanelUnlocked> {
   final _searchController = TextEditingController();
   String? _hoveredItemId;
   Timer? _hoverTimer;
+  Timer? _totpTimer;
   VaultItem? _detailItem; // 当前显示详情的项目
   bool _showPassword = false; // 是否显示密码明文
   bool _showPasswordLarge = false; // 是否显示放大密码页面
@@ -39,13 +41,27 @@ class _TrayPanelUnlockedState extends ConsumerState<TrayPanelUnlocked> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(vaultProvider.notifier).searchItems('');
     });
+    // 启动 TOTP 定时器
+    _startTotpTimer();
   }
 
   @override
   void dispose() {
     _searchController.dispose();
     _hoverTimer?.cancel();
+    _totpTimer?.cancel();
     super.dispose();
+  }
+
+  void _startTotpTimer() {
+    _totpTimer?.cancel();
+    _totpTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (mounted && _detailItem?.totpSecret != null) {
+        setState(() {
+          // 触发 UI 刷新以更新 TOTP 倒计时
+        });
+      }
+    });
   }
 
   void _showDetail(VaultItem item) {
@@ -402,6 +418,22 @@ class _TrayPanelUnlockedState extends ConsumerState<TrayPanelUnlocked> {
                   ],
                 ),
               ),
+              // TOTP 标识
+              if (item.totpSecret != null) ...[
+                const SizedBox(width: 6),
+                Container(
+                  padding: const EdgeInsets.all(3),
+                  decoration: BoxDecoration(
+                    color: CupertinoColors.activeBlue.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(3),
+                  ),
+                  child: Icon(
+                    CupertinoIcons.timer,
+                    size: 12,
+                    color: CupertinoColors.activeBlue,
+                  ),
+                ),
+              ],
             ],
           ),
         ),
@@ -504,6 +536,16 @@ class _TrayPanelUnlockedState extends ConsumerState<TrayPanelUnlocked> {
                     context: context,
                     label: l10n.password,
                     value: item.password!,
+                    isDark: isDark,
+                  ),
+
+                // TOTP
+                if (item.totpSecret != null)
+                  _buildTotpField(
+                    context: context,
+                    l10n: l10n,
+                    label: l10n.totp,
+                    item: item,
                     isDark: isDark,
                   ),
 
@@ -638,6 +680,117 @@ class _TrayPanelUnlockedState extends ConsumerState<TrayPanelUnlocked> {
       ),
     );
   }
+
+  /// 构建 TOTP 字段
+  Widget _buildTotpField({
+    required BuildContext context,
+    required AppLocalizations l10n,
+    required String label,
+    required VaultItem item,
+    required bool isDark,
+  }) {
+    try {
+      final code = TotpService.generateTotp(item.totpSecret!);
+      final formattedCode = TotpService.formatCode(code);
+      final remaining = TotpService.getRemainingSeconds();
+
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // 标签
+            Row(
+              children: [
+                Icon(
+                  CupertinoIcons.timer,
+                  size: 12,
+                  color: isDark ? CupertinoColors.systemGrey : CupertinoColors.systemGrey2,
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 10,
+                    color: isDark ? CupertinoColors.systemGrey : CupertinoColors.systemGrey2,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 6),
+
+            // 验证码 + 倒计时 + 复制按钮
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                // 验证码
+                Text(
+                  formattedCode,
+                  style: TextStyle(
+                    fontFamily: 'Courier',
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 2,
+                    color: isDark ? CupertinoColors.white : CupertinoColors.black,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                // 倒计时
+                Text(
+                  '⏱ ${remaining}s',
+                  style: TextStyle(
+                    color: remaining <= 5
+                        ? CupertinoColors.destructiveRed
+                        : (isDark ? CupertinoColors.systemGrey : CupertinoColors.systemGrey2),
+                    fontSize: 11,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const Spacer(),
+                // 复制按钮
+                CupertinoButton(
+                  padding: EdgeInsets.zero,
+                  minSize: 0,
+                  onPressed: () {
+                    Clipboard.setData(ClipboardData(text: code));
+                    // TODO: 显示复制成功提示
+                  },
+                  child: Icon(
+                    CupertinoIcons.doc_on_doc,
+                    size: 14,
+                    color: CupertinoColors.activeBlue,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      );
+    } catch (e) {
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 16),
+        child: Row(
+          children: [
+            Icon(
+              CupertinoIcons.exclamationmark_triangle,
+              color: CupertinoColors.destructiveRed,
+              size: 14,
+            ),
+            const SizedBox(width: 6),
+            Text(
+              l10n.totpGenerationFailed,
+              style: TextStyle(
+                color: CupertinoColors.destructiveRed,
+                fontSize: 11,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+  }
+
   Widget _buildDetailField({
     required BuildContext context,
     required String label,

@@ -166,5 +166,40 @@
   "viewIntroduction": "功能介绍",
   "viewIntroductionDesc": "查看应用功能介绍",
   "splashScreen": "启动页",
-  "splashScreenDesc": "查看启动加载页面"
+  "splashScreenDesc": "查看启动加载页面",
+  "totp": "验证码",
+  "totpCode": "验证码",
+  "addTotp": "添加验证码",
+  "editTotp": "编辑验证码",
+  "deleteTotp": "删除验证码",
+  "deleteTotpConfirm": "确定删除验证码吗？",
+  "totpSecret": "密钥",
+  "totpIssuer": "发行方",
+  "totpIssuerHint": "例如：Google、GitHub",
+  "scanQrCode": "扫描二维码",
+  "manualInput": "手动输入",
+  "invalidSecret": "无效的密钥",
+  "secretFormatError": "密钥应为 Base32 编码（16-32 个字符）",
+  "totpCopied": "验证码已复制",
+  "totpGenerationFailed": "验证码生成失败",
+  "qrCodeScanFailed": "二维码扫描失败",
+  "qrCodeFormatError": "二维码格式不正确",
+  "timeNotSynced": "系统时间可能不准确，验证码可能无效",
+  "totpRemainingSeconds": "{seconds}秒",
+  "@totpRemainingSeconds": {
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "scanFailed": "扫描失败",
+  "invalidQrCode": "无效的二维码，请扫描 TOTP 二维码",
+  "ok": "确定",
+  "scanQrCodeHint": "将二维码放入框内即可自动扫描",
+  "error": "错误",
+  "addTotpHint": "选择包含 TOTP 二维码的图片",
+  "processing": "处理中...",
+  "selectImage": "选择图片",
+  "manualInputHint": "暂不支持从图片识别，请手动输入 TOTP Secret"
 }

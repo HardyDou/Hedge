@@ -5,6 +5,9 @@ import 'package:lpinyin/lpinyin.dart';
 import 'package:uuid/uuid.dart';
 import 'crypto.dart';
 
+// 用于区分 null 和未提供参数
+const _undefined = Object();
+
 class VaultItem {
   final String id;
   final String title;
@@ -14,6 +17,8 @@ class VaultItem {
   final String? url;
   final String? notes;
   final String? category;
+  final String? totpSecret;   // TOTP Secret Key（加密存储）
+  final String? totpIssuer;   // 发行方名称（如 "Google"）
   final List<Attachment> attachments;
   final DateTime createdAt;
   final DateTime updatedAt;
@@ -27,6 +32,8 @@ class VaultItem {
     this.url,
     this.notes,
     this.category,
+    this.totpSecret,
+    this.totpIssuer,
     List<Attachment>? attachments,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -51,6 +58,8 @@ class VaultItem {
     String? url,
     String? notes,
     String? category,
+    Object? totpSecret = _undefined,
+    Object? totpIssuer = _undefined,
     List<Attachment>? attachments,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -65,6 +74,8 @@ class VaultItem {
       url: url ?? this.url,
       notes: notes ?? this.notes,
       category: category ?? this.category,
+      totpSecret: totpSecret == _undefined ? this.totpSecret : totpSecret as String?,
+      totpIssuer: totpIssuer == _undefined ? this.totpIssuer : totpIssuer as String?,
       attachments: attachments ?? this.attachments,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? DateTime.now(),
@@ -80,6 +91,8 @@ class VaultItem {
         'url': url,
         'notes': notes,
         'category': category,
+        'totpSecret': totpSecret,
+        'totpIssuer': totpIssuer,
         'attachments': attachments.map((e) => e.toJson()).toList(),
         'createdAt': createdAt.toIso8601String(),
         'updatedAt': updatedAt.toIso8601String(),
@@ -99,6 +112,8 @@ class VaultItem {
       url: json['url'] as String?,
       notes: json['notes'] as String?,
       category: json['category'] as String?,
+      totpSecret: json['totpSecret'] as String?,
+      totpIssuer: json['totpIssuer'] as String?,
       attachments: (json['attachments'] as List<dynamic>?)
           ?.map((e) => Attachment.fromJson(e as Map<String, dynamic>))
           .toList() ?? [],

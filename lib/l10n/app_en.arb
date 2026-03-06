@@ -192,5 +192,40 @@
   "viewIntroduction": "Feature Introduction",
   "viewIntroductionDesc": "View app feature introduction",
   "splashScreen": "Splash Screen",
-  "splashScreenDesc": "View startup loading screen"
+  "splashScreenDesc": "View startup loading screen",
+  "totp": "Verification Code",
+  "totpCode": "Code",
+  "addTotp": "Add Verification Code",
+  "editTotp": "Edit Verification Code",
+  "deleteTotp": "Delete Verification Code",
+  "deleteTotpConfirm": "Are you sure you want to delete the verification code?",
+  "totpSecret": "Secret Key",
+  "totpIssuer": "Issuer",
+  "totpIssuerHint": "e.g., Google, GitHub",
+  "scanQrCode": "Scan QR Code",
+  "manualInput": "Manual Input",
+  "invalidSecret": "Invalid Secret Key",
+  "secretFormatError": "Secret Key should be Base32 encoded (16-32 characters)",
+  "totpCopied": "Verification code copied",
+  "totpGenerationFailed": "Failed to generate verification code",
+  "qrCodeScanFailed": "Failed to scan QR code",
+  "qrCodeFormatError": "QR code format is incorrect",
+  "timeNotSynced": "System time may be inaccurate, verification code may be invalid",
+  "totpRemainingSeconds": "{seconds}s",
+  "@totpRemainingSeconds": {
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "scanFailed": "Scan Failed",
+  "invalidQrCode": "Invalid QR code, please scan a TOTP QR code",
+  "ok": "OK",
+  "scanQrCodeHint": "Place the QR code within the frame to scan automatically",
+  "error": "Error",
+  "addTotpHint": "Select an image containing a TOTP QR code",
+  "processing": "Processing...",
+  "selectImage": "Select Image",
+  "manualInputHint": "Image recognition not supported yet, please enter TOTP Secret manually"
 }

@@ -991,6 +991,174 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'View startup loading screen'**
   String get splashScreenDesc;
+
+  /// No description provided for @totp.
+  ///
+  /// In en, this message translates to:
+  /// **'Verification Code'**
+  String get totp;
+
+  /// No description provided for @totpCode.
+  ///
+  /// In en, this message translates to:
+  /// **'Code'**
+  String get totpCode;
+
+  /// No description provided for @addTotp.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Verification Code'**
+  String get addTotp;
+
+  /// No description provided for @editTotp.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit Verification Code'**
+  String get editTotp;
+
+  /// No description provided for @deleteTotp.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete Verification Code'**
+  String get deleteTotp;
+
+  /// No description provided for @deleteTotpConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to delete the verification code?'**
+  String get deleteTotpConfirm;
+
+  /// No description provided for @totpSecret.
+  ///
+  /// In en, this message translates to:
+  /// **'Secret Key'**
+  String get totpSecret;
+
+  /// No description provided for @totpIssuer.
+  ///
+  /// In en, this message translates to:
+  /// **'Issuer'**
+  String get totpIssuer;
+
+  /// No description provided for @totpIssuerHint.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g., Google, GitHub'**
+  String get totpIssuerHint;
+
+  /// No description provided for @scanQrCode.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan QR Code'**
+  String get scanQrCode;
+
+  /// No description provided for @manualInput.
+  ///
+  /// In en, this message translates to:
+  /// **'Manual Input'**
+  String get manualInput;
+
+  /// No description provided for @invalidSecret.
+  ///
+  /// In en, this message translates to:
+  /// **'Invalid Secret Key'**
+  String get invalidSecret;
+
+  /// No description provided for @secretFormatError.
+  ///
+  /// In en, this message translates to:
+  /// **'Secret Key should be Base32 encoded (16-32 characters)'**
+  String get secretFormatError;
+
+  /// No description provided for @totpCopied.
+  ///
+  /// In en, this message translates to:
+  /// **'Verification code copied'**
+  String get totpCopied;
+
+  /// No description provided for @totpGenerationFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to generate verification code'**
+  String get totpGenerationFailed;
+
+  /// No description provided for @qrCodeScanFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to scan QR code'**
+  String get qrCodeScanFailed;
+
+  /// No description provided for @qrCodeFormatError.
+  ///
+  /// In en, this message translates to:
+  /// **'QR code format is incorrect'**
+  String get qrCodeFormatError;
+
+  /// No description provided for @timeNotSynced.
+  ///
+  /// In en, this message translates to:
+  /// **'System time may be inaccurate, verification code may be invalid'**
+  String get timeNotSynced;
+
+  /// No description provided for @totpRemainingSeconds.
+  ///
+  /// In en, this message translates to:
+  /// **'{seconds}s'**
+  String totpRemainingSeconds(int seconds);
+
+  /// No description provided for @scanFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan Failed'**
+  String get scanFailed;
+
+  /// No description provided for @invalidQrCode.
+  ///
+  /// In en, this message translates to:
+  /// **'Invalid QR code, please scan a TOTP QR code'**
+  String get invalidQrCode;
+
+  /// No description provided for @ok.
+  ///
+  /// In en, this message translates to:
+  /// **'OK'**
+  String get ok;
+
+  /// No description provided for @scanQrCodeHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Place the QR code within the frame to scan automatically'**
+  String get scanQrCodeHint;
+
+  /// No description provided for @error.
+  ///
+  /// In en, this message translates to:
+  /// **'Error'**
+  String get error;
+
+  /// No description provided for @addTotpHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Select an image containing a TOTP QR code'**
+  String get addTotpHint;
+
+  /// No description provided for @processing.
+  ///
+  /// In en, this message translates to:
+  /// **'Processing...'**
+  String get processing;
+
+  /// No description provided for @selectImage.
+  ///
+  /// In en, this message translates to:
+  /// **'Select Image'**
+  String get selectImage;
+
+  /// No description provided for @manualInputHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Image recognition not supported yet, please enter TOTP Secret manually'**
+  String get manualInputHint;
 }
 
 class _AppLocalizationsDelegate
