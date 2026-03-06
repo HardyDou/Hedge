@@ -52,6 +52,7 @@ rust/target/
 
 # iOS build artifacts
 ios/Frameworks/
+macos/build/
 build/releases/
 
 # Release files
