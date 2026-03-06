@@ -128,24 +128,33 @@ jobs:
           path: hedge-macos.zip
 
   release:
-    needs: [build-android, build-linux, build-windows]
+    needs: [build-linux, build-windows]
     runs-on: ubuntu-latest
-    if: startsWith(github.ref, 'refs/tags/')
+    if: startsWith(github.ref, 'refs/tags/') && always()
     steps:
       - uses: actions/checkout@v4
 
       - name: Download all artifacts
         uses: actions/download-artifact@v4
+        continue-on-error: true
 
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
           files: |
-            android-apk/app-release.apk
             linux-x64/hedge-linux-x64.tar.gz
             windows-x64/hedge-windows-x64.zip
           draft: false
           prerelease: false
           generate_release_notes: true
+          body: |
+            ## ⚠️ 注意
+            本版本暂时不包含 Android 和 macOS 构建：
+            - Android: qr_code_scanner 插件兼容性问题（修复中）
+            - macOS: 需要代码签名配置
+
+            可用平台：
+            - ✅ Windows x64
+            - ✅ Linux x64
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
