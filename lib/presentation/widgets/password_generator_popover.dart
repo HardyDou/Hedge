@@ -224,7 +224,7 @@ class PasswordGeneratorPopover extends ConsumerWidget {
     PasswordGeneratorConfig config,
   ) {
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -255,15 +255,18 @@ class PasswordGeneratorPopover extends ConsumerWidget {
           ],
         ),
         const SizedBox(height: 4),
-        CupertinoSlider(
-          value: config.length.toDouble(),
-          min: 8,
-          max: 64,
-          divisions: 56,
-          onChanged: (value) {
-            final newConfig = config.copyWith(length: value.toInt());
-            ref.read(passwordGeneratorProvider.notifier).updateConfig(newConfig);
-          },
+        SizedBox(
+          width: double.infinity,
+          child: CupertinoSlider(
+            value: config.length.toDouble(),
+            min: 8,
+            max: 64,
+            divisions: 56,
+            onChanged: (value) {
+              final newConfig = config.copyWith(length: value.toInt());
+              ref.read(passwordGeneratorProvider.notifier).updateConfig(newConfig);
+            },
+          ),
         ),
       ],
     );
