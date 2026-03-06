@@ -532,6 +532,22 @@ class _DesktopHomePageState extends ConsumerState<DesktopHomePage> {
                   ],
                 ),
               ),
+              // TOTP 标识
+              if (item.totpSecret != null) ...[
+                const SizedBox(width: 6),
+                Container(
+                  padding: const EdgeInsets.all(4),
+                  decoration: BoxDecoration(
+                    color: CupertinoColors.activeBlue.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Icon(
+                    CupertinoIcons.timer,
+                    size: 14,
+                    color: CupertinoColors.activeBlue,
+                  ),
+                ),
+              ],
             ],
           ),
         ),

@@ -1,13 +1,16 @@
 import 'package:hedge/presentation/providers/vault_provider.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart' show LinearProgressIndicator;
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:hedge/src/dart/vault.dart';
 import 'dart:io';
+import 'dart:async';
 import 'package:open_file/open_file.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:hedge/l10n/generated/app_localizations.dart';
+import 'package:hedge/domain/services/totp_service.dart';
 import 'edit_page.dart';
 import 'large_password_page.dart' show LargePasswordPage;
 
@@ -23,11 +26,34 @@ class DetailPage extends ConsumerStatefulWidget {
 class _DetailPageState extends ConsumerState<DetailPage> {
   late VaultItem _item;
   bool _obscurePassword = true;
+  Timer? _totpTimer;
+  Timer? _clipboardTimer;
 
   @override
   void initState() {
     super.initState();
     _item = widget.item;
+    if (_item.totpSecret != null) {
+      _startTotpTimer();
+    }
+  }
+
+  @override
+  void dispose() {
+    _totpTimer?.cancel();
+    _clipboardTimer?.cancel();
+    super.dispose();
+  }
+
+  void _startTotpTimer() {
+    _totpTimer?.cancel();
+    _totpTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (mounted) {
+        setState(() {
+          // 触发 UI 刷新以更新倒计时
+        });
+      }
+    });
   }
 
   void _copyToClipboard(String text, String label) {
@@ -36,18 +62,29 @@ class _DetailPageState extends ConsumerState<DetailPage> {
     _showToast(context, l10n.copied(label));
   }
 
+  void _copyTotp(String code) {
+    final l10n = AppLocalizations.of(context)!;
+    Clipboard.setData(ClipboardData(text: code));
+    _showToast(context, l10n.totpCopied);
+
+    // 30 秒后清空剪贴板
+    _clipboardTimer?.cancel();
+    _clipboardTimer = Timer(const Duration(seconds: 30), () {
+      Clipboard.setData(const ClipboardData(text: ''));
+    });
+  }
+
   void _showToast(BuildContext context, String message) {
-    showCupertinoDialog(
-      context: context,
-      barrierDismissible: true,
-      builder: (context) => CupertinoAlertDialog(
-        content: Text(message),
-      ),
+    final overlay = Overlay.of(context);
+    final overlayEntry = OverlayEntry(
+      builder: (context) => _ToastWidget(message: message),
     );
-    Future.delayed(const Duration(seconds: 1), () {
-      if (mounted && Navigator.canPop(context)) {
-        Navigator.pop(context);
-      }
+
+    overlay.insert(overlayEntry);
+
+    // 1.5 秒后自动移除
+    Future.delayed(const Duration(milliseconds: 1500), () {
+      overlayEntry.remove();
     });
   }
 
@@ -183,6 +220,11 @@ class _DetailPageState extends ConsumerState<DetailPage> {
                   onCopy: () => _copyToClipboard(_item.password!, l10n.password),
                   onEnlarge: () => LargePasswordPage.show(context, _item.password!),
                 ));
+              }
+              // TOTP 显示
+              if (_item.totpSecret != null) {
+                if (children.isNotEmpty) children.add(_buildDivider(isDark));
+                children.add(_buildTotpTile(isDark, l10n));
               }
               return _buildiOSSection(
                 context: context,
@@ -440,6 +482,242 @@ class _DetailPageState extends ConsumerState<DetailPage> {
               onPressed: onCopy,
             ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildTotpTile(bool isDark, AppLocalizations l10n) {
+    try {
+      final code = TotpService.generateTotp(_item.totpSecret!);
+      final formattedCode = TotpService.formatCode(code);
+      final remaining = TotpService.getRemainingSeconds();
+      final progress = TotpService.getProgress();
+
+      return GestureDetector(
+        onLongPress: () => _showTotpActionSheet(l10n),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          child: Row(
+            children: [
+              Icon(
+                CupertinoIcons.timer,
+                color: isDark
+                    ? CupertinoColors.white.withOpacity(0.7)
+                    : CupertinoColors.black.withOpacity(0.54),
+                size: 22,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      l10n.totp,
+                      style: TextStyle(
+                        color: isDark
+                            ? CupertinoColors.white.withOpacity(0.6)
+                            : CupertinoColors.black.withOpacity(0.54),
+                        fontSize: 12,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        Text(
+                          formattedCode,
+                          style: TextStyle(
+                            color: isDark
+                                ? CupertinoColors.white
+                                : CupertinoColors.black,
+                            fontSize: 20,
+                            fontWeight: FontWeight.w600,
+                            fontFamily: 'Courier',
+                            letterSpacing: 2,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Text(
+                          '⏱ ${remaining}s',
+                          style: TextStyle(
+                            color: remaining <= 5
+                                ? CupertinoColors.destructiveRed
+                                : (isDark
+                                    ? CupertinoColors.white.withOpacity(0.6)
+                                    : CupertinoColors.black.withOpacity(0.54)),
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    // 进度条
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(2),
+                      child: LinearProgressIndicator(
+                        value: progress,
+                        backgroundColor: isDark
+                            ? CupertinoColors.white.withOpacity(0.1)
+                            : CupertinoColors.black.withOpacity(0.1),
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                          remaining <= 5
+                              ? CupertinoColors.destructiveRed
+                              : CupertinoColors.activeBlue,
+                        ),
+                        minHeight: 3,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              CupertinoButton(
+                padding: EdgeInsets.zero,
+                child: const Icon(
+                  CupertinoIcons.doc_on_doc,
+                  color: CupertinoColors.activeBlue,
+                  size: 18,
+                ),
+                onPressed: () => _copyTotp(code),
+              ),
+            ],
+          ),
+        ),
+      );
+    } catch (e) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        child: Row(
+          children: [
+            Icon(
+              CupertinoIcons.exclamationmark_triangle,
+              color: CupertinoColors.destructiveRed,
+              size: 22,
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                l10n.totpGenerationFailed,
+                style: TextStyle(
+                  color: CupertinoColors.destructiveRed,
+                  fontSize: 14,
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+  }
+
+  void _showTotpActionSheet(AppLocalizations l10n) {
+    showCupertinoModalPopup<void>(
+      context: context,
+      builder: (BuildContext sheetContext) => CupertinoActionSheet(
+        actions: [
+          CupertinoActionSheetAction(
+            onPressed: () {
+              Navigator.pop(sheetContext);
+              // TODO: 导航到编辑页面
+            },
+            child: Text(l10n.editTotp),
+          ),
+          CupertinoActionSheetAction(
+            isDestructiveAction: true,
+            onPressed: () async {
+              Navigator.pop(sheetContext);
+              final confirmed = await showCupertinoDialog<bool>(
+                context: context,
+                builder: (context) => CupertinoAlertDialog(
+                  title: Text(l10n.deleteTotp),
+                  content: Text(l10n.deleteTotpConfirm),
+                  actions: [
+                    CupertinoDialogAction(
+                      onPressed: () => Navigator.pop(context, false),
+                      child: Text(l10n.cancel),
+                    ),
+                    CupertinoDialogAction(
+                      isDestructiveAction: true,
+                      onPressed: () => Navigator.pop(context, true),
+                      child: Text(l10n.delete),
+                    ),
+                  ],
+                ),
+              );
+
+              if (confirmed == true) {
+                // 创建新的 VaultItem，将 totpSecret 和 totpIssuer 设置为 null
+                final updatedItem = VaultItem(
+                  id: _item.id,
+                  title: _item.title,
+                  titlePinyin: _item.titlePinyin,
+                  username: _item.username,
+                  password: _item.password,
+                  url: _item.url,
+                  notes: _item.notes,
+                  category: _item.category,
+                  totpSecret: null,
+                  totpIssuer: null,
+                  attachments: _item.attachments,
+                  createdAt: _item.createdAt,
+                  updatedAt: DateTime.now(),
+                );
+                await ref.read(vaultProvider.notifier).updateItem(updatedItem);
+                setState(() {
+                  _item = updatedItem;
+                  _totpTimer?.cancel();
+                });
+              }
+            },
+            child: Text(l10n.deleteTotp),
+          ),
+        ],
+        cancelButton: CupertinoActionSheetAction(
+          onPressed: () => Navigator.pop(sheetContext),
+          child: Text(l10n.cancel),
+        ),
+      ),
+    );
+  }
+}
+
+/// Toast 提示组件
+class _ToastWidget extends StatelessWidget {
+  final String message;
+
+  const _ToastWidget({required this.message});
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 60),
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+        decoration: BoxDecoration(
+          color: CupertinoColors.black.withValues(alpha: 0.85),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(
+              CupertinoIcons.checkmark_circle_fill,
+              color: CupertinoColors.white,
+              size: 20,
+            ),
+            const SizedBox(width: 8),
+            Flexible(
+              child: Text(
+                message,
+                style: const TextStyle(
+                  color: CupertinoColors.white,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w500,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -55,6 +55,13 @@ dependencies:
   tray_manager: ^0.2.3
   window_manager: ^0.4.2
   shared_preferences: ^2.2.2
+  otp: ^3.1.4
+  qr_code_scanner: ^1.0.1
+  mobile_scanner: ^5.2.3
+  google_mlkit_barcode_scanning: ^0.13.0
+  zxing2: ^0.2.3
+  image: ^4.0.17
+  image_picker: ^1.0.7
 
 dev_dependencies:
   flutter_test:

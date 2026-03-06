@@ -1,12 +1,14 @@
+import 'dart:async';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart' show LinearProgressIndicator;
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:hedge/src/dart/vault.dart';
 import 'package:hedge/l10n/generated/app_localizations.dart';
 import 'package:hedge/presentation/providers/vault_provider.dart';
-import 'package:hedge/presentation/pages/mobile/edit_page.dart';
 import 'package:hedge/presentation/pages/desktop/large_password_dialog.dart';
+import 'package:hedge/domain/services/totp_service.dart';
 
 class DetailPanel extends ConsumerStatefulWidget {
   final VaultItem item;
@@ -27,11 +29,21 @@ class DetailPanel extends ConsumerStatefulWidget {
 class _DetailPanelState extends ConsumerState<DetailPanel> {
   late VaultItem _item;
   bool _obscurePassword = true;
+  Timer? _totpTimer;
 
   @override
   void initState() {
     super.initState();
     _item = widget.item;
+    if (_item.totpSecret != null) {
+      _startTotpTimer();
+    }
+  }
+
+  @override
+  void dispose() {
+    _totpTimer?.cancel();
+    super.dispose();
   }
 
   @override
@@ -40,7 +52,22 @@ class _DetailPanelState extends ConsumerState<DetailPanel> {
     if (oldWidget.item.id != widget.item.id) {
       _item = widget.item;
       _obscurePassword = true;
+      _totpTimer?.cancel();
+      if (_item.totpSecret != null) {
+        _startTotpTimer();
+      }
     }
+  }
+
+  void _startTotpTimer() {
+    _totpTimer?.cancel();
+    _totpTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (mounted) {
+        setState(() {
+          // 触发 UI 刷新以更新倒计时
+        });
+      }
+    });
   }
 
   void _copyToClipboard(String text, String label) {
@@ -56,17 +83,16 @@ class _DetailPanelState extends ConsumerState<DetailPanel> {
   }
 
   void _showToast(BuildContext context, String message) {
-    showCupertinoDialog(
-      context: context,
-      barrierDismissible: true,
-      builder: (context) => CupertinoAlertDialog(
-        content: Text(message),
-      ),
+    final overlay = Overlay.of(context);
+    final overlayEntry = OverlayEntry(
+      builder: (context) => _ToastWidget(message: message),
     );
-    Future.delayed(const Duration(seconds: 1), () {
-      if (mounted && Navigator.canPop(context)) {
-        Navigator.pop(context);
-      }
+
+    overlay.insert(overlayEntry);
+
+    // 1.5 秒后自动移除
+    Future.delayed(const Duration(milliseconds: 1500), () {
+      overlayEntry.remove();
     });
   }
 
@@ -95,6 +121,9 @@ class _DetailPanelState extends ConsumerState<DetailPanel> {
                     _buildUrlSection(isDark, l10n),
                   // 凭据区域
                   _buildCredentialsSection(isDark, l10n),
+                  // TOTP 区域
+                  if (_item.totpSecret != null)
+                    _buildTotpSection(isDark, l10n),
                   // 备注区域
                   if (_item.notes != null && _item.notes!.isNotEmpty)
                     _buildNotesSection(isDark, l10n),
@@ -512,6 +541,142 @@ class _DetailPanelState extends ConsumerState<DetailPanel> {
     );
   }
 
+  Widget _buildTotpSection(bool isDark, AppLocalizations l10n) {
+    try {
+      final code = TotpService.generateTotp(_item.totpSecret!);
+      final formattedCode = TotpService.formatCode(code);
+      final remaining = TotpService.getRemainingSeconds();
+      final progress = TotpService.getProgress();
+
+      return Padding(
+        padding: const EdgeInsets.only(left: 24, right: 24, top: 16),
+        child: _buildCard(
+          isDark: isDark,
+          children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              child: Row(
+                children: [
+                  Icon(
+                    CupertinoIcons.timer,
+                    color: isDark
+                        ? CupertinoColors.white.withOpacity(0.7)
+                        : CupertinoColors.black.withOpacity(0.54),
+                    size: 22,
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          l10n.totp,
+                          style: TextStyle(
+                            color: isDark
+                                ? CupertinoColors.white.withOpacity(0.6)
+                                : CupertinoColors.black.withOpacity(0.54),
+                            fontSize: 12,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Row(
+                          children: [
+                            Text(
+                              formattedCode,
+                              style: TextStyle(
+                                color: isDark
+                                    ? CupertinoColors.white
+                                    : CupertinoColors.black,
+                                fontSize: 20,
+                                fontWeight: FontWeight.w600,
+                                fontFamily: 'Courier',
+                                letterSpacing: 2,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Text(
+                              '⏱ ${remaining}s',
+                              style: TextStyle(
+                                color: remaining <= 5
+                                    ? CupertinoColors.destructiveRed
+                                    : (isDark
+                                        ? CupertinoColors.white.withOpacity(0.6)
+                                        : CupertinoColors.black.withOpacity(0.54)),
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 6),
+                        // 进度条
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(2),
+                          child: LinearProgressIndicator(
+                            value: progress,
+                            backgroundColor: isDark
+                                ? CupertinoColors.white.withOpacity(0.1)
+                                : CupertinoColors.black.withOpacity(0.1),
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              remaining <= 5
+                                  ? CupertinoColors.destructiveRed
+                                  : CupertinoColors.activeBlue,
+                            ),
+                            minHeight: 3,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  CupertinoButton(
+                    padding: EdgeInsets.zero,
+                    child: const Icon(
+                      CupertinoIcons.doc_on_doc,
+                      color: CupertinoColors.activeBlue,
+                      size: 18,
+                    ),
+                    onPressed: () => _copyToClipboard(code, l10n.totp),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
+    } catch (e) {
+      return Padding(
+        padding: const EdgeInsets.only(left: 24, right: 24, top: 16),
+        child: _buildCard(
+          isDark: isDark,
+          children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              child: Row(
+                children: [
+                  Icon(
+                    CupertinoIcons.exclamationmark_triangle,
+                    color: CupertinoColors.destructiveRed,
+                    size: 22,
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      l10n.totpGenerationFailed,
+                      style: TextStyle(
+                        color: CupertinoColors.destructiveRed,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+  }
+
   Future<void> _openAttachment(Attachment attachment) async {
     final l10n = AppLocalizations.of(context)!;
     try {
@@ -548,5 +713,48 @@ class _DetailPanelState extends ConsumerState<DetailPanel> {
       await ref.read(vaultProvider.notifier).deleteItem(_item.id);
       widget.onDelete?.call();
     }
+  }
+}
+
+/// Toast 提示组件
+class _ToastWidget extends StatelessWidget {
+  final String message;
+
+  const _ToastWidget({required this.message});
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 60),
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+        decoration: BoxDecoration(
+          color: CupertinoColors.black.withValues(alpha: 0.85),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(
+              CupertinoIcons.checkmark_circle_fill,
+              color: CupertinoColors.white,
+              size: 20,
+            ),
+            const SizedBox(width: 8),
+            Flexible(
+              child: Text(
+                message,
+                style: const TextStyle(
+                  color: CupertinoColors.white,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w500,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }

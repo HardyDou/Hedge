@@ -51,6 +51,10 @@
 	<true/>
 	<key>NSFaceIDUsageDescription</key>
 	<string>Authenticate to unlock your secure vault.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>需要访问相机以扫描 TOTP 二维码</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>需要访问相册以选择二维码图片</string>
 	<key>LSSupportsOpeningDocumentsInPlace</key>
 	<true/>
 	<key>UISupportsDocumentBrowser</key>
