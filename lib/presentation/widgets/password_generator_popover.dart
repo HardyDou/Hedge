@@ -1,4 +1,5 @@
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hedge/l10n/generated/app_localizations.dart';
 import 'package:hedge/presentation/providers/password_generator_provider.dart';
@@ -103,6 +104,7 @@ class PasswordGeneratorPopover extends ConsumerWidget {
                       borderRadius: BorderRadius.circular(6),
                       minSize: 0,
                       onPressed: () {
+                        HapticFeedback.lightImpact();
                         ref.read(passwordGeneratorProvider.notifier).regenerate();
                       },
                       child: Row(
@@ -353,6 +355,7 @@ class PasswordGeneratorPopover extends ConsumerWidget {
   ) {
     return GestureDetector(
       onTap: () {
+        HapticFeedback.selectionClick();
         final newConfig = config.copyWith(excludeAmbiguous: !config.excludeAmbiguous);
         ref.read(passwordGeneratorProvider.notifier).updateConfig(newConfig);
       },
@@ -424,6 +427,7 @@ class PasswordGeneratorPopover extends ConsumerWidget {
               color: CupertinoColors.activeBlue,
               borderRadius: BorderRadius.circular(8),
               onPressed: () {
+                HapticFeedback.mediumImpact();
                 Navigator.of(context).pop(password);
               },
               child: Text(

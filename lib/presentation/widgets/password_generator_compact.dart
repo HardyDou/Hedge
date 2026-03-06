@@ -77,6 +77,7 @@ class PasswordGeneratorCompact extends ConsumerWidget {
                   borderRadius: BorderRadius.circular(6),
                   minSize: 0,
                   onPressed: () {
+                    HapticFeedback.lightImpact();
                     ref.read(passwordGeneratorProvider.notifier).regenerate();
                   },
                   child: Row(
@@ -107,6 +108,7 @@ class PasswordGeneratorCompact extends ConsumerWidget {
                   borderRadius: BorderRadius.circular(6),
                   minSize: 0,
                   onPressed: () {
+                    HapticFeedback.mediumImpact();
                     Clipboard.setData(
                       ClipboardData(text: state.generatedPassword),
                     );

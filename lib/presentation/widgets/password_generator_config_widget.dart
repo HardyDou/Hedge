@@ -1,4 +1,5 @@
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/services.dart';
 import '../../l10n/generated/app_localizations.dart';
 import '../../domain/models/password_generator_config.dart';
 
@@ -90,7 +91,10 @@ class PasswordGeneratorConfigWidget extends StatelessWidget {
           min: min.toDouble(),
           max: max.toDouble(),
           divisions: max - min,
-          onChanged: (newValue) => onChanged(newValue.toInt()),
+          onChanged: (newValue) {
+            HapticFeedback.selectionClick();
+            onChanged(newValue.toInt());
+          },
         ),
       ],
     );
@@ -98,13 +102,19 @@ class PasswordGeneratorConfigWidget extends StatelessWidget {
 
   Widget _buildExcludeAmbiguousOption(BuildContext context, AppLocalizations l10n) {
     return GestureDetector(
-      onTap: () => onConfigChanged(config.copyWith(excludeAmbiguous: !config.excludeAmbiguous)),
+      onTap: () {
+        HapticFeedback.selectionClick();
+        onConfigChanged(config.copyWith(excludeAmbiguous: !config.excludeAmbiguous));
+      },
       behavior: HitTestBehavior.opaque,
       child: Row(
         children: [
           CupertinoCheckbox(
             value: config.excludeAmbiguous,
-            onChanged: (value) => onConfigChanged(config.copyWith(excludeAmbiguous: value ?? false)),
+            onChanged: (value) {
+              HapticFeedback.selectionClick();
+              onConfigChanged(config.copyWith(excludeAmbiguous: value ?? false));
+            },
           ),
           const SizedBox(width: 8),
           Expanded(
