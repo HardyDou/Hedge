@@ -119,11 +119,15 @@ class PasswordGeneratorCompact extends ConsumerWidget {
                       const Icon(
                         CupertinoIcons.doc_on_clipboard,
                         size: 14,
+                        color: CupertinoColors.white,
                       ),
                       const SizedBox(width: 4),
                       Text(
                         l10n.copy,
-                        style: const TextStyle(fontSize: 12),
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: CupertinoColors.white,
+                        ),
                       ),
                     ],
                   ),
