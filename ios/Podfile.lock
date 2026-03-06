@@ -90,7 +90,6 @@ PODS:
   - mobile_scanner (5.2.3):
     - Flutter
     - GoogleMLKit/BarcodeScanning (~> 6.0.0)
-  - MTBBarcodeScanner (5.0.11)
   - nanopb (2.30910.0):
     - nanopb/decode (= 2.30910.0)
     - nanopb/encode (= 2.30910.0)
@@ -99,9 +98,6 @@ PODS:
   - open_file_ios (1.0.3):
     - Flutter
   - PromisesObjC (2.4.0)
-  - qr_code_scanner (0.2.0):
-    - Flutter
-    - MTBBarcodeScanner
   - SDWebImage (5.21.7):
     - SDWebImage/Core (= 5.21.7)
   - SDWebImage/Core (5.21.7)
@@ -122,7 +118,6 @@ DEPENDENCIES:
   - local_auth_darwin (from `.symlinks/plugins/local_auth_darwin/darwin`)
   - mobile_scanner (from `.symlinks/plugins/mobile_scanner/ios`)
   - open_file_ios (from `.symlinks/plugins/open_file_ios/ios`)
-  - qr_code_scanner (from `.symlinks/plugins/qr_code_scanner/ios`)
   - shared_preferences_foundation (from `.symlinks/plugins/shared_preferences_foundation/darwin`)
   - sqflite_darwin (from `.symlinks/plugins/sqflite_darwin/darwin`)
 
@@ -140,7 +135,6 @@ SPEC REPOS:
     - MLKitBarcodeScanning
     - MLKitCommon
     - MLKitVision
-    - MTBBarcodeScanner
     - nanopb
     - PromisesObjC
     - SDWebImage
@@ -163,8 +157,6 @@ EXTERNAL SOURCES:
     :path: ".symlinks/plugins/mobile_scanner/ios"
   open_file_ios:
     :path: ".symlinks/plugins/open_file_ios/ios"
-  qr_code_scanner:
-    :path: ".symlinks/plugins/qr_code_scanner/ios"
   shared_preferences_foundation:
     :path: ".symlinks/plugins/shared_preferences_foundation/darwin"
   sqflite_darwin:
@@ -190,11 +182,9 @@ SPEC CHECKSUMS:
   MLKitCommon: afec63980417d29ffbb4790529a1b0a2291699e1
   MLKitVision: e858c5f125ecc288e4a31127928301eaba9ae0c1
   mobile_scanner: 92e8812bf22a8f84131e2a7f9d0f44dad1a4742b
-  MTBBarcodeScanner: f453b33c4b7dfe545d8c6484ed744d55671788cb
   nanopb: 438bc412db1928dac798aa6fd75726007be04262
   open_file_ios: 46184d802ee7959203f6392abcfa0dd49fdb5be0
   PromisesObjC: f5707f49cb48b9636751c5b2e7d227e43fba9f47
-  qr_code_scanner: d77f94ecc9abf96d9b9b8fc04ef13f611e5a147a
   SDWebImage: e9fc87c1aab89a8ab1bbd74eba378c6f53be8abf
   shared_preferences_foundation: 7036424c3d8ec98dfe75ff1667cb0cd531ec82bb
   sqflite_darwin: 20b2a3a3b70e43edae938624ce550a3cbf66a3d0
