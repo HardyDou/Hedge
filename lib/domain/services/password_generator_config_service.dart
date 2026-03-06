@@ -30,13 +30,19 @@ class PasswordGeneratorConfigService {
           data.containsKey('includeNumbers') ||
           data.containsKey('includeSymbols')) {
         // 旧版本配置，迁移到新版本
-        return _migrateOldConfig(data);
+        final migratedConfig = _migrateOldConfig(data);
+        // 立即保存迁移后的配置
+        await saveConfig(migratedConfig);
+        return migratedConfig;
       }
 
       return PasswordGeneratorConfig.fromJson(data);
     } catch (e) {
-      // 如果解析失败，返回默认配置
-      return PasswordGeneratorConfig.defaultConfig();
+      // 如果解析失败，清除旧配置并返回默认配置
+      await prefs.remove(_key);
+      final defaultConfig = PasswordGeneratorConfig.defaultConfig();
+      await saveConfig(defaultConfig);
+      return defaultConfig;
     }
   }
 
@@ -57,5 +63,11 @@ class PasswordGeneratorConfigService {
       symbolsCount: symbolsCount,
       excludeAmbiguous: excludeAmbiguous,
     );
+  }
+
+  /// 清除配置（用于调试）
+  static Future<void> clearConfig() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_key);
   }
 }
