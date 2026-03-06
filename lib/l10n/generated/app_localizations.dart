@@ -1136,6 +1136,12 @@ abstract class AppLocalizations {
   /// **'Error'**
   String get error;
 
+  /// No description provided for @retry.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry'**
+  String get retry;
+
   /// No description provided for @addTotpHint.
   ///
   /// In en, this message translates to:
@@ -1159,6 +1165,156 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Image recognition not supported yet, please enter TOTP Secret manually'**
   String get manualInputHint;
+
+  /// No description provided for @passwordGenerator.
+  ///
+  /// In en, this message translates to:
+  /// **'Password Generator'**
+  String get passwordGenerator;
+
+  /// No description provided for @generate.
+  ///
+  /// In en, this message translates to:
+  /// **'Generate'**
+  String get generate;
+
+  /// No description provided for @regenerate.
+  ///
+  /// In en, this message translates to:
+  /// **'Regenerate'**
+  String get regenerate;
+
+  /// No description provided for @useThisPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Use This Password'**
+  String get useThisPassword;
+
+  /// No description provided for @generatedPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Generated Password'**
+  String get generatedPassword;
+
+  /// No description provided for @passwordStrength.
+  ///
+  /// In en, this message translates to:
+  /// **'Password Strength'**
+  String get passwordStrength;
+
+  /// No description provided for @strengthWeak.
+  ///
+  /// In en, this message translates to:
+  /// **'Weak'**
+  String get strengthWeak;
+
+  /// No description provided for @strengthMedium.
+  ///
+  /// In en, this message translates to:
+  /// **'Medium'**
+  String get strengthMedium;
+
+  /// No description provided for @strengthStrong.
+  ///
+  /// In en, this message translates to:
+  /// **'Strong'**
+  String get strengthStrong;
+
+  /// No description provided for @strengthVeryStrong.
+  ///
+  /// In en, this message translates to:
+  /// **'Very Strong'**
+  String get strengthVeryStrong;
+
+  /// No description provided for @passwordLength.
+  ///
+  /// In en, this message translates to:
+  /// **'Length'**
+  String get passwordLength;
+
+  /// No description provided for @includeUppercase.
+  ///
+  /// In en, this message translates to:
+  /// **'Uppercase (A-Z)'**
+  String get includeUppercase;
+
+  /// No description provided for @includeLowercase.
+  ///
+  /// In en, this message translates to:
+  /// **'Lowercase (a-z)'**
+  String get includeLowercase;
+
+  /// No description provided for @includeNumbers.
+  ///
+  /// In en, this message translates to:
+  /// **'Numbers (0-9)'**
+  String get includeNumbers;
+
+  /// No description provided for @includeSymbols.
+  ///
+  /// In en, this message translates to:
+  /// **'Symbols (!@#\$...)'**
+  String get includeSymbols;
+
+  /// No description provided for @excludeAmbiguous.
+  ///
+  /// In en, this message translates to:
+  /// **'Exclude Ambiguous Characters'**
+  String get excludeAmbiguous;
+
+  /// No description provided for @excludeAmbiguousHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Exclude 0/O, 1/l/I'**
+  String get excludeAmbiguousHint;
+
+  /// No description provided for @passwordCopiedToClipboard.
+  ///
+  /// In en, this message translates to:
+  /// **'Password copied to clipboard'**
+  String get passwordCopiedToClipboard;
+
+  /// No description provided for @atLeastOneCharType.
+  ///
+  /// In en, this message translates to:
+  /// **'Select at least one character type'**
+  String get atLeastOneCharType;
+
+  /// No description provided for @suggestionIncreaseLength.
+  ///
+  /// In en, this message translates to:
+  /// **'Increase length to 12+ characters'**
+  String get suggestionIncreaseLength;
+
+  /// No description provided for @suggestionAddSymbols.
+  ///
+  /// In en, this message translates to:
+  /// **'Add special symbols'**
+  String get suggestionAddSymbols;
+
+  /// No description provided for @suggestionMoreTypes.
+  ///
+  /// In en, this message translates to:
+  /// **'Use more character types'**
+  String get suggestionMoreTypes;
+
+  /// No description provided for @suggestionGood.
+  ///
+  /// In en, this message translates to:
+  /// **'Password strength is good'**
+  String get suggestionGood;
+
+  /// No description provided for @use.
+  ///
+  /// In en, this message translates to:
+  /// **'Use'**
+  String get use;
+
+  /// No description provided for @config.
+  ///
+  /// In en, this message translates to:
+  /// **'Config'**
+  String get config;
 }
 
 class _AppLocalizationsDelegate

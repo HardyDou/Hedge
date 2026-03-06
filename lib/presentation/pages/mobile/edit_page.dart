@@ -8,6 +8,7 @@ import 'package:hedge/src/dart/vault.dart';
 import 'package:hedge/presentation/widgets/markdown_toolbar.dart';
 import 'package:hedge/presentation/pages/mobile/qr_scanner_page.dart';
 import 'package:hedge/domain/services/qr_scanner_service.dart';
+import 'package:hedge/presentation/widgets/password_generator_sheet.dart';
 import '../../providers/vault_provider.dart';
 
 class EditPage extends ConsumerStatefulWidget {
@@ -143,6 +144,15 @@ class _EditPageState extends ConsumerState<EditPage> {
                   isDark: isDark,
                   isPassword: true,
                   showPasswordToggle: true,
+                  showGenerateButton: true,
+                  onGeneratePassword: () async {
+                    final password = await PasswordGeneratorSheet.show(context);
+                    if (password != null) {
+                      setState(() {
+                        _passwordController.text = password;
+                      });
+                    }
+                  },
                 ),
                 _iOSTextField(
                   label: l10n.url,
@@ -543,6 +553,8 @@ class _iOSTextField extends StatefulWidget {
   final bool isDark;
   final bool isPassword;
   final bool showPasswordToggle;
+  final bool showGenerateButton;
+  final VoidCallback? onGeneratePassword;
   final int maxLines;
   final bool showDivider;
 
@@ -554,6 +566,8 @@ class _iOSTextField extends StatefulWidget {
     required this.isDark,
     this.isPassword = false,
     this.showPasswordToggle = false,
+    this.showGenerateButton = false,
+    this.onGeneratePassword,
     this.maxLines = 1,
     this.showDivider = true,
   });
@@ -621,6 +635,18 @@ class _iOSTextFieldState extends State<_iOSTextField> {
                     decoration: const BoxDecoration(),
                   ),
                 ),
+                if (widget.showGenerateButton)
+                  Padding(
+                    padding: const EdgeInsets.only(left: 8),
+                    child: GestureDetector(
+                      onTap: widget.onGeneratePassword,
+                      child: Icon(
+                        CupertinoIcons.wand_stars,
+                        color: CupertinoColors.activeBlue,
+                        size: 20,
+                      ),
+                    ),
+                  ),
                 if (widget.showPasswordToggle)
                   GestureDetector(
                     onTap: () {

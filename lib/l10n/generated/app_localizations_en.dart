@@ -563,6 +563,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get error => 'Error';
 
   @override
+  String get retry => 'Retry';
+
+  @override
   String get addTotpHint => 'Select an image containing a TOTP QR code';
 
   @override
@@ -574,4 +577,79 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get manualInputHint =>
       'Image recognition not supported yet, please enter TOTP Secret manually';
+
+  @override
+  String get passwordGenerator => 'Password Generator';
+
+  @override
+  String get generate => 'Generate';
+
+  @override
+  String get regenerate => 'Regenerate';
+
+  @override
+  String get useThisPassword => 'Use This Password';
+
+  @override
+  String get generatedPassword => 'Generated Password';
+
+  @override
+  String get passwordStrength => 'Password Strength';
+
+  @override
+  String get strengthWeak => 'Weak';
+
+  @override
+  String get strengthMedium => 'Medium';
+
+  @override
+  String get strengthStrong => 'Strong';
+
+  @override
+  String get strengthVeryStrong => 'Very Strong';
+
+  @override
+  String get passwordLength => 'Length';
+
+  @override
+  String get includeUppercase => 'Uppercase (A-Z)';
+
+  @override
+  String get includeLowercase => 'Lowercase (a-z)';
+
+  @override
+  String get includeNumbers => 'Numbers (0-9)';
+
+  @override
+  String get includeSymbols => 'Symbols (!@#\$...)';
+
+  @override
+  String get excludeAmbiguous => 'Exclude Ambiguous Characters';
+
+  @override
+  String get excludeAmbiguousHint => 'Exclude 0/O, 1/l/I';
+
+  @override
+  String get passwordCopiedToClipboard => 'Password copied to clipboard';
+
+  @override
+  String get atLeastOneCharType => 'Select at least one character type';
+
+  @override
+  String get suggestionIncreaseLength => 'Increase length to 12+ characters';
+
+  @override
+  String get suggestionAddSymbols => 'Add special symbols';
+
+  @override
+  String get suggestionMoreTypes => 'Use more character types';
+
+  @override
+  String get suggestionGood => 'Password strength is good';
+
+  @override
+  String get use => 'Use';
+
+  @override
+  String get config => 'Config';
 }
