@@ -31,7 +31,7 @@ class PasswordGeneratorCompact extends ConsumerWidget {
     PasswordGeneratorState state,
   ) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: CupertinoColors.systemBackground.resolveFrom(context),
         borderRadius: BorderRadius.circular(12),
@@ -43,63 +43,69 @@ class PasswordGeneratorCompact extends ConsumerWidget {
           // 标题
           Row(
             children: [
-              const Icon(
+              Icon(
                 CupertinoIcons.lock_shield,
-                size: 18,
+                size: 16,
+                color: CupertinoColors.label.resolveFrom(context),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: 6),
               Text(
                 l10n.passwordGenerator,
-                style: const TextStyle(
-                  fontSize: 15,
+                style: TextStyle(
+                  fontSize: 13,
                   fontWeight: FontWeight.w600,
+                  color: CupertinoColors.label.resolveFrom(context),
                 ),
               ),
             ],
           ),
 
-          const SizedBox(height: 12),
+          const SizedBox(height: 10),
 
           // 密码显示
           _buildPasswordDisplay(context, ref, state.generatedPassword),
 
-          const SizedBox(height: 12),
+          const SizedBox(height: 10),
 
           // 快捷操作按钮
           Row(
             children: [
               Expanded(
                 child: CupertinoButton(
-                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  padding: const EdgeInsets.symmetric(vertical: 6),
                   color: CupertinoColors.systemGrey5.resolveFrom(context),
+                  borderRadius: BorderRadius.circular(6),
+                  minSize: 0,
                   onPressed: () {
                     ref.read(passwordGeneratorProvider.notifier).regenerate();
                   },
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(
+                      Icon(
                         CupertinoIcons.arrow_clockwise,
-                        size: 16,
-                        color: CupertinoColors.label,
+                        size: 14,
+                        color: CupertinoColors.label.resolveFrom(context),
                       ),
                       const SizedBox(width: 4),
                       Text(
                         l10n.regenerate,
-                        style: const TextStyle(
-                          fontSize: 13,
-                          color: CupertinoColors.label,
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: CupertinoColors.label.resolveFrom(context),
                         ),
                       ),
                     ],
                   ),
                 ),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: 6),
               Expanded(
                 child: CupertinoButton(
-                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  padding: const EdgeInsets.symmetric(vertical: 6),
                   color: CupertinoColors.activeBlue,
+                  borderRadius: BorderRadius.circular(6),
+                  minSize: 0,
                   onPressed: () {
                     Clipboard.setData(
                       ClipboardData(text: state.generatedPassword),
@@ -112,12 +118,12 @@ class PasswordGeneratorCompact extends ConsumerWidget {
                     children: [
                       const Icon(
                         CupertinoIcons.doc_on_clipboard,
-                        size: 16,
+                        size: 14,
                       ),
                       const SizedBox(width: 4),
-                      Text(
-                        l10n.copy,
-                        style: const TextStyle(fontSize: 13),
+                      const Text(
+                        '复制',
+                        style: TextStyle(fontSize: 12),
                       ),
                     ],
                   ),
@@ -126,7 +132,7 @@ class PasswordGeneratorCompact extends ConsumerWidget {
             ],
           ),
 
-          const SizedBox(height: 12),
+          const SizedBox(height: 10),
 
           // 长度调整
           _buildLengthControl(context, ref, l10n, state.config.length),
@@ -141,17 +147,18 @@ class PasswordGeneratorCompact extends ConsumerWidget {
     String password,
   ) {
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
         color: CupertinoColors.systemGrey6.resolveFrom(context),
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(6),
       ),
       child: Text(
         password,
-        style: const TextStyle(
-          fontSize: 16,
+        style: TextStyle(
+          fontSize: 14,
           fontFamily: 'Courier',
           fontWeight: FontWeight.w500,
+          color: CupertinoColors.label.resolveFrom(context),
         ),
         textAlign: TextAlign.center,
       ),
@@ -168,7 +175,10 @@ class PasswordGeneratorCompact extends ConsumerWidget {
       children: [
         Text(
           l10n.passwordLength,
-          style: const TextStyle(fontSize: 13),
+          style: TextStyle(
+            fontSize: 12,
+            color: CupertinoColors.secondaryLabel.resolveFrom(context),
+          ),
         ),
         const Spacer(),
         CupertinoButton(
@@ -184,41 +194,42 @@ class PasswordGeneratorCompact extends ConsumerWidget {
                 }
               : null,
           child: Container(
-            width: 28,
-            height: 28,
+            width: 24,
+            height: 24,
             decoration: BoxDecoration(
               color: length > 8
                   ? CupertinoColors.systemGrey5.resolveFrom(context)
                   : CupertinoColors.systemGrey6.resolveFrom(context),
-              borderRadius: BorderRadius.circular(6),
+              borderRadius: BorderRadius.circular(5),
             ),
             child: Icon(
               CupertinoIcons.minus,
-              size: 16,
+              size: 14,
               color: length > 8
                   ? CupertinoColors.label.resolveFrom(context)
-                  : CupertinoColors.systemGrey3.resolveFrom(context),
+                  : CupertinoColors.tertiaryLabel.resolveFrom(context),
             ),
           ),
         ),
-        const SizedBox(width: 12),
+        const SizedBox(width: 10),
         Container(
-          width: 40,
-          padding: const EdgeInsets.symmetric(vertical: 4),
+          width: 36,
+          padding: const EdgeInsets.symmetric(vertical: 3),
           decoration: BoxDecoration(
             color: CupertinoColors.systemGrey6.resolveFrom(context),
-            borderRadius: BorderRadius.circular(6),
+            borderRadius: BorderRadius.circular(5),
           ),
           child: Text(
             '$length',
-            style: const TextStyle(
-              fontSize: 15,
+            style: TextStyle(
+              fontSize: 13,
               fontWeight: FontWeight.w600,
+              color: CupertinoColors.label.resolveFrom(context),
             ),
             textAlign: TextAlign.center,
           ),
         ),
-        const SizedBox(width: 12),
+        const SizedBox(width: 10),
         CupertinoButton(
           padding: EdgeInsets.zero,
           minSize: 0,
@@ -232,20 +243,20 @@ class PasswordGeneratorCompact extends ConsumerWidget {
                 }
               : null,
           child: Container(
-            width: 28,
-            height: 28,
+            width: 24,
+            height: 24,
             decoration: BoxDecoration(
               color: length < 64
                   ? CupertinoColors.systemGrey5.resolveFrom(context)
                   : CupertinoColors.systemGrey6.resolveFrom(context),
-              borderRadius: BorderRadius.circular(6),
+              borderRadius: BorderRadius.circular(5),
             ),
             child: Icon(
               CupertinoIcons.plus,
-              size: 16,
+              size: 14,
               color: length < 64
                   ? CupertinoColors.label.resolveFrom(context)
-                  : CupertinoColors.systemGrey3.resolveFrom(context),
+                  : CupertinoColors.tertiaryLabel.resolveFrom(context),
             ),
           ),
         ),
@@ -259,10 +270,10 @@ class PasswordGeneratorCompact extends ConsumerWidget {
       barrierDismissible: true,
       builder: (context) => Center(
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
           decoration: BoxDecoration(
             color: CupertinoColors.systemBackground.resolveFrom(context),
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(10),
             boxShadow: [
               BoxShadow(
                 color: CupertinoColors.black.withOpacity(0.2),
@@ -274,14 +285,17 @@ class PasswordGeneratorCompact extends ConsumerWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               const Icon(
-                CupertinoIcons.check_mark_circled_solid,
+                CupertinoIcons.checkmark_circle_fill,
                 color: CupertinoColors.activeGreen,
-                size: 24,
+                size: 20,
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 10),
               Text(
                 l10n.copied(l10n.password),
-                style: const TextStyle(fontSize: 15),
+                style: TextStyle(
+                  fontSize: 13,
+                  color: CupertinoColors.label.resolveFrom(context),
+                ),
               ),
             ],
           ),

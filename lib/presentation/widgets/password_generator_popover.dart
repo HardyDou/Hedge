@@ -33,8 +33,8 @@ class PasswordGeneratorPopover extends ConsumerWidget {
 
     return Center(
       child: Container(
-        width: 480,
-        constraints: const BoxConstraints(maxHeight: 600),
+        width: 420,
+        constraints: const BoxConstraints(maxHeight: 520),
         decoration: BoxDecoration(
           color: CupertinoColors.systemBackground.resolveFrom(context),
           borderRadius: BorderRadius.circular(12),
@@ -79,7 +79,7 @@ class PasswordGeneratorPopover extends ConsumerWidget {
         // 内容区域
         Flexible(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
+            padding: const EdgeInsets.all(16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
@@ -88,33 +88,41 @@ class PasswordGeneratorPopover extends ConsumerWidget {
                   password: state.generatedPassword,
                 ),
 
-                const SizedBox(height: 8),
+                const SizedBox(height: 6),
 
                 // 重新生成按钮
                 CupertinoButton(
                   padding: EdgeInsets.zero,
+                  minSize: 0,
                   onPressed: () {
                     ref.read(passwordGeneratorProvider.notifier).regenerate();
                   },
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(
+                      Icon(
                         CupertinoIcons.arrow_clockwise,
-                        size: 16,
+                        size: 14,
+                        color: CupertinoColors.activeBlue.resolveFrom(context),
                       ),
                       const SizedBox(width: 4),
-                      Text(l10n.regenerate),
+                      Text(
+                        l10n.regenerate,
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: CupertinoColors.activeBlue.resolveFrom(context),
+                        ),
+                      ),
                     ],
                   ),
                 ),
 
-                const SizedBox(height: 16),
+                const SizedBox(height: 12),
 
                 // 强度指示器
                 PasswordStrengthIndicator(strength: state.strength),
 
-                const SizedBox(height: 24),
+                const SizedBox(height: 16),
 
                 // 配置选项 - 桌面端布局
                 _buildDesktopConfig(context, ref, l10n, state.config),
@@ -136,29 +144,32 @@ class PasswordGeneratorPopover extends ConsumerWidget {
 
   Widget _buildHeader(BuildContext context, AppLocalizations l10n) {
     return Padding(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       child: Row(
         children: [
-          const Icon(
+          Icon(
             CupertinoIcons.lock_shield,
-            size: 20,
+            size: 18,
+            color: CupertinoColors.label.resolveFrom(context),
           ),
           const SizedBox(width: 8),
           Text(
             l10n.passwordGenerator,
-            style: const TextStyle(
-              fontSize: 17,
+            style: TextStyle(
+              fontSize: 15,
               fontWeight: FontWeight.w600,
+              color: CupertinoColors.label.resolveFrom(context),
             ),
           ),
           const Spacer(),
           CupertinoButton(
             padding: EdgeInsets.zero,
+            minSize: 0,
             onPressed: () => Navigator.of(context).pop(),
-            child: const Icon(
+            child: Icon(
               CupertinoIcons.xmark_circle_fill,
-              color: CupertinoColors.systemGrey,
-              size: 20,
+              color: CupertinoColors.systemGrey.resolveFrom(context),
+              size: 18,
             ),
           ),
         ],
@@ -178,20 +189,21 @@ class PasswordGeneratorPopover extends ConsumerWidget {
         // 长度滑块
         _buildLengthSlider(context, ref, l10n, config),
 
-        const SizedBox(height: 24),
+        const SizedBox(height: 16),
 
         // 字符类型选项 - 双列布局
         Text(
-          l10n.passwordLength,
-          style: const TextStyle(
-            fontSize: 15,
+          '字符类型',
+          style: TextStyle(
+            fontSize: 13,
             fontWeight: FontWeight.w600,
+            color: CupertinoColors.label.resolveFrom(context),
           ),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 8),
         _buildCharacterOptions(context, ref, l10n, config),
 
-        const SizedBox(height: 16),
+        const SizedBox(height: 12),
 
         // 排除易混淆字符
         _buildExcludeAmbiguousOption(context, ref, l10n, config),
@@ -213,28 +225,30 @@ class PasswordGeneratorPopover extends ConsumerWidget {
           children: [
             Text(
               l10n.passwordLength,
-              style: const TextStyle(
-                fontSize: 15,
+              style: TextStyle(
+                fontSize: 13,
                 fontWeight: FontWeight.w600,
+                color: CupertinoColors.label.resolveFrom(context),
               ),
             ),
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
               decoration: BoxDecoration(
                 color: CupertinoColors.systemGrey6.resolveFrom(context),
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(6),
               ),
               child: Text(
                 '${config.length}',
-                style: const TextStyle(
-                  fontSize: 17,
+                style: TextStyle(
+                  fontSize: 15,
                   fontWeight: FontWeight.w600,
+                  color: CupertinoColors.label.resolveFrom(context),
                 ),
               ),
             ),
           ],
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 6),
         CupertinoSlider(
           value: config.length.toDouble(),
           min: 8,
@@ -251,15 +265,15 @@ class PasswordGeneratorPopover extends ConsumerWidget {
             Text(
               '8',
               style: TextStyle(
-                fontSize: 12,
-                color: CupertinoColors.systemGrey.resolveFrom(context),
+                fontSize: 11,
+                color: CupertinoColors.secondaryLabel.resolveFrom(context),
               ),
             ),
             Text(
               '64',
               style: TextStyle(
-                fontSize: 12,
-                color: CupertinoColors.systemGrey.resolveFrom(context),
+                fontSize: 11,
+                color: CupertinoColors.secondaryLabel.resolveFrom(context),
               ),
             ),
           ],
@@ -290,7 +304,7 @@ class PasswordGeneratorPopover extends ConsumerWidget {
                 },
               ),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: 8),
             Expanded(
               child: _buildCheckbox(
                 context,
@@ -305,7 +319,7 @@ class PasswordGeneratorPopover extends ConsumerWidget {
             ),
           ],
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 8),
         Row(
           children: [
             Expanded(
@@ -320,7 +334,7 @@ class PasswordGeneratorPopover extends ConsumerWidget {
                 },
               ),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: 8),
             Expanded(
               child: _buildCheckbox(
                 context,
@@ -349,35 +363,38 @@ class PasswordGeneratorPopover extends ConsumerWidget {
     return GestureDetector(
       onTap: () => onChanged(!value),
       child: Container(
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
         decoration: BoxDecoration(
           color: value
               ? CupertinoColors.activeBlue.withOpacity(0.1)
               : CupertinoColors.systemGrey6.resolveFrom(context),
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(6),
           border: Border.all(
             color: value
                 ? CupertinoColors.activeBlue
-                : CupertinoColors.systemGrey4.resolveFrom(context),
-            width: value ? 2 : 1,
+                : CupertinoColors.separator.resolveFrom(context),
+            width: value ? 1.5 : 0.5,
           ),
         ),
         child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(
-              value ? CupertinoIcons.check_mark_circled_solid : CupertinoIcons.circle,
-              color: value ? CupertinoColors.activeBlue : CupertinoColors.systemGrey,
-              size: 20,
+              value ? CupertinoIcons.checkmark_circle_fill : CupertinoIcons.circle,
+              color: value
+                  ? CupertinoColors.activeBlue
+                  : CupertinoColors.secondaryLabel.resolveFrom(context),
+              size: 16,
             ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Text(
-                label,
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: value ? FontWeight.w600 : FontWeight.normal,
-                  color: value ? CupertinoColors.activeBlue : null,
-                ),
+            const SizedBox(width: 6),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: value ? FontWeight.w600 : FontWeight.normal,
+                color: value
+                    ? CupertinoColors.activeBlue
+                    : CupertinoColors.label.resolveFrom(context),
               ),
             ),
           ],
@@ -398,27 +415,30 @@ class PasswordGeneratorPopover extends ConsumerWidget {
         ref.read(passwordGeneratorProvider.notifier).updateConfig(newConfig);
       },
       child: Container(
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
         decoration: BoxDecoration(
           color: CupertinoColors.systemGrey6.resolveFrom(context),
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(6),
         ),
         child: Row(
           children: [
             Icon(
               config.excludeAmbiguous
-                  ? CupertinoIcons.check_mark_circled_solid
+                  ? CupertinoIcons.checkmark_circle_fill
                   : CupertinoIcons.circle,
               color: config.excludeAmbiguous
                   ? CupertinoColors.activeBlue
-                  : CupertinoColors.systemGrey,
-              size: 20,
+                  : CupertinoColors.secondaryLabel.resolveFrom(context),
+              size: 16,
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: 6),
             Expanded(
               child: Text(
                 l10n.excludeAmbiguous,
-                style: const TextStyle(fontSize: 14),
+                style: TextStyle(
+                  fontSize: 13,
+                  color: CupertinoColors.label.resolveFrom(context),
+                ),
               ),
             ),
           ],
@@ -434,34 +454,38 @@ class PasswordGeneratorPopover extends ConsumerWidget {
     String password,
   ) {
     return Padding(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(12),
       child: Row(
         children: [
           Expanded(
             child: CupertinoButton(
-              padding: const EdgeInsets.symmetric(vertical: 12),
-              color: CupertinoColors.systemGrey5,
+              padding: const EdgeInsets.symmetric(vertical: 10),
+              color: CupertinoColors.systemGrey5.resolveFrom(context),
+              borderRadius: BorderRadius.circular(8),
               onPressed: () => Navigator.of(context).pop(),
               child: Text(
                 l10n.cancel,
-                style: const TextStyle(
-                  color: CupertinoColors.label,
+                style: TextStyle(
+                  fontSize: 14,
+                  color: CupertinoColors.label.resolveFrom(context),
                   fontWeight: FontWeight.w600,
                 ),
               ),
             ),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 8),
           Expanded(
             child: CupertinoButton(
-              padding: const EdgeInsets.symmetric(vertical: 12),
+              padding: const EdgeInsets.symmetric(vertical: 10),
               color: CupertinoColors.activeBlue,
+              borderRadius: BorderRadius.circular(8),
               onPressed: () {
                 Navigator.of(context).pop(password);
               },
               child: Text(
                 l10n.use,
                 style: const TextStyle(
+                  fontSize: 14,
                   fontWeight: FontWeight.w600,
                 ),
               ),
