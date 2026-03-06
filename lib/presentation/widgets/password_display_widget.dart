@@ -29,10 +29,14 @@ class _PasswordDisplayWidgetState extends State<PasswordDisplayWidget> {
     final l10n = AppLocalizations.of(context)!;
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: CupertinoColors.systemGrey6.resolveFrom(context),
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(
+          color: CupertinoColors.separator.resolveFrom(context),
+          width: 0.5,
+        ),
       ),
       child: Row(
         children: [
@@ -40,17 +44,18 @@ class _PasswordDisplayWidgetState extends State<PasswordDisplayWidget> {
           Expanded(
             child: Text(
               _isVisible ? widget.password : '•' * widget.password.length,
-              style: const TextStyle(
+              style: TextStyle(
                 fontFamily: 'Courier',
-                fontSize: 16,
-                fontWeight: FontWeight.w500,
-                letterSpacing: 1.2,
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+                letterSpacing: 1.5,
+                color: CupertinoColors.label.resolveFrom(context),
               ),
-              maxLines: 1,
+              maxLines: 2,
               overflow: TextOverflow.ellipsis,
             ),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: 12),
           // 显示/隐藏按钮
           if (widget.showVisibilityToggle)
             CupertinoButton(
@@ -64,7 +69,7 @@ class _PasswordDisplayWidgetState extends State<PasswordDisplayWidget> {
               child: Icon(
                 _isVisible ? CupertinoIcons.eye_slash : CupertinoIcons.eye,
                 size: 20,
-                color: CupertinoColors.systemGrey,
+                color: CupertinoColors.secondaryLabel.resolveFrom(context),
               ),
             ),
           // 复制按钮
@@ -79,30 +84,68 @@ class _PasswordDisplayWidgetState extends State<PasswordDisplayWidget> {
                   widget.onCopy!();
                 }
                 if (context.mounted) {
-                  // 显示复制成功提示
-                  showCupertinoDialog(
-                    context: context,
-                    barrierDismissible: true,
-                    builder: (context) => CupertinoAlertDialog(
-                      content: Text(l10n.passwordCopiedToClipboard),
-                      actions: [
-                        CupertinoDialogAction(
-                          child: Text(l10n.ok),
-                          onPressed: () => Navigator.of(context).pop(),
-                        ),
-                      ],
-                    ),
-                  );
+                  _showCopiedToast(context, l10n);
                 }
               },
-              child: const Icon(
+              child: Icon(
                 CupertinoIcons.doc_on_clipboard,
                 size: 20,
-                color: CupertinoColors.activeBlue,
+                color: CupertinoColors.activeBlue.resolveFrom(context),
               ),
             ),
         ],
       ),
     );
+  }
+
+  void _showCopiedToast(BuildContext context, AppLocalizations l10n) {
+    final overlay = Overlay.of(context);
+    final overlayEntry = OverlayEntry(
+      builder: (context) => Positioned(
+        top: 80,
+        left: 0,
+        right: 0,
+        child: Center(
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+            decoration: BoxDecoration(
+              color: CupertinoColors.systemGreen.withOpacity(0.95),
+              borderRadius: BorderRadius.circular(10),
+              boxShadow: [
+                BoxShadow(
+                  color: CupertinoColors.black.withOpacity(0.2),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(
+                  CupertinoIcons.checkmark_circle_fill,
+                  color: CupertinoColors.white,
+                  size: 20,
+                ),
+                const SizedBox(width: 10),
+                Text(
+                  l10n.passwordCopiedToClipboard,
+                  style: const TextStyle(
+                    color: CupertinoColors.white,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+
+    overlay.insert(overlayEntry);
+    Future.delayed(const Duration(milliseconds: 1200), () {
+      overlayEntry.remove();
+    });
   }
 }
