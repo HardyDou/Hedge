@@ -20,11 +20,35 @@ class PasswordGeneratorConfigWidget extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // 长度控制
-        _buildLengthControl(context, l10n),
+        // 长度滑块
+        _buildSlider(
+          context,
+          l10n.passwordLength,
+          config.length,
+          8,
+          64,
+          (value) => onConfigChanged(config.copyWith(length: value)),
+        ),
         const SizedBox(height: 16),
-        // 字符类型选项
-        _buildCharacterTypeOptions(context, l10n),
+        // 数字数量滑块
+        _buildSlider(
+          context,
+          '数字',
+          config.numbersCount,
+          0,
+          config.length,
+          (value) => onConfigChanged(config.copyWith(numbersCount: value)),
+        ),
+        const SizedBox(height: 16),
+        // 符号数量滑块
+        _buildSlider(
+          context,
+          '符号',
+          config.symbolsCount,
+          0,
+          config.length,
+          (value) => onConfigChanged(config.copyWith(symbolsCount: value)),
+        ),
         const SizedBox(height: 12),
         // 排除易混淆字符
         _buildExcludeAmbiguousOption(context, l10n),
@@ -32,117 +56,60 @@ class PasswordGeneratorConfigWidget extends StatelessWidget {
     );
   }
 
-  Widget _buildLengthControl(BuildContext context, AppLocalizations l10n) {
-    return Row(
+  Widget _buildSlider(
+    BuildContext context,
+    String label,
+    int value,
+    int min,
+    int max,
+    ValueChanged<int> onChanged,
+  ) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          '${l10n.passwordLength}: ${config.length}',
-          style: const TextStyle(fontSize: 16),
-        ),
-        const Spacer(),
-        // 减少按钮
-        CupertinoButton(
-          padding: EdgeInsets.zero,
-          minSize: 32,
-          onPressed: config.length > 8
-              ? () {
-                  onConfigChanged(config.copyWith(length: config.length - 1));
-                }
-              : null,
-          child: const Icon(CupertinoIcons.minus_circle, size: 28),
-        ),
-        const SizedBox(width: 8),
-        // 显示当前长度
-        SizedBox(
-          width: 40,
-          child: Center(
-            child: Text(
-              '${config.length}',
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              label,
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+            ),
+            Text(
+              '$value',
               style: const TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w600,
+                color: CupertinoColors.activeBlue,
               ),
             ),
-          ),
-        ),
-        const SizedBox(width: 8),
-        // 增加按钮
-        CupertinoButton(
-          padding: EdgeInsets.zero,
-          minSize: 32,
-          onPressed: config.length < 64
-              ? () {
-                  onConfigChanged(config.copyWith(length: config.length + 1));
-                }
-              : null,
-          child: const Icon(CupertinoIcons.plus_circle, size: 28),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildCharacterTypeOptions(BuildContext context, AppLocalizations l10n) {
-    return Column(
-      children: [
-        _buildCheckboxRow(
-          context,
-          l10n.includeUppercase,
-          config.includeUppercase,
-          (value) => onConfigChanged(config.copyWith(includeUppercase: value)),
+          ],
         ),
         const SizedBox(height: 8),
-        _buildCheckboxRow(
-          context,
-          l10n.includeLowercase,
-          config.includeLowercase,
-          (value) => onConfigChanged(config.copyWith(includeLowercase: value)),
-        ),
-        const SizedBox(height: 8),
-        _buildCheckboxRow(
-          context,
-          l10n.includeNumbers,
-          config.includeNumbers,
-          (value) => onConfigChanged(config.copyWith(includeNumbers: value)),
-        ),
-        const SizedBox(height: 8),
-        _buildCheckboxRow(
-          context,
-          l10n.includeSymbols,
-          config.includeSymbols,
-          (value) => onConfigChanged(config.copyWith(includeSymbols: value)),
+        CupertinoSlider(
+          value: value.toDouble(),
+          min: min.toDouble(),
+          max: max.toDouble(),
+          divisions: max - min,
+          onChanged: (newValue) => onChanged(newValue.toInt()),
         ),
       ],
     );
   }
 
   Widget _buildExcludeAmbiguousOption(BuildContext context, AppLocalizations l10n) {
-    return _buildCheckboxRow(
-      context,
-      '${l10n.excludeAmbiguous} (${l10n.excludeAmbiguousHint})',
-      config.excludeAmbiguous,
-      (value) => onConfigChanged(config.copyWith(excludeAmbiguous: value)),
-    );
-  }
-
-  Widget _buildCheckboxRow(
-    BuildContext context,
-    String label,
-    bool value,
-    ValueChanged<bool> onChanged,
-  ) {
     return GestureDetector(
-      onTap: () => onChanged(!value),
+      onTap: () => onConfigChanged(config.copyWith(excludeAmbiguous: !config.excludeAmbiguous)),
       behavior: HitTestBehavior.opaque,
       child: Row(
         children: [
           CupertinoCheckbox(
-            value: value,
-            onChanged: (newValue) => onChanged(newValue ?? false),
+            value: config.excludeAmbiguous,
+            onChanged: (value) => onConfigChanged(config.copyWith(excludeAmbiguous: value ?? false)),
           ),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
-              label,
+              '${l10n.excludeAmbiguous} (${l10n.excludeAmbiguousHint})',
               style: const TextStyle(fontSize: 15),
             ),
           ),

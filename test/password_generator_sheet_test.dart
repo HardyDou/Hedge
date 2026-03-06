@@ -69,10 +69,8 @@ void main() {
       // 更新配置
       final newConfig = PasswordGeneratorConfig(
         length: 24,
-        includeUppercase: true,
-        includeLowercase: true,
-        includeNumbers: false,
-        includeSymbols: true,
+        numbersCount: 0,
+        symbolsCount: 5,
         excludeAmbiguous: true,
       );
       container.read(passwordGeneratorProvider.notifier).updateConfig(newConfig);
@@ -82,8 +80,8 @@ void main() {
       final updatedState = await container.read(passwordGeneratorProvider.future);
 
       expect(updatedState.config.length, equals(24));
-      expect(updatedState.config.includeNumbers, isFalse);
-      expect(updatedState.config.includeSymbols, isTrue);
+      expect(updatedState.config.numbersCount, equals(0));
+      expect(updatedState.config.symbolsCount, equals(5));
       expect(updatedState.config.excludeAmbiguous, isTrue);
     });
 

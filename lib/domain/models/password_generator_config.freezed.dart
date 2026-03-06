@@ -26,17 +26,11 @@ mixin _$PasswordGeneratorConfig {
   /// 密码长度 (8-64)
   int get length => throw _privateConstructorUsedError;
 
-  /// 包含大写字母 (A-Z)
-  bool get includeUppercase => throw _privateConstructorUsedError;
+  /// 数字字符数量 (0-length)
+  int get numbersCount => throw _privateConstructorUsedError;
 
-  /// 包含小写字母 (a-z)
-  bool get includeLowercase => throw _privateConstructorUsedError;
-
-  /// 包含数字 (0-9)
-  bool get includeNumbers => throw _privateConstructorUsedError;
-
-  /// 包含符号 (!@#$%^&*()_+-=[]{}|;:,.<>?)
-  bool get includeSymbols => throw _privateConstructorUsedError;
+  /// 符号字符数量 (0-length)
+  int get symbolsCount => throw _privateConstructorUsedError;
 
   /// 排除易混淆字符 (0/O, 1/l/I)
   bool get excludeAmbiguous => throw _privateConstructorUsedError;
@@ -60,10 +54,8 @@ abstract class $PasswordGeneratorConfigCopyWith<$Res> {
   @useResult
   $Res call({
     int length,
-    bool includeUppercase,
-    bool includeLowercase,
-    bool includeNumbers,
-    bool includeSymbols,
+    int numbersCount,
+    int symbolsCount,
     bool excludeAmbiguous,
   });
 }
@@ -87,10 +79,8 @@ class _$PasswordGeneratorConfigCopyWithImpl<
   @override
   $Res call({
     Object? length = null,
-    Object? includeUppercase = null,
-    Object? includeLowercase = null,
-    Object? includeNumbers = null,
-    Object? includeSymbols = null,
+    Object? numbersCount = null,
+    Object? symbolsCount = null,
     Object? excludeAmbiguous = null,
   }) {
     return _then(
@@ -99,22 +89,14 @@ class _$PasswordGeneratorConfigCopyWithImpl<
                 ? _value.length
                 : length // ignore: cast_nullable_to_non_nullable
                       as int,
-            includeUppercase: null == includeUppercase
-                ? _value.includeUppercase
-                : includeUppercase // ignore: cast_nullable_to_non_nullable
-                      as bool,
-            includeLowercase: null == includeLowercase
-                ? _value.includeLowercase
-                : includeLowercase // ignore: cast_nullable_to_non_nullable
-                      as bool,
-            includeNumbers: null == includeNumbers
-                ? _value.includeNumbers
-                : includeNumbers // ignore: cast_nullable_to_non_nullable
-                      as bool,
-            includeSymbols: null == includeSymbols
-                ? _value.includeSymbols
-                : includeSymbols // ignore: cast_nullable_to_non_nullable
-                      as bool,
+            numbersCount: null == numbersCount
+                ? _value.numbersCount
+                : numbersCount // ignore: cast_nullable_to_non_nullable
+                      as int,
+            symbolsCount: null == symbolsCount
+                ? _value.symbolsCount
+                : symbolsCount // ignore: cast_nullable_to_non_nullable
+                      as int,
             excludeAmbiguous: null == excludeAmbiguous
                 ? _value.excludeAmbiguous
                 : excludeAmbiguous // ignore: cast_nullable_to_non_nullable
@@ -136,10 +118,8 @@ abstract class _$$PasswordGeneratorConfigImplCopyWith<$Res>
   @useResult
   $Res call({
     int length,
-    bool includeUppercase,
-    bool includeLowercase,
-    bool includeNumbers,
-    bool includeSymbols,
+    int numbersCount,
+    int symbolsCount,
     bool excludeAmbiguous,
   });
 }
@@ -163,10 +143,8 @@ class __$$PasswordGeneratorConfigImplCopyWithImpl<$Res>
   @override
   $Res call({
     Object? length = null,
-    Object? includeUppercase = null,
-    Object? includeLowercase = null,
-    Object? includeNumbers = null,
-    Object? includeSymbols = null,
+    Object? numbersCount = null,
+    Object? symbolsCount = null,
     Object? excludeAmbiguous = null,
   }) {
     return _then(
@@ -175,22 +153,14 @@ class __$$PasswordGeneratorConfigImplCopyWithImpl<$Res>
             ? _value.length
             : length // ignore: cast_nullable_to_non_nullable
                   as int,
-        includeUppercase: null == includeUppercase
-            ? _value.includeUppercase
-            : includeUppercase // ignore: cast_nullable_to_non_nullable
-                  as bool,
-        includeLowercase: null == includeLowercase
-            ? _value.includeLowercase
-            : includeLowercase // ignore: cast_nullable_to_non_nullable
-                  as bool,
-        includeNumbers: null == includeNumbers
-            ? _value.includeNumbers
-            : includeNumbers // ignore: cast_nullable_to_non_nullable
-                  as bool,
-        includeSymbols: null == includeSymbols
-            ? _value.includeSymbols
-            : includeSymbols // ignore: cast_nullable_to_non_nullable
-                  as bool,
+        numbersCount: null == numbersCount
+            ? _value.numbersCount
+            : numbersCount // ignore: cast_nullable_to_non_nullable
+                  as int,
+        symbolsCount: null == symbolsCount
+            ? _value.symbolsCount
+            : symbolsCount // ignore: cast_nullable_to_non_nullable
+                  as int,
         excludeAmbiguous: null == excludeAmbiguous
             ? _value.excludeAmbiguous
             : excludeAmbiguous // ignore: cast_nullable_to_non_nullable
@@ -205,10 +175,8 @@ class __$$PasswordGeneratorConfigImplCopyWithImpl<$Res>
 class _$PasswordGeneratorConfigImpl implements _PasswordGeneratorConfig {
   const _$PasswordGeneratorConfigImpl({
     required this.length,
-    required this.includeUppercase,
-    required this.includeLowercase,
-    required this.includeNumbers,
-    required this.includeSymbols,
+    this.numbersCount = 0,
+    this.symbolsCount = 0,
     this.excludeAmbiguous = false,
   });
 
@@ -219,21 +187,15 @@ class _$PasswordGeneratorConfigImpl implements _PasswordGeneratorConfig {
   @override
   final int length;
 
-  /// 包含大写字母 (A-Z)
+  /// 数字字符数量 (0-length)
   @override
-  final bool includeUppercase;
+  @JsonKey()
+  final int numbersCount;
 
-  /// 包含小写字母 (a-z)
+  /// 符号字符数量 (0-length)
   @override
-  final bool includeLowercase;
-
-  /// 包含数字 (0-9)
-  @override
-  final bool includeNumbers;
-
-  /// 包含符号 (!@#$%^&*()_+-=[]{}|;:,.<>?)
-  @override
-  final bool includeSymbols;
+  @JsonKey()
+  final int symbolsCount;
 
   /// 排除易混淆字符 (0/O, 1/l/I)
   @override
@@ -242,7 +204,7 @@ class _$PasswordGeneratorConfigImpl implements _PasswordGeneratorConfig {
 
   @override
   String toString() {
-    return 'PasswordGeneratorConfig(length: $length, includeUppercase: $includeUppercase, includeLowercase: $includeLowercase, includeNumbers: $includeNumbers, includeSymbols: $includeSymbols, excludeAmbiguous: $excludeAmbiguous)';
+    return 'PasswordGeneratorConfig(length: $length, numbersCount: $numbersCount, symbolsCount: $symbolsCount, excludeAmbiguous: $excludeAmbiguous)';
   }
 
   @override
@@ -251,14 +213,10 @@ class _$PasswordGeneratorConfigImpl implements _PasswordGeneratorConfig {
         (other.runtimeType == runtimeType &&
             other is _$PasswordGeneratorConfigImpl &&
             (identical(other.length, length) || other.length == length) &&
-            (identical(other.includeUppercase, includeUppercase) ||
-                other.includeUppercase == includeUppercase) &&
-            (identical(other.includeLowercase, includeLowercase) ||
-                other.includeLowercase == includeLowercase) &&
-            (identical(other.includeNumbers, includeNumbers) ||
-                other.includeNumbers == includeNumbers) &&
-            (identical(other.includeSymbols, includeSymbols) ||
-                other.includeSymbols == includeSymbols) &&
+            (identical(other.numbersCount, numbersCount) ||
+                other.numbersCount == numbersCount) &&
+            (identical(other.symbolsCount, symbolsCount) ||
+                other.symbolsCount == symbolsCount) &&
             (identical(other.excludeAmbiguous, excludeAmbiguous) ||
                 other.excludeAmbiguous == excludeAmbiguous));
   }
@@ -268,10 +226,8 @@ class _$PasswordGeneratorConfigImpl implements _PasswordGeneratorConfig {
   int get hashCode => Object.hash(
     runtimeType,
     length,
-    includeUppercase,
-    includeLowercase,
-    includeNumbers,
-    includeSymbols,
+    numbersCount,
+    symbolsCount,
     excludeAmbiguous,
   );
 
@@ -295,10 +251,8 @@ class _$PasswordGeneratorConfigImpl implements _PasswordGeneratorConfig {
 abstract class _PasswordGeneratorConfig implements PasswordGeneratorConfig {
   const factory _PasswordGeneratorConfig({
     required final int length,
-    required final bool includeUppercase,
-    required final bool includeLowercase,
-    required final bool includeNumbers,
-    required final bool includeSymbols,
+    final int numbersCount,
+    final int symbolsCount,
     final bool excludeAmbiguous,
   }) = _$PasswordGeneratorConfigImpl;
 
@@ -309,21 +263,13 @@ abstract class _PasswordGeneratorConfig implements PasswordGeneratorConfig {
   @override
   int get length;
 
-  /// 包含大写字母 (A-Z)
+  /// 数字字符数量 (0-length)
   @override
-  bool get includeUppercase;
+  int get numbersCount;
 
-  /// 包含小写字母 (a-z)
+  /// 符号字符数量 (0-length)
   @override
-  bool get includeLowercase;
-
-  /// 包含数字 (0-9)
-  @override
-  bool get includeNumbers;
-
-  /// 包含符号 (!@#$%^&*()_+-=[]{}|;:,.<>?)
-  @override
-  bool get includeSymbols;
+  int get symbolsCount;
 
   /// 排除易混淆字符 (0/O, 1/l/I)
   @override

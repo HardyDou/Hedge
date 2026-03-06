@@ -19,61 +19,63 @@ void main() {
       expect(password.length, equals(20));
     });
 
-    test('生成仅包含大写字母的密码', () {
+    test('生成仅包含字母的密码', () {
       final config = PasswordGeneratorConfig(
         length: 16,
-        includeUppercase: true,
-        includeLowercase: false,
-        includeNumbers: false,
-        includeSymbols: false,
+        numbersCount: 0,
+        symbolsCount: 0,
       );
       final password = PasswordGeneratorService.generate(config);
 
       expect(password.length, equals(16));
-      expect(RegExp(r'^[A-Z]+$').hasMatch(password), isTrue);
+      expect(RegExp(r'^[A-Za-z]+$').hasMatch(password), isTrue);
     });
 
-    test('生成仅包含小写字母的密码', () {
+    test('生成包含指定数量数字的密码', () {
       final config = PasswordGeneratorConfig(
         length: 16,
-        includeUppercase: false,
-        includeLowercase: true,
-        includeNumbers: false,
-        includeSymbols: false,
+        numbersCount: 4,
+        symbolsCount: 0,
       );
       final password = PasswordGeneratorService.generate(config);
 
       expect(password.length, equals(16));
-      expect(RegExp(r'^[a-z]+$').hasMatch(password), isTrue);
+      final digitCount = password.split('').where((c) => RegExp(r'[0-9]').hasMatch(c)).length;
+      expect(digitCount, equals(4));
     });
 
-    test('生成仅包含数字的密码', () {
+    test('生成包含指定数量符号的密码', () {
       final config = PasswordGeneratorConfig(
         length: 16,
-        includeUppercase: false,
-        includeLowercase: false,
-        includeNumbers: true,
-        includeSymbols: false,
+        numbersCount: 0,
+        symbolsCount: 3,
       );
       final password = PasswordGeneratorService.generate(config);
 
       expect(password.length, equals(16));
-      expect(RegExp(r'^[0-9]+$').hasMatch(password), isTrue);
+      final symbolCount = password.split('').where((c) => RegExp(r'[!@#$%^&*()_+\-=\[\]{}|;:,.<>?]').hasMatch(c)).length;
+      expect(symbolCount, equals(3));
     });
 
-    test('生成包含所有字符类型的密码', () {
-      final config = PasswordGeneratorConfig.defaultConfig();
+    test('生成包含数字和符号的密码', () {
+      final config = PasswordGeneratorConfig(
+        length: 16,
+        numbersCount: 2,
+        symbolsCount: 2,
+      );
       final password = PasswordGeneratorService.generate(config);
 
       expect(password.length, equals(16));
-      expect(RegExp(r'[A-Z]').hasMatch(password), isTrue);
-      expect(RegExp(r'[a-z]').hasMatch(password), isTrue);
+      expect(RegExp(r'[A-Za-z]').hasMatch(password), isTrue);
       expect(RegExp(r'[0-9]').hasMatch(password), isTrue);
       expect(RegExp(r'[!@#$%^&*()_+\-=\[\]{}|;:,.<>?]').hasMatch(password), isTrue);
     });
 
     test('排除易混淆字符', () {
-      final config = PasswordGeneratorConfig.defaultConfig().copyWith(
+      final config = PasswordGeneratorConfig(
+        length: 16,
+        numbersCount: 4,
+        symbolsCount: 0,
         excludeAmbiguous: true,
       );
       final password = PasswordGeneratorService.generate(config);
@@ -87,26 +89,32 @@ void main() {
     });
 
     test('生成最小长度密码', () {
-      final config = PasswordGeneratorConfig.defaultConfig().copyWith(length: 8);
+      final config = PasswordGeneratorConfig(
+        length: 8,
+        numbersCount: 2,
+        symbolsCount: 2,
+      );
       final password = PasswordGeneratorService.generate(config);
 
       expect(password.length, equals(8));
     });
 
     test('生成最大长度密码', () {
-      final config = PasswordGeneratorConfig.defaultConfig().copyWith(length: 64);
+      final config = PasswordGeneratorConfig(
+        length: 64,
+        numbersCount: 10,
+        symbolsCount: 10,
+      );
       final password = PasswordGeneratorService.generate(config);
 
       expect(password.length, equals(64));
     });
 
-    test('未选择任何字符类型时抛出异常', () {
+    test('数字和符号总数超过密码长度时抛出异常', () {
       final config = PasswordGeneratorConfig(
-        length: 16,
-        includeUppercase: false,
-        includeLowercase: false,
-        includeNumbers: false,
-        includeSymbols: false,
+        length: 10,
+        numbersCount: 6,
+        symbolsCount: 6,
       );
 
       expect(
@@ -121,6 +129,18 @@ void main() {
       final password2 = PasswordGeneratorService.generate(config);
 
       expect(password1, isNot(equals(password2)));
+    });
+
+    test('数字和符号数量为0时生成纯字母密码', () {
+      final config = PasswordGeneratorConfig(
+        length: 12,
+        numbersCount: 0,
+        symbolsCount: 0,
+      );
+      final password = PasswordGeneratorService.generate(config);
+
+      expect(password.length, equals(12));
+      expect(RegExp(r'^[A-Za-z]+$').hasMatch(password), isTrue);
     });
   });
 }

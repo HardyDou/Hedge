@@ -197,17 +197,35 @@ class PasswordGeneratorPopover extends ConsumerWidget {
 
         const SizedBox(height: 12),
 
-        // 字符类型选项 - 双列布局
-        Text(
-          '字符类型',
-          style: TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w600,
-            color: CupertinoColors.label.resolveFrom(context),
-          ),
+        // 数字数量滑块
+        _buildCountSlider(
+          context,
+          ref,
+          l10n,
+          '数字',
+          config.numbersCount,
+          config.length,
+          (value) {
+            final newConfig = config.copyWith(numbersCount: value);
+            ref.read(passwordGeneratorProvider.notifier).updateConfig(newConfig);
+          },
         ),
-        const SizedBox(height: 6),
-        _buildCharacterOptions(context, ref, l10n, config),
+
+        const SizedBox(height: 12),
+
+        // 符号数量滑块
+        _buildCountSlider(
+          context,
+          ref,
+          l10n,
+          '符号',
+          config.symbolsCount,
+          config.length,
+          (value) {
+            final newConfig = config.copyWith(symbolsCount: value);
+            ref.read(passwordGeneratorProvider.notifier).updateConfig(newConfig);
+          },
+        ),
 
         const SizedBox(height: 10),
 
@@ -272,125 +290,58 @@ class PasswordGeneratorPopover extends ConsumerWidget {
     );
   }
 
-  Widget _buildCharacterOptions(
+  Widget _buildCountSlider(
     BuildContext context,
     WidgetRef ref,
     AppLocalizations l10n,
-    PasswordGeneratorConfig config,
+    String label,
+    int currentValue,
+    int maxValue,
+    Function(int) onChanged,
   ) {
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Expanded(
-              child: _buildCheckbox(
-                context,
-                ref,
-                'A-Z',
-                config.includeUppercase,
-                (value) {
-                  final newConfig = config.copyWith(includeUppercase: value);
-                  ref.read(passwordGeneratorProvider.notifier).updateConfig(newConfig);
-                },
-              ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: _buildCheckbox(
-                context,
-                ref,
-                'a-z',
-                config.includeLowercase,
-                (value) {
-                  final newConfig = config.copyWith(includeLowercase: value);
-                  ref.read(passwordGeneratorProvider.notifier).updateConfig(newConfig);
-                },
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 8),
-        Row(
-          children: [
-            Expanded(
-              child: _buildCheckbox(
-                context,
-                ref,
-                '0-9',
-                config.includeNumbers,
-                (value) {
-                  final newConfig = config.copyWith(includeNumbers: value);
-                  ref.read(passwordGeneratorProvider.notifier).updateConfig(newConfig);
-                },
-              ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: _buildCheckbox(
-                context,
-                ref,
-                r'!@#$',
-                config.includeSymbols,
-                (value) {
-                  final newConfig = config.copyWith(includeSymbols: value);
-                  ref.read(passwordGeneratorProvider.notifier).updateConfig(newConfig);
-                },
-              ),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-
-  Widget _buildCheckbox(
-    BuildContext context,
-    WidgetRef ref,
-    String label,
-    bool value,
-    Function(bool) onChanged,
-  ) {
-    return GestureDetector(
-      onTap: () => onChanged(!value),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-        decoration: BoxDecoration(
-          color: value
-              ? CupertinoColors.activeBlue.withOpacity(0.1)
-              : CupertinoColors.systemGrey6.resolveFrom(context),
-          borderRadius: BorderRadius.circular(6),
-          border: Border.all(
-            color: value
-                ? CupertinoColors.activeBlue
-                : CupertinoColors.separator.resolveFrom(context),
-            width: value ? 1.5 : 0.5,
-          ),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              value ? CupertinoIcons.checkmark_circle_fill : CupertinoIcons.circle,
-              color: value
-                  ? CupertinoColors.activeBlue
-                  : CupertinoColors.secondaryLabel.resolveFrom(context),
-              size: 14,
-            ),
-            const SizedBox(width: 5),
             Text(
               label,
               style: TextStyle(
-                fontSize: 13,
-                fontWeight: value ? FontWeight.w600 : FontWeight.normal,
-                fontFamily: 'Courier',
-                color: value
-                    ? CupertinoColors.activeBlue
-                    : CupertinoColors.label.resolveFrom(context),
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: CupertinoColors.label.resolveFrom(context),
+              ),
+            ),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+              decoration: BoxDecoration(
+                color: CupertinoColors.systemGrey6.resolveFrom(context),
+                borderRadius: BorderRadius.circular(5),
+              ),
+              child: Text(
+                '$currentValue',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: CupertinoColors.label.resolveFrom(context),
+                ),
               ),
             ),
           ],
         ),
-      ),
+        const SizedBox(height: 4),
+        SizedBox(
+          width: double.infinity,
+          child: CupertinoSlider(
+            value: currentValue.toDouble(),
+            min: 0,
+            max: maxValue.toDouble(),
+            divisions: maxValue,
+            onChanged: (value) => onChanged(value.toInt()),
+          ),
+        ),
+      ],
     );
   }
 

@@ -10,17 +10,11 @@ class PasswordGeneratorConfig with _$PasswordGeneratorConfig {
     /// 密码长度 (8-64)
     required int length,
 
-    /// 包含大写字母 (A-Z)
-    required bool includeUppercase,
+    /// 数字字符数量 (0-length)
+    @Default(0) int numbersCount,
 
-    /// 包含小写字母 (a-z)
-    required bool includeLowercase,
-
-    /// 包含数字 (0-9)
-    required bool includeNumbers,
-
-    /// 包含符号 (!@#$%^&*()_+-=[]{}|;:,.<>?)
-    required bool includeSymbols,
+    /// 符号字符数量 (0-length)
+    @Default(0) int symbolsCount,
 
     /// 排除易混淆字符 (0/O, 1/l/I)
     @Default(false) bool excludeAmbiguous,
@@ -29,10 +23,8 @@ class PasswordGeneratorConfig with _$PasswordGeneratorConfig {
   /// 默认配置
   factory PasswordGeneratorConfig.defaultConfig() => const PasswordGeneratorConfig(
         length: 16,
-        includeUppercase: true,
-        includeLowercase: true,
-        includeNumbers: true,
-        includeSymbols: true,
+        numbersCount: 2,
+        symbolsCount: 2,
         excludeAmbiguous: false,
       );
 

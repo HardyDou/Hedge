@@ -16,25 +16,37 @@ class PasswordGeneratorService {
 
   /// 生成密码
   static String generate(PasswordGeneratorConfig config) {
-    // 1. 构建字符集
-    String charset = _buildCharset(config);
-
-    if (charset.isEmpty) {
-      throw ArgumentError('至少需要选择一种字符类型');
+    // 验证配置
+    final totalRequired = config.numbersCount + config.symbolsCount;
+    if (totalRequired > config.length) {
+      throw ArgumentError('数字和符号的总数量不能超过密码长度');
     }
 
-    // 2. 确保至少包含每种选中的字符类型
-    final List<String> requiredChars = _getRequiredChars(config);
+    // 构建字符集
+    final letterCharset = _buildLetterCharset(config.excludeAmbiguous);
+    final numberCharset = _buildNumberCharset(config.excludeAmbiguous);
+    final symbolCharset = _symbols;
 
-    // 3. 生成剩余的随机字符
-    final int remainingLength = config.length - requiredChars.length;
-    if (remainingLength < 0) {
-      throw ArgumentError('密码长度不足以包含所有必需的字符类型');
+    if (letterCharset.isEmpty) {
+      throw ArgumentError('字母字符集不能为空');
     }
 
-    final List<String> allChars = List.from(requiredChars);
-    for (int i = 0; i < remainingLength; i++) {
-      allChars.add(charset[_random.nextInt(charset.length)]);
+    final List<String> allChars = [];
+
+    // 1. 添加指定数量的数字
+    for (int i = 0; i < config.numbersCount; i++) {
+      allChars.add(numberCharset[_random.nextInt(numberCharset.length)]);
+    }
+
+    // 2. 添加指定数量的符号
+    for (int i = 0; i < config.symbolsCount; i++) {
+      allChars.add(symbolCharset[_random.nextInt(symbolCharset.length)]);
+    }
+
+    // 3. 剩余位置用字母填充
+    final int letterCount = config.length - totalRequired;
+    for (int i = 0; i < letterCount; i++) {
+      allChars.add(letterCharset[_random.nextInt(letterCharset.length)]);
     }
 
     // 4. 打乱顺序
@@ -43,60 +55,25 @@ class PasswordGeneratorService {
     return allChars.join();
   }
 
-  /// 构建字符集
-  static String _buildCharset(PasswordGeneratorConfig config) {
-    String charset = '';
+  /// 构建字母字符集（大写+小写）
+  static String _buildLetterCharset(bool excludeAmbiguous) {
+    String charset = _uppercase + _lowercase;
 
-    if (config.includeUppercase) {
-      charset += _uppercase;
-    }
-    if (config.includeLowercase) {
-      charset += _lowercase;
-    }
-    if (config.includeNumbers) {
-      charset += _numbers;
-    }
-    if (config.includeSymbols) {
-      charset += _symbols;
-    }
-
-    // 排除易混淆字符
-    if (config.excludeAmbiguous) {
+    if (excludeAmbiguous) {
       charset = charset.split('').where((char) => !_ambiguousChars.contains(char)).join();
     }
 
     return charset;
   }
 
-  /// 获取必需的字符（确保每种类型至少有一个）
-  static List<String> _getRequiredChars(PasswordGeneratorConfig config) {
-    final List<String> required = [];
+  /// 构建数字字符集
+  static String _buildNumberCharset(bool excludeAmbiguous) {
+    String charset = _numbers;
 
-    if (config.includeUppercase) {
-      String chars = config.excludeAmbiguous
-          ? _uppercase.split('').where((c) => !_ambiguousChars.contains(c)).join()
-          : _uppercase;
-      required.add(chars[_random.nextInt(chars.length)]);
+    if (excludeAmbiguous) {
+      charset = charset.split('').where((char) => !_ambiguousChars.contains(char)).join();
     }
 
-    if (config.includeLowercase) {
-      String chars = config.excludeAmbiguous
-          ? _lowercase.split('').where((c) => !_ambiguousChars.contains(c)).join()
-          : _lowercase;
-      required.add(chars[_random.nextInt(chars.length)]);
-    }
-
-    if (config.includeNumbers) {
-      String chars = config.excludeAmbiguous
-          ? _numbers.split('').where((c) => !_ambiguousChars.contains(c)).join()
-          : _numbers;
-      required.add(chars[_random.nextInt(chars.length)]);
-    }
-
-    if (config.includeSymbols) {
-      required.add(_symbols[_random.nextInt(_symbols.length)]);
-    }
-
-    return required;
+    return charset;
   }
 }
