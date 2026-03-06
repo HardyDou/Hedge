@@ -107,10 +107,14 @@ class _PasswordDisplayWidgetState extends State<PasswordDisplayWidget> {
         right: 0,
         child: Center(
           child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
             decoration: BoxDecoration(
-              color: CupertinoColors.systemGreen.withOpacity(0.95),
-              borderRadius: BorderRadius.circular(10),
+              color: CupertinoColors.systemBackground.resolveFrom(context),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(
+                color: CupertinoColors.systemGreen.resolveFrom(context),
+                width: 1.5,
+              ),
               boxShadow: [
                 BoxShadow(
                   color: CupertinoColors.black.withOpacity(0.2),
@@ -122,17 +126,17 @@ class _PasswordDisplayWidgetState extends State<PasswordDisplayWidget> {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(
+                Icon(
                   CupertinoIcons.checkmark_circle_fill,
-                  color: CupertinoColors.white,
-                  size: 20,
+                  color: CupertinoColors.systemGreen.resolveFrom(context),
+                  size: 18,
                 ),
-                const SizedBox(width: 10),
+                const SizedBox(width: 8),
                 Text(
                   l10n.passwordCopiedToClipboard,
-                  style: const TextStyle(
-                    color: CupertinoColors.white,
-                    fontSize: 14,
+                  style: TextStyle(
+                    color: CupertinoColors.label.resolveFrom(context),
+                    fontSize: 13,
                     fontWeight: FontWeight.w500,
                   ),
                 ),

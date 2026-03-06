@@ -35,7 +35,7 @@ class PasswordStrengthIndicator extends StatelessWidget {
                     children: [
                       // 背景
                       Container(
-                        color: CupertinoColors.systemGrey5,
+                        color: CupertinoColors.systemGrey5.resolveFrom(context),
                       ),
                       // 进度条
                       FractionallySizedBox(
@@ -69,9 +69,9 @@ class PasswordStrengthIndicator extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             strength.suggestion,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 12,
-              color: CupertinoColors.systemGrey,
+              color: CupertinoColors.secondaryLabel.resolveFrom(context),
             ),
           ),
         ],
