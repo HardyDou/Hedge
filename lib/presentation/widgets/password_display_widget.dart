@@ -29,10 +29,10 @@ class _PasswordDisplayWidgetState extends State<PasswordDisplayWidget> {
     final l10n = AppLocalizations.of(context)!;
 
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: CupertinoColors.systemGrey6.resolveFrom(context),
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(8),
         border: Border.all(
           color: CupertinoColors.separator.resolveFrom(context),
           width: 0.5,
@@ -46,21 +46,21 @@ class _PasswordDisplayWidgetState extends State<PasswordDisplayWidget> {
               _isVisible ? widget.password : '•' * widget.password.length,
               style: TextStyle(
                 fontFamily: 'Courier',
-                fontSize: 18,
+                fontSize: 16,
                 fontWeight: FontWeight.w600,
-                letterSpacing: 1.5,
+                letterSpacing: 1.2,
                 color: CupertinoColors.label.resolveFrom(context),
               ),
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
             ),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 10),
           // 显示/隐藏按钮
           if (widget.showVisibilityToggle)
             CupertinoButton(
               padding: EdgeInsets.zero,
-              minSize: 32,
+              minSize: 28,
               onPressed: () {
                 setState(() {
                   _isVisible = !_isVisible;
@@ -68,7 +68,7 @@ class _PasswordDisplayWidgetState extends State<PasswordDisplayWidget> {
               },
               child: Icon(
                 _isVisible ? CupertinoIcons.eye_slash : CupertinoIcons.eye,
-                size: 20,
+                size: 18,
                 color: CupertinoColors.secondaryLabel.resolveFrom(context),
               ),
             ),
@@ -76,7 +76,7 @@ class _PasswordDisplayWidgetState extends State<PasswordDisplayWidget> {
           if (widget.showCopyButton)
             CupertinoButton(
               padding: EdgeInsets.zero,
-              minSize: 32,
+              minSize: 28,
               onPressed: () async {
                 await Clipboard.setData(ClipboardData(text: widget.password));
                 HapticFeedback.lightImpact();
@@ -89,7 +89,7 @@ class _PasswordDisplayWidgetState extends State<PasswordDisplayWidget> {
               },
               child: Icon(
                 CupertinoIcons.doc_on_clipboard,
-                size: 20,
+                size: 18,
                 color: CupertinoColors.activeBlue.resolveFrom(context),
               ),
             ),
