@@ -26,6 +26,7 @@ class _AddItemPanelState extends ConsumerState<AddItemPanel> {
   final _notesController = TextEditingController();
   bool _isLoading = false;
   bool _notesPreview = false;
+  bool _passwordVisible = false;
   String? _totpSecret;
   String? _totpIssuer;
 
@@ -179,28 +180,52 @@ class _AddItemPanelState extends ConsumerState<AddItemPanel> {
           ],
         ),
         const SizedBox(height: 8),
-        CupertinoTextField(
-          controller: _passwordController,
-          obscureText: true,
-          placeholder: '密码',
-          style: TextStyle(
-            color: isDark ? CupertinoColors.white : CupertinoColors.black,
-          ),
-          placeholderStyle: TextStyle(
-            color: isDark
-                ? CupertinoColors.white.withValues(alpha: 0.3)
-                : CupertinoColors.black.withValues(alpha: 0.3),
-          ),
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: isDark ? const Color(0xFF1C1C1E) : CupertinoColors.white,
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(
-              color: isDark
-                  ? CupertinoColors.white.withValues(alpha: 0.2)
-                  : CupertinoColors.black.withValues(alpha: 0.1),
+        Stack(
+          alignment: Alignment.centerRight,
+          children: [
+            CupertinoTextField(
+              controller: _passwordController,
+              obscureText: !_passwordVisible,
+              placeholder: '密码',
+              style: TextStyle(
+                color: isDark ? CupertinoColors.white : CupertinoColors.black,
+              ),
+              placeholderStyle: TextStyle(
+                color: isDark
+                    ? CupertinoColors.white.withValues(alpha: 0.3)
+                    : CupertinoColors.black.withValues(alpha: 0.3),
+              ),
+              padding: const EdgeInsets.only(left: 12, top: 12, bottom: 12, right: 40),
+              decoration: BoxDecoration(
+                color: isDark ? const Color(0xFF1C1C1E) : CupertinoColors.white,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: isDark
+                      ? CupertinoColors.white.withValues(alpha: 0.2)
+                      : CupertinoColors.black.withValues(alpha: 0.1),
+                ),
+              ),
             ),
-          ),
+            Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: CupertinoButton(
+                padding: EdgeInsets.zero,
+                minSize: 0,
+                onPressed: () {
+                  setState(() {
+                    _passwordVisible = !_passwordVisible;
+                  });
+                },
+                child: Icon(
+                  _passwordVisible ? CupertinoIcons.eye_slash : CupertinoIcons.eye,
+                  size: 20,
+                  color: isDark
+                      ? CupertinoColors.white.withValues(alpha: 0.6)
+                      : CupertinoColors.black.withValues(alpha: 0.45),
+                ),
+              ),
+            ),
+          ],
         ),
       ],
     );
