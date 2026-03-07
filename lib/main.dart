@@ -487,10 +487,9 @@ class _AuthGuardState extends ConsumerState<AuthGuard> with WidgetsBindingObserv
     // Listen for state changes to enable/disable AppLock and menu
     ref.listen<VaultState>(vaultProvider, (previous, next) {
       if (next.hasVaultFile && !next.isLoading) {
-        // AppLock won't auto-update if initially disabled, so we force enable it
-        if (previous == null || !previous.hasVaultFile || previous.isLoading) {
-          AppLock.of(context)?.setEnabled(true);
-        }
+        // Always ensure AppLock is enabled when vault is ready
+        // This fixes the issue where AppLock might be disabled after app has been running
+        AppLock.of(context)?.setEnabled(true);
 
         // Update timeout if changed
         if (previous?.autoLockTimeout != next.autoLockTimeout) {
