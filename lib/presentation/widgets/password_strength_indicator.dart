@@ -28,9 +28,9 @@ class PasswordStrengthIndicator extends StatelessWidget {
           children: [
             Expanded(
               child: ClipRRect(
-                borderRadius: BorderRadius.circular(4),
+                borderRadius: BorderRadius.circular(5),
                 child: SizedBox(
-                  height: 8,
+                  height: 10,
                   child: Stack(
                     children: [
                       // 背景
@@ -56,7 +56,7 @@ class PasswordStrengthIndicator extends StatelessWidget {
               Text(
                 _getLevelText(l10n, strength.level),
                 style: TextStyle(
-                  fontSize: 14,
+                  fontSize: 15,
                   color: strength.color,
                   fontWeight: FontWeight.w600,
                 ),
@@ -70,7 +70,7 @@ class PasswordStrengthIndicator extends StatelessWidget {
           Text(
             strength.suggestion,
             style: TextStyle(
-              fontSize: 12,
+              fontSize: 13,
               color: CupertinoColors.secondaryLabel.resolveFrom(context),
             ),
           ),
