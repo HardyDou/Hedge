@@ -27,7 +27,7 @@ class _EditPanelState extends ConsumerState<EditPanel> {
   late TextEditingController _notesController;
   bool _isLoading = false;
   bool _notesPreview = false;
-  bool _passwordVisible = false;
+  bool _passwordVisible = true;
   String? _totpSecret;
   String? _totpIssuer;
 

@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hedge/l10n/generated/app_localizations.dart';
 import 'package:hedge/presentation/providers/password_generator_provider.dart';
+import 'package:hedge/domain/models/password_strength.dart';
 
 /// 极简密码生成器组件 - 用于快捷面板
 class PasswordGeneratorCompact extends ConsumerWidget {
@@ -60,86 +61,13 @@ class PasswordGeneratorCompact extends ConsumerWidget {
 
           const SizedBox(height: 10),
 
-          // 密码显示
-          _buildPasswordDisplay(context, ref, state.generatedPassword),
+          // 密码显示（包含强度色块、刷新按钮、复制按钮）
+          _buildPasswordDisplay(context, ref, l10n, state),
 
           const SizedBox(height: 10),
 
-          // 快捷操作按钮
-          Row(
-            children: [
-              Expanded(
-                child: CupertinoButton(
-                  padding: const EdgeInsets.symmetric(vertical: 6),
-                  color: CupertinoColors.systemGrey5.resolveFrom(context),
-                  borderRadius: BorderRadius.circular(6),
-                  minSize: 0,
-                  onPressed: () {
-                    HapticFeedback.lightImpact();
-                    ref.read(passwordGeneratorProvider.notifier).regenerate();
-                  },
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        CupertinoIcons.arrow_clockwise,
-                        size: 14,
-                        color: CupertinoColors.label.resolveFrom(context),
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        l10n.regenerate,
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: CupertinoColors.label.resolveFrom(context),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(width: 6),
-              Expanded(
-                child: CupertinoButton(
-                  padding: const EdgeInsets.symmetric(vertical: 6),
-                  color: CupertinoColors.activeBlue,
-                  borderRadius: BorderRadius.circular(6),
-                  minSize: 0,
-                  onPressed: () {
-                    HapticFeedback.mediumImpact();
-                    Clipboard.setData(
-                      ClipboardData(text: state.generatedPassword),
-                    );
-                    // 显示提示
-                    _showCopiedFeedback(context, l10n);
-                  },
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(
-                        CupertinoIcons.doc_on_clipboard,
-                        size: 14,
-                        color: CupertinoColors.white,
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        l10n.copy,
-                        style: const TextStyle(
-                          fontSize: 12,
-                          color: CupertinoColors.white,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
-
-          const SizedBox(height: 10),
-
-          // 长度调整
-          _buildLengthControl(context, ref, l10n, state.config.length),
+          // 长度滑块
+          _buildLengthSlider(context, ref, l10n, state.config.length),
         ],
       ),
     );
@@ -148,121 +76,163 @@ class PasswordGeneratorCompact extends ConsumerWidget {
   Widget _buildPasswordDisplay(
     BuildContext context,
     WidgetRef ref,
-    String password,
+    AppLocalizations l10n,
+    PasswordGeneratorState state,
   ) {
     return Container(
-      padding: const EdgeInsets.all(10),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       decoration: BoxDecoration(
         color: CupertinoColors.systemGrey6.resolveFrom(context),
         borderRadius: BorderRadius.circular(6),
       ),
-      child: Text(
-        password,
-        style: TextStyle(
-          fontSize: 14,
-          fontFamily: 'Courier',
-          fontWeight: FontWeight.w500,
-          color: CupertinoColors.label.resolveFrom(context),
-        ),
-        textAlign: TextAlign.center,
+      child: Row(
+        children: [
+          // 密码文本
+          Expanded(
+            child: Text(
+              state.generatedPassword,
+              style: TextStyle(
+                fontSize: 13,
+                fontFamily: 'Courier',
+                fontWeight: FontWeight.w500,
+                color: CupertinoColors.label.resolveFrom(context),
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          const SizedBox(width: 8),
+
+          // 强度色块
+          _buildStrengthBadge(state.strength),
+
+          const SizedBox(width: 6),
+
+          // 刷新按钮
+          CupertinoButton(
+            padding: EdgeInsets.zero,
+            minSize: 0,
+            onPressed: () {
+              HapticFeedback.lightImpact();
+              ref.read(passwordGeneratorProvider.notifier).regenerate();
+            },
+            child: Icon(
+              CupertinoIcons.arrow_clockwise,
+              size: 16,
+              color: CupertinoColors.secondaryLabel.resolveFrom(context),
+            ),
+          ),
+
+          const SizedBox(width: 6),
+
+          // 复制按钮
+          CupertinoButton(
+            padding: EdgeInsets.zero,
+            minSize: 0,
+            onPressed: () {
+              HapticFeedback.mediumImpact();
+              Clipboard.setData(
+                ClipboardData(text: state.generatedPassword),
+              );
+              _showCopiedFeedback(context, l10n);
+            },
+            child: Icon(
+              CupertinoIcons.doc_on_clipboard,
+              size: 16,
+              color: CupertinoColors.activeBlue.resolveFrom(context),
+            ),
+          ),
+        ],
       ),
     );
   }
 
-  Widget _buildLengthControl(
+  /// 构建强度色块（1个汉字）
+  Widget _buildStrengthBadge(PasswordStrength strength) {
+    String label;
+    switch (strength.level) {
+      case StrengthLevel.weak:
+        label = '低';
+        break;
+      case StrengthLevel.medium:
+        label = '中';
+        break;
+      case StrengthLevel.strong:
+        label = '高';
+        break;
+      case StrengthLevel.veryStrong:
+        label = '强';
+        break;
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        color: strength.color,
+        borderRadius: BorderRadius.circular(3),
+      ),
+      child: Text(
+        label,
+        style: const TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.w600,
+          color: CupertinoColors.white,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLengthSlider(
     BuildContext context,
     WidgetRef ref,
     AppLocalizations l10n,
     int length,
   ) {
-    return Row(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Text(
-          l10n.passwordLength,
-          style: TextStyle(
-            fontSize: 12,
-            color: CupertinoColors.secondaryLabel.resolveFrom(context),
-          ),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              l10n.passwordLength,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+                color: CupertinoColors.label.resolveFrom(context),
+              ),
+            ),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+              decoration: BoxDecoration(
+                color: CupertinoColors.systemGrey6.resolveFrom(context),
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: Text(
+                '$length',
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: CupertinoColors.label.resolveFrom(context),
+                ),
+              ),
+            ),
+          ],
         ),
-        const Spacer(),
-        CupertinoButton(
-          padding: EdgeInsets.zero,
-          minSize: 0,
-          onPressed: length > 8
-              ? () {
-                  final notifier = ref.read(passwordGeneratorProvider.notifier);
-                  final currentConfig = ref.read(passwordGeneratorProvider).value!.config;
-                  notifier.updateConfig(
-                    currentConfig.copyWith(length: length - 1),
-                  );
-                }
-              : null,
-          child: Container(
-            width: 24,
-            height: 24,
-            decoration: BoxDecoration(
-              color: length > 8
-                  ? CupertinoColors.systemGrey5.resolveFrom(context)
-                  : CupertinoColors.systemGrey6.resolveFrom(context),
-              borderRadius: BorderRadius.circular(5),
-            ),
-            child: Icon(
-              CupertinoIcons.minus,
-              size: 14,
-              color: length > 8
-                  ? CupertinoColors.label.resolveFrom(context)
-                  : CupertinoColors.tertiaryLabel.resolveFrom(context),
-            ),
-          ),
-        ),
-        const SizedBox(width: 10),
-        Container(
-          width: 36,
-          padding: const EdgeInsets.symmetric(vertical: 3),
-          decoration: BoxDecoration(
-            color: CupertinoColors.systemGrey6.resolveFrom(context),
-            borderRadius: BorderRadius.circular(5),
-          ),
-          child: Text(
-            '$length',
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-              color: CupertinoColors.label.resolveFrom(context),
-            ),
-            textAlign: TextAlign.center,
-          ),
-        ),
-        const SizedBox(width: 10),
-        CupertinoButton(
-          padding: EdgeInsets.zero,
-          minSize: 0,
-          onPressed: length < 64
-              ? () {
-                  final notifier = ref.read(passwordGeneratorProvider.notifier);
-                  final currentConfig = ref.read(passwordGeneratorProvider).value!.config;
-                  notifier.updateConfig(
-                    currentConfig.copyWith(length: length + 1),
-                  );
-                }
-              : null,
-          child: Container(
-            width: 24,
-            height: 24,
-            decoration: BoxDecoration(
-              color: length < 64
-                  ? CupertinoColors.systemGrey5.resolveFrom(context)
-                  : CupertinoColors.systemGrey6.resolveFrom(context),
-              borderRadius: BorderRadius.circular(5),
-            ),
-            child: Icon(
-              CupertinoIcons.plus,
-              size: 14,
-              color: length < 64
-                  ? CupertinoColors.label.resolveFrom(context)
-                  : CupertinoColors.tertiaryLabel.resolveFrom(context),
-            ),
-          ),
+        const SizedBox(height: 6),
+        CupertinoSlider(
+          value: length.toDouble(),
+          min: 8,
+          max: 64,
+          divisions: 56,
+          onChanged: (value) {
+            HapticFeedback.selectionClick();
+            final notifier = ref.read(passwordGeneratorProvider.notifier);
+            final currentConfig = ref.read(passwordGeneratorProvider).value!.config;
+            notifier.updateConfig(
+              currentConfig.copyWith(length: value.toInt()),
+            );
+          },
         ),
       ],
     );

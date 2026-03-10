@@ -3,8 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hedge/l10n/generated/app_localizations.dart';
 import 'package:hedge/presentation/providers/password_generator_provider.dart';
-import 'package:hedge/presentation/widgets/password_display_widget.dart';
-import 'package:hedge/presentation/widgets/password_strength_indicator.dart';
+import 'package:hedge/presentation/widgets/password_generator_display.dart';
 import 'package:hedge/domain/models/password_generator_config.dart';
 
 /// 桌面端密码生成器 Popover 浮层组件
@@ -88,55 +87,13 @@ class PasswordGeneratorPopover extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // 密码显示
-                PasswordDisplayWidget(
+                // 密码显示（包含强度色块、刷新按钮、复制按钮）
+                PasswordGeneratorDisplay(
                   password: state.generatedPassword,
-                ),
-
-                const SizedBox(height: 12),
-
-                // 强度指示器 + 重新生成按钮（同一行）
-                Row(
-                  children: [
-                    Expanded(
-                      child: PasswordStrengthIndicator(strength: state.strength),
-                    ),
-                    const SizedBox(width: 12),
-                    Semantics(
-                      label: l10n.regenerate,
-                      button: true,
-                      hint: 'Generate a new password',
-                      child: CupertinoButton(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                        color: CupertinoColors.systemGrey5.resolveFrom(context),
-                        borderRadius: BorderRadius.circular(8),
-                        minSize: 36,
-                        onPressed: () {
-                          HapticFeedback.lightImpact();
-                          ref.read(passwordGeneratorProvider.notifier).regenerate();
-                        },
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              CupertinoIcons.arrow_clockwise,
-                              size: 18,
-                              color: CupertinoColors.label.resolveFrom(context),
-                            ),
-                            const SizedBox(width: 6),
-                            Text(
-                              l10n.regenerate,
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: CupertinoColors.label.resolveFrom(context),
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
+                  strength: state.strength,
+                  onRegenerate: () {
+                    ref.read(passwordGeneratorProvider.notifier).regenerate();
+                  },
                 ),
 
                 const SizedBox(height: 16),
