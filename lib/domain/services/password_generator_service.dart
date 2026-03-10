@@ -16,43 +16,34 @@ class PasswordGeneratorService {
 
   /// 生成密码
   static String generate(PasswordGeneratorConfig config) {
-    // 验证配置
-    final totalRequired = config.numbersCount + config.symbolsCount;
-    if (totalRequired > config.length) {
-      throw ArgumentError('数字和符号的总数量不能超过密码长度');
-    }
-
-    // 构建字符集
     final letterCharset = _buildLetterCharset(config.excludeAmbiguous);
     final numberCharset = _buildNumberCharset(config.excludeAmbiguous);
     final symbolCharset = _symbols;
 
-    if (letterCharset.isEmpty) {
-      throw ArgumentError('字母字符集不能为空');
+    // 1. 保证字符：开关开启时各放入至少 1 个
+    final List<String> guaranteed = [];
+    if (config.includeNumbers) {
+      guaranteed.add(numberCharset[_random.nextInt(numberCharset.length)]);
+    }
+    if (config.includeSymbols) {
+      guaranteed.add(symbolCharset[_random.nextInt(symbolCharset.length)]);
     }
 
-    final List<String> allChars = [];
+    // 2. 构建完整字符集（字母始终包含）
+    String fullCharset = letterCharset;
+    if (config.includeNumbers) fullCharset += numberCharset;
+    if (config.includeSymbols) fullCharset += symbolCharset;
 
-    // 1. 添加指定数量的数字
-    for (int i = 0; i < config.numbersCount; i++) {
-      allChars.add(numberCharset[_random.nextInt(numberCharset.length)]);
-    }
-
-    // 2. 添加指定数量的符号
-    for (int i = 0; i < config.symbolsCount; i++) {
-      allChars.add(symbolCharset[_random.nextInt(symbolCharset.length)]);
-    }
-
-    // 3. 剩余位置用字母填充
-    final int letterCount = config.length - totalRequired;
-    for (int i = 0; i < letterCount; i++) {
-      allChars.add(letterCharset[_random.nextInt(letterCharset.length)]);
+    // 3. 剩余位置从完整字符集随机填充
+    final remaining = config.length - guaranteed.length;
+    for (int i = 0; i < remaining; i++) {
+      guaranteed.add(fullCharset[_random.nextInt(fullCharset.length)]);
     }
 
     // 4. 打乱顺序
-    allChars.shuffle(_random);
+    guaranteed.shuffle(_random);
 
-    return allChars.join();
+    return guaranteed.join();
   }
 
   /// 构建字母字符集（大写+小写）

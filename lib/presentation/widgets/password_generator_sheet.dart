@@ -300,6 +300,11 @@ class PasswordGeneratorSheet extends ConsumerWidget {
     AppLocalizations l10n,
     PasswordGeneratorConfig config,
   ) {
+    // 防御性读取，避免旧格式数据导致 null 崩溃
+    final includeNumbers = config.includeNumbers == true;
+    final includeSymbols = config.includeSymbols == true;
+    final excludeAmbiguous = config.excludeAmbiguous == true;
+
     return Container(
       decoration: BoxDecoration(
         color: CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context),
@@ -310,36 +315,62 @@ class PasswordGeneratorSheet extends ConsumerWidget {
           // 长度 — stepper
           _buildLengthRow(context, ref, l10n, config),
           _buildDivider(context),
-          // 数字 — 滑块
-          _buildSliderRow(
+          // 数字 — toggle
+          _buildToggleRow(
             context,
-            label: '数字',
-            value: config.numbersCount,
-            min: 0,
-            max: config.length - config.symbolsCount,
+            label: l10n.includeNumbers,
+            value: includeNumbers,
             onChanged: (v) {
               ref.read(passwordGeneratorProvider.notifier).updateConfig(
-                    config.copyWith(numbersCount: v),
+                    config.copyWith(includeNumbers: v),
                   );
             },
           ),
           _buildDivider(context),
-          // 符号 — 滑块
-          _buildSliderRow(
+          // 符号 — toggle
+          _buildToggleRow(
             context,
-            label: '符号',
-            value: config.symbolsCount,
-            min: 0,
-            max: config.length - config.numbersCount,
+            label: l10n.includeSymbols,
+            value: includeSymbols,
             onChanged: (v) {
               ref.read(passwordGeneratorProvider.notifier).updateConfig(
-                    config.copyWith(symbolsCount: v),
+                    config.copyWith(includeSymbols: v),
                   );
             },
           ),
           _buildDivider(context),
           // 排除易混淆 — switch
-          _buildSwitchRow(context, ref, l10n, config),
+          _buildSwitchRow(context, ref, l10n, config.copyWith(excludeAmbiguous: excludeAmbiguous)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildToggleRow(
+    BuildContext context, {
+    required String label,
+    required bool value,
+    required ValueChanged<bool> onChanged,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      child: Row(
+        children: [
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 16,
+              color: CupertinoColors.label.resolveFrom(context),
+            ),
+          ),
+          const Spacer(),
+          CupertinoSwitch(
+            value: value,
+            onChanged: (v) {
+              HapticFeedback.selectionClick();
+              onChanged(v);
+            },
+          ),
         ],
       ),
     );
@@ -373,15 +404,8 @@ class PasswordGeneratorSheet extends ConsumerWidget {
                 onTap: () {
                   if (config.length <= 8) return;
                   HapticFeedback.selectionClick();
-                  final newLength = config.length - 1;
-                  final numbers = config.numbersCount.clamp(0, newLength);
-                  final symbols = config.symbolsCount.clamp(0, newLength - numbers);
                   ref.read(passwordGeneratorProvider.notifier).updateConfig(
-                        config.copyWith(
-                          length: newLength,
-                          numbersCount: numbers,
-                          symbolsCount: symbols,
-                        ),
+                        config.copyWith(length: config.length - 1),
                       );
                 },
               ),
@@ -442,83 +466,6 @@ class PasswordGeneratorSheet extends ConsumerWidget {
               ? CupertinoColors.activeBlue.resolveFrom(context)
               : CupertinoColors.systemGrey3.resolveFrom(context),
         ),
-      ),
-    );
-  }
-
-  Widget _buildSliderRow(
-    BuildContext context, {
-    required String label,
-    required int value,
-    required int min,
-    required int max,
-    required ValueChanged<int> onChanged,
-  }) {
-    // 确保 value 在 [min, max] 范围内
-    final clampedValue = value.clamp(min, max);
-
-    // 当 max == min 时，滑块无法渲染（会导致 division by zero），显示禁用状态
-    final isDisabled = max <= min;
-
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 10, 16, 6),
-      child: Column(
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: 16,
-                  color: isDisabled
-                      ? CupertinoColors.secondaryLabel.resolveFrom(context)
-                      : CupertinoColors.label.resolveFrom(context),
-                ),
-              ),
-              Container(
-                width: 32,
-                alignment: Alignment.center,
-                child: Text(
-                  '$clampedValue',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: CupertinoColors.secondaryLabel.resolveFrom(context),
-                  ),
-                ),
-              ),
-            ],
-          ),
-          if (isDisabled)
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 8),
-              child: Text(
-                '已达上限',
-                style: TextStyle(
-                  fontSize: 13,
-                  color: CupertinoColors.tertiaryLabel.resolveFrom(context),
-                ),
-              ),
-            )
-          else
-            Semantics(
-              label: '$label: $clampedValue',
-              value: '$clampedValue',
-              increasedValue: '${clampedValue + 1}',
-              decreasedValue: '${clampedValue - 1}',
-              child: CupertinoSlider(
-                value: clampedValue.toDouble(),
-                min: min.toDouble(),
-                max: max.toDouble(),
-                divisions: (max - min).clamp(1, 64),
-                onChanged: (v) {
-                  HapticFeedback.selectionClick();
-                  onChanged(v.toInt());
-                },
-              ),
-            ),
-        ],
       ),
     );
   }
