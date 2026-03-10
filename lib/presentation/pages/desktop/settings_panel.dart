@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hedge/l10n/generated/app_localizations.dart';
 import 'package:hedge/presentation/providers/locale_provider.dart';
 import 'package:hedge/presentation/providers/theme_provider.dart';
+import 'package:hedge/core/theme/app_colors.dart';
 import 'package:hedge/presentation/providers/vault_provider.dart';
 import 'package:hedge/domain/models/sync_config.dart';
 import 'package:hedge/platform/webdav_sync_service.dart';
@@ -56,13 +57,11 @@ class _SettingsPanelState extends ConsumerState<SettingsPanel> {
     final currentLocale = ref.watch(localeProvider);
     final vaultState = ref.watch(vaultProvider);
     final l10n = AppLocalizations.of(context)!;
-    final brightness = CupertinoTheme.of(context).brightness ??
-                       MediaQuery.platformBrightnessOf(context);
-    final isDark = brightness == Brightness.dark;
+    final isDark = AppColors.isDark(context);
 
     return Container(
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1C1C1E) : CupertinoColors.white,
+        color: AppColors.surface1.resolveFrom(context),
         borderRadius: BorderRadius.circular(widget.isModal ? 12 : 0),
       ),
       child: Column(
@@ -70,7 +69,7 @@ class _SettingsPanelState extends ConsumerState<SettingsPanel> {
         children: [
           if (widget.isModal) _buildHeader(isDark, l10n),
           _buildTabBar(isDark, l10n),
-          Container(height: 1, color: isDark ? const Color(0xFF2C2C2E) : const Color(0xFFE5E5EA)),
+          Container(height: 1, color: AppColors.separator.resolveFrom(context)),
           Flexible(
             child: SingleChildScrollView(
               child: _buildContent(themeMode, currentLocale, vaultState, isDark, l10n),
@@ -131,7 +130,7 @@ class _SettingsPanelState extends ConsumerState<SettingsPanel> {
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
           margin: const EdgeInsets.only(right: 4),
           decoration: BoxDecoration(
-            color: isSelected ? (isDark ? const Color(0xFF2C2C2E) : CupertinoColors.systemGrey6) : CupertinoColors.transparent,
+            color: isSelected ? AppColors.surface2.resolveFrom(context) : CupertinoColors.transparent,
             borderRadius: BorderRadius.circular(6),
           ),
           child: Row(
@@ -205,7 +204,7 @@ class _SettingsPanelState extends ConsumerState<SettingsPanel> {
       decoration: BoxDecoration(
         border: Border(
           bottom: BorderSide(
-            color: isDark ? const Color(0xFF2C2C2E) : const Color(0xFFE5E5EA),
+            color: AppColors.separator.resolveFrom(context),
             width: 0.5,
           ),
         ),
@@ -404,7 +403,7 @@ class _SettingsPanelState extends ConsumerState<SettingsPanel> {
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF2C2C2E) : CupertinoColors.white,
+          color: AppColors.surface2.resolveFrom(context),
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
             color: isSelected
@@ -562,7 +561,7 @@ class _SettingsPanelState extends ConsumerState<SettingsPanel> {
                     placeholder: 'https://your-server.com/webdav',
                     style: TextStyle(fontSize: 13, color: isDark ? CupertinoColors.white : CupertinoColors.black),
                     decoration: BoxDecoration(
-                      color: isDark ? const Color(0xFF1C1C1E) : CupertinoColors.systemGrey6,
+                      color: AppColors.surface1.resolveFrom(context),
                       borderRadius: BorderRadius.circular(6),
                     ),
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
@@ -575,7 +574,7 @@ class _SettingsPanelState extends ConsumerState<SettingsPanel> {
                     placeholder: '用户名',
                     style: TextStyle(fontSize: 13, color: isDark ? CupertinoColors.white : CupertinoColors.black),
                     decoration: BoxDecoration(
-                      color: isDark ? const Color(0xFF1C1C1E) : CupertinoColors.systemGrey6,
+                      color: AppColors.surface1.resolveFrom(context),
                       borderRadius: BorderRadius.circular(6),
                     ),
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
@@ -589,7 +588,7 @@ class _SettingsPanelState extends ConsumerState<SettingsPanel> {
                     obscureText: _obscurePassword,
                     style: TextStyle(fontSize: 13, color: isDark ? CupertinoColors.white : CupertinoColors.black),
                     decoration: BoxDecoration(
-                      color: isDark ? const Color(0xFF1C1C1E) : CupertinoColors.systemGrey6,
+                      color: AppColors.surface1.resolveFrom(context),
                       borderRadius: BorderRadius.circular(6),
                     ),
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
@@ -612,7 +611,7 @@ class _SettingsPanelState extends ConsumerState<SettingsPanel> {
                     placeholder: 'Hedge/vault.db',
                     style: TextStyle(fontSize: 13, color: isDark ? CupertinoColors.white : CupertinoColors.black),
                     decoration: BoxDecoration(
-                      color: isDark ? const Color(0xFF1C1C1E) : CupertinoColors.systemGrey6,
+                      color: AppColors.surface1.resolveFrom(context),
                       borderRadius: BorderRadius.circular(6),
                     ),
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
@@ -676,7 +675,7 @@ class _SettingsPanelState extends ConsumerState<SettingsPanel> {
               Expanded(
                 child: CupertinoButton(
                   padding: const EdgeInsets.symmetric(vertical: 8),
-                  color: isDark ? const Color(0xFF2C2C2E) : CupertinoColors.systemGrey6,
+                  color: AppColors.surface2.resolveFrom(context),
                   borderRadius: BorderRadius.circular(6),
                   onPressed: _isTestingConnection ? null : _testConnection,
                   child: _isTestingConnection
@@ -852,7 +851,7 @@ class _SettingsPanelState extends ConsumerState<SettingsPanel> {
   Widget _buildSettingCard(List<Widget> children, bool isDark) {
     return Container(
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF2C2C2E) : CupertinoColors.white,
+        color: AppColors.surface2.resolveFrom(context),
         borderRadius: BorderRadius.circular(10),
         border: Border.all(color: isDark ? const Color(0xFF3C3C3E) : CupertinoColors.systemGrey5),
       ),
@@ -929,7 +928,7 @@ class _SettingsPanelState extends ConsumerState<SettingsPanel> {
         child: Container(
           width: 200,
           decoration: BoxDecoration(
-            color: isDark ? const Color(0xFF2C2C2E) : CupertinoColors.white,
+            color: AppColors.surface2.resolveFrom(context),
             borderRadius: BorderRadius.circular(8),
             boxShadow: [
               BoxShadow(color: CupertinoColors.black.withValues(alpha: 0.3), blurRadius: 10, offset: const Offset(0, 4)),
@@ -988,7 +987,7 @@ class _SettingsPanelState extends ConsumerState<SettingsPanel> {
         child: Container(
           width: 180,
           decoration: BoxDecoration(
-            color: isDark ? const Color(0xFF2C2C2E) : CupertinoColors.white,
+            color: AppColors.surface2.resolveFrom(context),
             borderRadius: BorderRadius.circular(8),
             boxShadow: [
               BoxShadow(color: CupertinoColors.black.withValues(alpha: 0.3), blurRadius: 10, offset: const Offset(0, 4)),
@@ -1033,7 +1032,7 @@ class _SettingsPanelState extends ConsumerState<SettingsPanel> {
         child: Container(
           width: 160,
           decoration: BoxDecoration(
-            color: isDark ? const Color(0xFF2C2C2E) : CupertinoColors.white,
+            color: AppColors.surface2.resolveFrom(context),
             borderRadius: BorderRadius.circular(8),
             boxShadow: [
               BoxShadow(color: CupertinoColors.black.withValues(alpha: 0.3), blurRadius: 10, offset: const Offset(0, 4)),

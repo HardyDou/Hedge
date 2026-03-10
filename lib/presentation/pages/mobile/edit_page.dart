@@ -9,6 +9,7 @@ import 'package:hedge/presentation/widgets/markdown_toolbar.dart';
 import 'package:hedge/presentation/pages/mobile/qr_scanner_page.dart';
 import 'package:hedge/domain/services/qr_scanner_service.dart';
 import 'package:hedge/presentation/widgets/password_generator_sheet.dart';
+import 'package:hedge/core/theme/app_colors.dart';
 import '../../providers/vault_provider.dart';
 
 class EditPage extends ConsumerStatefulWidget {
@@ -93,14 +94,12 @@ class _EditPageState extends ConsumerState<EditPage> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final brightness = CupertinoTheme.of(context).brightness ??
-                       MediaQuery.platformBrightnessOf(context);
-    final isDark = brightness == Brightness.dark;
+    final isDark = AppColors.isDark(context);
 
     return CupertinoPageScaffold(
-      backgroundColor: isDark ? CupertinoColors.black : const Color(0xFFF2F2F7),
+      backgroundColor: AppColors.surface2.resolveFrom(context),
       navigationBar: CupertinoNavigationBar(
-        backgroundColor: isDark ? const Color(0xFF1C1C1E) : CupertinoColors.white,
+        backgroundColor: AppColors.surface1.resolveFrom(context),
         middle: Text(l10n.editEntry),
         trailing: CupertinoButton(
           padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -477,7 +476,7 @@ class _EditPageState extends ConsumerState<EditPage> {
         Container(
           margin: const EdgeInsets.symmetric(horizontal: 16),
           decoration: BoxDecoration(
-            color: isDark ? const Color(0xFF1C1C1E) : CupertinoColors.white,
+            color: AppColors.surface1.resolveFrom(context),
             borderRadius: BorderRadius.circular(12),
           ),
           clipBehavior: Clip.antiAlias,
@@ -514,9 +513,7 @@ class _EditPageState extends ConsumerState<EditPage> {
     required String header,
     required List<Widget> children,
   }) {
-    final brightness = CupertinoTheme.of(context).brightness ??
-                       MediaQuery.platformBrightnessOf(context);
-    final isDark = brightness == Brightness.dark;
+    final isDark = AppColors.isDark(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -535,7 +532,7 @@ class _EditPageState extends ConsumerState<EditPage> {
         Container(
           margin: const EdgeInsets.symmetric(horizontal: 16),
           decoration: BoxDecoration(
-            color: isDark ? const Color(0xFF1C1C1E) : CupertinoColors.white,
+            color: AppColors.surface1.resolveFrom(context),
             borderRadius: BorderRadius.circular(12),
           ),
           child: Column(children: children),
@@ -849,9 +846,9 @@ class _FullscreenNotesEditorState extends State<_FullscreenNotesEditor> {
   @override
   Widget build(BuildContext context) {
     return CupertinoPageScaffold(
-      backgroundColor: widget.isDark ? const Color(0xFF000000) : const Color(0xFFF2F2F7),
+      backgroundColor: widget.isDark ? const Color(0xFF000000) : AppColors.surface2.resolveFrom(context),
       navigationBar: CupertinoNavigationBar(
-        backgroundColor: widget.isDark ? const Color(0xFF1C1C1E) : CupertinoColors.white,
+        backgroundColor: AppColors.surface1.resolveFrom(context),
         border: Border(
           bottom: BorderSide(
             color: widget.isDark
@@ -901,7 +898,7 @@ class _FullscreenNotesEditorState extends State<_FullscreenNotesEditor> {
                             child: Container(
                               width: double.infinity,
                               padding: const EdgeInsets.all(16),
-                              color: widget.isDark ? const Color(0xFF1C1C1E) : CupertinoColors.white,
+                              color: AppColors.surface1.resolveFrom(context),
                               child: widget.controller.text.isEmpty
                                   ? Text(
                                       '暂无内容',
@@ -921,7 +918,7 @@ class _FullscreenNotesEditorState extends State<_FullscreenNotesEditor> {
                       },
                     )
                   : Container(
-                      color: widget.isDark ? const Color(0xFF1C1C1E) : CupertinoColors.white,
+                      color: AppColors.surface1.resolveFrom(context),
                       child: SingleChildScrollView(
                         padding: const EdgeInsets.all(16),
                         child: CupertinoTextField(

@@ -8,6 +8,7 @@ import 'package:hedge/presentation/widgets/markdown_toolbar.dart';
 import 'package:hedge/presentation/pages/mobile/qr_scanner_page.dart';
 import 'package:hedge/domain/services/qr_scanner_service.dart';
 import 'package:hedge/presentation/widgets/password_generator_sheet.dart';
+import 'package:hedge/core/theme/app_colors.dart';
 import '../../providers/vault_provider.dart';
 import 'dart:io';
 
@@ -91,14 +92,12 @@ class _AddItemPageState extends ConsumerState<AddItemPage> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final brightness = CupertinoTheme.of(context).brightness ??
-                       MediaQuery.platformBrightnessOf(context);
-    final isDark = brightness == Brightness.dark;
+    final isDark = AppColors.isDark(context);
 
     return CupertinoPageScaffold(
-      backgroundColor: isDark ? CupertinoColors.black : const Color(0xFFF2F2F7),
+      backgroundColor: AppColors.surface2.resolveFrom(context),
       navigationBar: CupertinoNavigationBar(
-        backgroundColor: isDark ? const Color(0xFF1C1C1E) : CupertinoColors.white,
+        backgroundColor: AppColors.surface1.resolveFrom(context),
         middle: Text(l10n.newEntry),
         trailing: CupertinoButton(
           padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -178,7 +177,7 @@ class _AddItemPageState extends ConsumerState<AddItemPage> {
                     child: Text(
                       l10n.noAttachments,
                       style: TextStyle(
-                        color: isDark ? CupertinoColors.white.withOpacity(0.4) : CupertinoColors.black.withOpacity(0.4),
+                        color: (isDark ? CupertinoColors.white : CupertinoColors.black).withOpacity(0.4),
                         fontSize: 14,
                       ),
                     ),
@@ -456,7 +455,7 @@ class _AddItemPageState extends ConsumerState<AddItemPage> {
         Container(
           margin: const EdgeInsets.symmetric(horizontal: 16),
           decoration: BoxDecoration(
-            color: isDark ? const Color(0xFF1C1C1E) : CupertinoColors.white,
+            color: AppColors.surface1.resolveFrom(context),
             borderRadius: BorderRadius.circular(12),
           ),
           clipBehavior: Clip.antiAlias,
@@ -496,12 +495,12 @@ class _AddItemPageState extends ConsumerState<AddItemPage> {
                           em: TextStyle(color: isDark ? CupertinoColors.white : CupertinoColors.black, fontStyle: FontStyle.italic),
                           code: TextStyle(
                             color: isDark ? CupertinoColors.white : CupertinoColors.black,
-                            backgroundColor: isDark ? const Color(0xFF2C2C2E) : const Color(0xFFE5E5EA),
+                            backgroundColor: AppColors.surface2.resolveFrom(context),
                             fontSize: 13,
                             fontFamily: 'Courier',
                           ),
                           codeblockDecoration: BoxDecoration(
-                            color: isDark ? const Color(0xFF2C2C2E) : const Color(0xFFE5E5EA),
+                            color: AppColors.surface2.resolveFrom(context),
                             borderRadius: BorderRadius.circular(6),
                           ),
                           listBullet: TextStyle(color: isDark ? CupertinoColors.white : CupertinoColors.black, fontSize: 15),
@@ -520,9 +519,7 @@ class _AddItemPageState extends ConsumerState<AddItemPage> {
     required String header,
     required List<Widget> children,
   }) {
-    final brightness = CupertinoTheme.of(context).brightness ??
-                       MediaQuery.platformBrightnessOf(context);
-    final isDark = brightness == Brightness.dark;
+    final isDark = AppColors.isDark(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -541,7 +538,7 @@ class _AddItemPageState extends ConsumerState<AddItemPage> {
         Container(
           margin: const EdgeInsets.symmetric(horizontal: 16),
           decoration: BoxDecoration(
-            color: isDark ? const Color(0xFF1C1C1E) : CupertinoColors.white,
+            color: AppColors.surface1.resolveFrom(context),
             borderRadius: BorderRadius.circular(12),
           ),
           child: Column(children: children),
@@ -855,9 +852,9 @@ class _FullscreenNotesEditorState extends State<_FullscreenNotesEditor> {
   @override
   Widget build(BuildContext context) {
     return CupertinoPageScaffold(
-      backgroundColor: widget.isDark ? const Color(0xFF000000) : const Color(0xFFF2F2F7),
+      backgroundColor: widget.isDark ? const Color(0xFF000000) : AppColors.surface2.resolveFrom(context),
       navigationBar: CupertinoNavigationBar(
-        backgroundColor: widget.isDark ? const Color(0xFF1C1C1E) : CupertinoColors.white,
+        backgroundColor: AppColors.surface1.resolveFrom(context),
         border: Border(
           bottom: BorderSide(
             color: widget.isDark
@@ -907,7 +904,7 @@ class _FullscreenNotesEditorState extends State<_FullscreenNotesEditor> {
                             child: Container(
                               width: double.infinity,
                               padding: const EdgeInsets.all(16),
-                              color: widget.isDark ? const Color(0xFF1C1C1E) : CupertinoColors.white,
+                              color: AppColors.surface1.resolveFrom(context),
                               child: widget.controller.text.isEmpty
                                   ? Text(
                                       '暂无内容',
@@ -927,7 +924,7 @@ class _FullscreenNotesEditorState extends State<_FullscreenNotesEditor> {
                       },
                     )
                   : Container(
-                      color: widget.isDark ? const Color(0xFF1C1C1E) : CupertinoColors.white,
+                      color: AppColors.surface1.resolveFrom(context),
                       child: SingleChildScrollView(
                         padding: const EdgeInsets.all(16),
                         child: CupertinoTextField(

@@ -11,6 +11,7 @@ import 'package:hedge/presentation/pages/desktop/settings_panel.dart';
 import 'package:hedge/presentation/pages/desktop/add_item_panel.dart';
 import 'package:hedge/presentation/pages/desktop/edit_panel.dart';
 import 'package:hedge/presentation/widgets/alphabet_index_bar.dart';
+import 'package:hedge/core/theme/app_colors.dart';
 
 class DesktopHomePage extends ConsumerStatefulWidget {
   const DesktopHomePage({super.key});
@@ -65,9 +66,7 @@ class _DesktopHomePageState extends ConsumerState<DesktopHomePage> {
   Widget build(BuildContext context) {
     final vaultState = ref.watch(vaultProvider);
     final l10n = AppLocalizations.of(context)!;
-    final brightness = CupertinoTheme.of(context).brightness ??
-                       MediaQuery.platformBrightnessOf(context);
-    final isDark = brightness == Brightness.dark;
+    final isDark = AppColors.isDark(context);
 
     final items = vaultState.filteredVaultItems ?? [];
 
@@ -116,9 +115,7 @@ class _DesktopHomePageState extends ConsumerState<DesktopHomePage> {
       }
       
       if (isControlPressed && event.logicalKey == LogicalKeyboardKey.comma) {
-        final brightness = CupertinoTheme.of(context).brightness ??
-                           MediaQuery.platformBrightnessOf(context);
-        final isDark = brightness == Brightness.dark;
+        final isDark = AppColors.isDark(context);
         _showSettingsDialog(context, isDark);
       }
     }
@@ -160,7 +157,7 @@ class _DesktopHomePageState extends ConsumerState<DesktopHomePage> {
     }
 
     if (_showSettings) {
-      return Container(color: isDark ? CupertinoColors.black : const Color(0xFFF2F2F7));
+      return Container(color: AppColors.surface2.resolveFrom(context));
     }
 
     return _buildEmptyState(isDark, l10n);
@@ -175,7 +172,7 @@ class _DesktopHomePageState extends ConsumerState<DesktopHomePage> {
           width: 450,
           height: 380,
           decoration: BoxDecoration(
-            color: isDark ? const Color(0xFF1C1C1E) : CupertinoColors.white,
+            color: AppColors.surface1.resolveFrom(context),
             borderRadius: BorderRadius.circular(12),
             boxShadow: [
               BoxShadow(
@@ -208,7 +205,7 @@ class _DesktopHomePageState extends ConsumerState<DesktopHomePage> {
         },
         child: Container(
           width: 1,
-          color: isDark ? const Color(0xFF2C2C2E) : const Color(0xFFE5E5EA),
+          color: AppColors.separator.resolveFrom(context),
         ),
       ),
     );
@@ -221,10 +218,10 @@ class _DesktopHomePageState extends ConsumerState<DesktopHomePage> {
       height: 52,
       padding: const EdgeInsets.symmetric(horizontal: 16),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1C1C1E) : CupertinoColors.white,
+        color: AppColors.surface1.resolveFrom(context),
         border: Border(
           bottom: BorderSide(
-            color: isDark ? const Color(0xFF2C2C2E) : const Color(0xFFE5E5EA),
+            color: AppColors.separator.resolveFrom(context),
             width: 1,
           ),
         ),
@@ -288,9 +285,9 @@ class _DesktopHomePageState extends ConsumerState<DesktopHomePage> {
         _buildSearchBar(isDark, l10n),
         Expanded(
           child: Container(
-            color: isDark ? const Color(0xFF1C1C1E) : CupertinoColors.systemGroupedBackground,
+            color: AppColors.surface1.resolveFrom(context),
             child: items.isEmpty
-                ? _buildEmptyListState(isDark, l10n)
+                ? _buildEmptyState(isDark, l10n)
                 : _buildListView(items, isDark, vaultState),
           ),
         ),
@@ -302,7 +299,7 @@ class _DesktopHomePageState extends ConsumerState<DesktopHomePage> {
   Widget _buildSearchBar(bool isDark, AppLocalizations l10n) {
     return Container(
       padding: const EdgeInsets.all(12),
-      color: isDark ? const Color(0xFF1C1C1E) : CupertinoColors.white,
+      color: AppColors.surface1.resolveFrom(context),
       child: Container(
         height: 30,
         decoration: BoxDecoration(
@@ -585,8 +582,8 @@ class _DesktopHomePageState extends ConsumerState<DesktopHomePage> {
     return Container(
       height: 50,
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1C1C1E) : CupertinoColors.white,
-        border: Border(top: BorderSide(color: isDark ? const Color(0xFF2C2C2E) : const Color(0xFFE5E5EA), width: 1)),
+        color: AppColors.surface1.resolveFrom(context),
+        border: Border(top: BorderSide(color: AppColors.separator.resolveFrom(context), width: 1)),
       ),
       child: GestureDetector(
         onTap: () => _showSettingsDialog(context, isDark),
@@ -607,7 +604,7 @@ class _DesktopHomePageState extends ConsumerState<DesktopHomePage> {
 
   Widget _buildEmptyState(bool isDark, AppLocalizations l10n) {
     return Container(
-      color: isDark ? CupertinoColors.black : CupertinoColors.systemGroupedBackground,
+      color: AppColors.surface2.resolveFrom(context),
       child: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -622,8 +619,7 @@ class _DesktopHomePageState extends ConsumerState<DesktopHomePage> {
   }
 
   Color _getColorForChar(String char) {
-    final colors = [const Color(0xFF007AFF), const Color(0xFF34C759), const Color(0xFFFF9500), const Color(0xFFAF52DE), const Color(0xFFFF3B30), const Color(0xFF5AC8FA), const Color(0xFFFF2D55), const Color(0xFF5856D6), const Color(0xFF00C7BE), const Color(0xFFFFCC00)];
-    return colors[char.toUpperCase().codeUnitAt(0) % colors.length];
+    return AppColors.categoryColors[char.toUpperCase().codeUnitAt(0) % AppColors.categoryColors.length];
   }
 
   void _showAboutDialog() {

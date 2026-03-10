@@ -12,6 +12,7 @@ import 'package:hedge/presentation/providers/vault_provider.dart';
 import 'package:hedge/presentation/pages/sync_settings_page.dart';
 import 'package:hedge/presentation/pages/shared/splash_page.dart';
 import 'package:hedge/presentation/pages/shared/introduction_page.dart';
+import 'package:hedge/core/theme/app_colors.dart';
 import 'dart:io';
 
 class _CustomNavBar extends StatelessWidget {
@@ -40,7 +41,7 @@ class _CustomNavBar extends StatelessWidget {
             height: MediaQuery.of(context).padding.top + 44,
             padding: EdgeInsets.only(top: MediaQuery.of(context).padding.top),
             decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF1C1C1E) : CupertinoColors.white,
+              color: AppColors.surface1.resolveFrom(context),
               border: Border(
                 bottom: BorderSide(
                   color: isDark ? CupertinoColors.white.withOpacity(0.1) : CupertinoColors.black.withOpacity(0.1),
@@ -101,12 +102,10 @@ class SettingsPage extends ConsumerWidget {
     final currentLocale = ref.watch(localeProvider);
     final vaultState = ref.watch(vaultProvider);
     final l10n = AppLocalizations.of(context)!;
-    final brightness = CupertinoTheme.of(context).brightness ??
-                       MediaQuery.platformBrightnessOf(context);
-    final isDark = brightness == Brightness.dark;
+    final isDark = AppColors.isDark(context);
 
     return CupertinoPageScaffold(
-      backgroundColor: isDark ? CupertinoColors.black : const Color(0xFFF2F2F7),
+      backgroundColor: AppColors.surface2.resolveFrom(context),
       child: _CustomNavBar(
         title: l10n.settings,
         isDark: isDark,
@@ -235,9 +234,7 @@ class SettingsPage extends ConsumerWidget {
     required String header,
     required List<Widget> children,
   }) {
-    final brightness = CupertinoTheme.of(context).brightness ??
-                       MediaQuery.platformBrightnessOf(context);
-    final isDark = brightness == Brightness.dark;
+    final isDark = AppColors.isDark(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -256,7 +253,7 @@ class SettingsPage extends ConsumerWidget {
         Container(
           margin: const EdgeInsets.symmetric(horizontal: 16),
           decoration: BoxDecoration(
-            color: isDark ? const Color(0xFF1C1C1E) : CupertinoColors.white,
+            color: AppColors.surface1.resolveFrom(context),
             borderRadius: BorderRadius.circular(10),
           ),
           child: Column(children: children),
@@ -557,9 +554,7 @@ class SettingsPage extends ConsumerWidget {
 
   void _showResetPasswordDialog(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
-    final brightness = CupertinoTheme.of(context).brightness ??
-                       MediaQuery.platformBrightnessOf(context);
-    final isDark = brightness == Brightness.dark;
+    final isDark = AppColors.isDark(context);
     
     showCupertinoModalPopup(
       context: context,
@@ -1073,8 +1068,7 @@ class _ResetPasswordSheetState extends ConsumerState<_ResetPasswordSheet> {
     return Container(
       padding: EdgeInsets.only(bottom: mediaQuery.viewInsets.bottom),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1C1C1E) : CupertinoColors.white,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+        color: AppColors.surface1.resolveFrom(context),
       ),
       child: SafeArea(
         top: false,

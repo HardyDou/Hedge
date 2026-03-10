@@ -8,6 +8,7 @@ import 'package:hedge/presentation/providers/vault_provider.dart';
 import 'package:hedge/src/dart/vault.dart';
 import 'package:hedge/domain/services/totp_service.dart';
 import 'package:hedge/presentation/widgets/password_generator_compact.dart';
+import 'package:hedge/core/theme/app_colors.dart';
 import '../services/panel_window_service.dart';
 import '../services/tray_service.dart';
 
@@ -131,9 +132,7 @@ class _TrayPanelUnlockedState extends ConsumerState<TrayPanelUnlocked> {
       return const Center(child: CupertinoActivityIndicator());
     }
 
-    final brightness = CupertinoTheme.of(context).brightness ??
-                       MediaQuery.platformBrightnessOf(context);
-    final isDark = brightness == Brightness.dark;
+    final isDark = AppColors.isDark(context);
     final vaultState = ref.watch(vaultProvider);
 
     return Stack(
@@ -168,7 +167,7 @@ class _TrayPanelUnlockedState extends ConsumerState<TrayPanelUnlocked> {
                 );
               },
               child: Container(
-                color: isDark ? const Color(0xFF1C1C1E) : CupertinoColors.white,
+                color: AppColors.surface1.resolveFrom(context),
                 child: _buildDetailPanel(context, l10n, isDark, _detailItem!),
               ),
             ),
@@ -188,7 +187,7 @@ class _TrayPanelUnlockedState extends ConsumerState<TrayPanelUnlocked> {
                 );
               },
               child: Container(
-                color: isDark ? const Color(0xFF1C1C1E) : CupertinoColors.white,
+                color: AppColors.surface1.resolveFrom(context),
                 child: _buildPasswordLargePage(context, l10n, isDark, _detailItem!),
               ),
             ),
@@ -208,7 +207,7 @@ class _TrayPanelUnlockedState extends ConsumerState<TrayPanelUnlocked> {
                 );
               },
               child: Container(
-                color: isDark ? const Color(0xFF1C1C1E) : CupertinoColors.white,
+                color: AppColors.surface1.resolveFrom(context),
                 child: _buildPasswordGeneratorPanel(context, l10n, isDark),
               ),
             ),
@@ -225,7 +224,7 @@ class _TrayPanelUnlockedState extends ConsumerState<TrayPanelUnlocked> {
       decoration: BoxDecoration(
         border: Border(
           bottom: BorderSide(
-            color: isDark ? const Color(0xFF38383A) : const Color(0xFFC6C6C8),
+            color: AppColors.separator.resolveFrom(context),
             width: 0.5,
           ),
         ),
@@ -302,7 +301,7 @@ class _TrayPanelUnlockedState extends ConsumerState<TrayPanelUnlocked> {
       decoration: BoxDecoration(
         border: Border(
           bottom: BorderSide(
-            color: isDark ? const Color(0xFF38383A) : const Color(0xFFC6C6C8),
+            color: AppColors.separator.resolveFrom(context),
             width: 0.5,
           ),
         ),
@@ -318,9 +317,7 @@ class _TrayPanelUnlockedState extends ConsumerState<TrayPanelUnlocked> {
           fontSize: 13,
           color: isDark ? CupertinoColors.systemGrey : CupertinoColors.systemGrey2,
         ),
-        backgroundColor: isDark
-            ? const Color(0xFF2C2C2E)
-            : const Color(0xFFF2F2F7),
+        backgroundColor: AppColors.surface2.resolveFrom(context),
         onChanged: (value) {
           ref.read(vaultProvider.notifier).searchItems(value);
         },
@@ -391,10 +388,8 @@ class _TrayPanelUnlockedState extends ConsumerState<TrayPanelUnlocked> {
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           decoration: BoxDecoration(
             color: isHovered
-                ? (isDark
-                    ? const Color(0xFF3A3A3C)
-                    : const Color(0xFFE5E5EA))
-                : (isDark ? const Color(0xFF1C1C1E) : CupertinoColors.white),
+                ? AppColors.surface3.resolveFrom(context)
+                : AppColors.surface1.resolveFrom(context),
           ),
           child: Row(
             children: [
@@ -513,7 +508,7 @@ class _TrayPanelUnlockedState extends ConsumerState<TrayPanelUnlocked> {
           decoration: BoxDecoration(
             border: Border(
               bottom: BorderSide(
-                color: isDark ? const Color(0xFF38383A) : const Color(0xFFC6C6C8),
+                color: AppColors.separator.resolveFrom(context),
                 width: 0.5,
               ),
             ),
@@ -909,7 +904,7 @@ class _TrayPanelUnlockedState extends ConsumerState<TrayPanelUnlocked> {
           decoration: BoxDecoration(
             border: Border(
               bottom: BorderSide(
-                color: isDark ? const Color(0xFF38383A) : const Color(0xFFC6C6C8),
+                color: AppColors.separator.resolveFrom(context),
                 width: 0.5,
               ),
             ),
@@ -1043,20 +1038,8 @@ class _TrayPanelUnlockedState extends ConsumerState<TrayPanelUnlocked> {
   }
 
   Color _getColorForChar(String char) {
-    final colors = [
-      const Color(0xFF007AFF),
-      const Color(0xFF34C759),
-      const Color(0xFFFF9500),
-      const Color(0xFFAF52DE),
-      const Color(0xFFFF3B30),
-      const Color(0xFF5AC8FA),
-      const Color(0xFFFF2D55),
-      const Color(0xFF5856D6),
-      const Color(0xFF00C7BE),
-      const Color(0xFFFFCC00),
-    ];
-    final index = char.toUpperCase().codeUnitAt(0) % colors.length;
-    return colors[index];
+    final index = char.toUpperCase().codeUnitAt(0) % AppColors.categoryColors.length;
+    return AppColors.categoryColors[index];
   }
 
   /// 构建密码生成器面板
@@ -1074,7 +1057,7 @@ class _TrayPanelUnlockedState extends ConsumerState<TrayPanelUnlocked> {
           decoration: BoxDecoration(
             border: Border(
               bottom: BorderSide(
-                color: isDark ? const Color(0xFF38383A) : const Color(0xFFC6C6C8),
+                color: AppColors.separator.resolveFrom(context),
                 width: 0.5,
               ),
             ),

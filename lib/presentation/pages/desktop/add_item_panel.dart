@@ -7,6 +7,7 @@ import 'package:hedge/presentation/providers/vault_provider.dart';
 import 'package:hedge/presentation/widgets/markdown_toolbar.dart';
 import 'package:hedge/presentation/pages/desktop/desktop_qr_scanner_dialog.dart';
 import 'package:hedge/presentation/widgets/password_generator_popover.dart';
+import 'package:hedge/core/theme/app_colors.dart';
 
 class AddItemPanel extends ConsumerStatefulWidget {
   final VoidCallback onClose;
@@ -43,12 +44,10 @@ class _AddItemPanelState extends ConsumerState<AddItemPanel> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final brightness = CupertinoTheme.of(context).brightness ??
-                       MediaQuery.platformBrightnessOf(context);
-    final isDark = brightness == Brightness.dark;
+    final isDark = AppColors.isDark(context);
 
     return Container(
-      color: isDark ? CupertinoColors.black : const Color(0xFFF2F2F7),
+      color: AppColors.surface2.resolveFrom(context),
       child: Column(
         children: [
           _buildHeader(isDark, l10n),
@@ -83,7 +82,7 @@ class _AddItemPanelState extends ConsumerState<AddItemPanel> {
       height: 52,
       padding: const EdgeInsets.symmetric(horizontal: 16),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1C1C1E) : CupertinoColors.white,
+        color: AppColors.surface1.resolveFrom(context),
         border: Border(
           bottom: BorderSide(
             color: isDark ? CupertinoColors.white.withValues(alpha: 0.1) : CupertinoColors.black.withValues(alpha: 0.1),
@@ -128,7 +127,7 @@ class _AddItemPanelState extends ConsumerState<AddItemPanel> {
           placeholderStyle: TextStyle(color: isDark ? CupertinoColors.white.withValues(alpha: 0.3) : CupertinoColors.black.withValues(alpha: 0.3)),
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: isDark ? const Color(0xFF1C1C1E) : CupertinoColors.white,
+            color: AppColors.surface1.resolveFrom(context),
             borderRadius: BorderRadius.circular(8),
             border: Border.all(color: isDark ? CupertinoColors.white.withValues(alpha: 0.2) : CupertinoColors.black.withValues(alpha: 0.1)),
           ),
@@ -197,7 +196,7 @@ class _AddItemPanelState extends ConsumerState<AddItemPanel> {
               ),
               padding: const EdgeInsets.only(left: 12, top: 12, bottom: 12, right: 40),
               decoration: BoxDecoration(
-                color: isDark ? const Color(0xFF1C1C1E) : CupertinoColors.white,
+                color: AppColors.surface1.resolveFrom(context),
                 borderRadius: BorderRadius.circular(8),
                 border: Border.all(
                   color: isDark
@@ -266,7 +265,7 @@ class _AddItemPanelState extends ConsumerState<AddItemPanel> {
         const SizedBox(height: 8),
         Container(
           decoration: BoxDecoration(
-            color: isDark ? const Color(0xFF1C1C1E) : CupertinoColors.white,
+            color: AppColors.surface1.resolveFrom(context),
             borderRadius: BorderRadius.circular(8),
             border: Border.all(color: isDark ? CupertinoColors.white.withValues(alpha: 0.2) : CupertinoColors.black.withValues(alpha: 0.1)),
           ),
@@ -373,7 +372,7 @@ class _AddItemPanelState extends ConsumerState<AddItemPanel> {
         const SizedBox(height: 8),
         Container(
           decoration: BoxDecoration(
-            color: isDark ? const Color(0xFF1C1C1E) : CupertinoColors.white,
+            color: AppColors.surface1.resolveFrom(context),
             borderRadius: BorderRadius.circular(8),
           ),
           child: Column(

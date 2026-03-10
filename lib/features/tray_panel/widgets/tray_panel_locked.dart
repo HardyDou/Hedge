@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hedge/l10n/generated/app_localizations.dart';
 import 'package:hedge/presentation/providers/vault_provider.dart';
+import 'package:hedge/core/theme/app_colors.dart';
 import '../services/panel_window_service.dart';
 import '../services/tray_service.dart';
 
@@ -100,9 +101,7 @@ class _TrayPanelLockedState extends ConsumerState<TrayPanelLocked> {
       return const Center(child: CupertinoActivityIndicator());
     }
 
-    final brightness = CupertinoTheme.of(context).brightness ??
-                       MediaQuery.platformBrightnessOf(context);
-    final isDark = brightness == Brightness.dark;
+    final isDark = AppColors.isDark(context);
 
     return Column(
       children: [
@@ -125,7 +124,7 @@ class _TrayPanelLockedState extends ConsumerState<TrayPanelLocked> {
       decoration: BoxDecoration(
         border: Border(
           bottom: BorderSide(
-            color: isDark ? const Color(0xFF38383A) : const Color(0xFFC6C6C8),
+            color: AppColors.separator.resolveFrom(context),
             width: 0.5,
           ),
         ),
@@ -201,7 +200,7 @@ class _TrayPanelLockedState extends ConsumerState<TrayPanelLocked> {
           // 密码输入框 + 解锁按钮 - 整体设计
           Container(
             decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF2C2C2E) : const Color(0xFFF2F2F7),
+              color: AppColors.surface2.resolveFrom(context),
               borderRadius: BorderRadius.circular(8),
               border: _errorMessage != null
                   ? Border.all(color: CupertinoColors.systemRed, width: 1)
@@ -288,9 +287,7 @@ class _TrayPanelLockedState extends ConsumerState<TrayPanelLocked> {
               width: double.infinity,
               height: 36,
               decoration: BoxDecoration(
-                color: isDark
-                    ? const Color(0xFF2C2C2E)
-                    : const Color(0xFFF2F2F7),
+                color: AppColors.surface2.resolveFrom(context),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Row(
