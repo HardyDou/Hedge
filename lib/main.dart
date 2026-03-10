@@ -1166,28 +1166,28 @@ class _iOSListItemState extends State<_iOSListItem> {
             width: 40,
             height: 40,
             fit: BoxFit.cover,
-            placeholder: (context, url) => _buildFallbackIcon(),
-            errorWidget: (context, url, error) => _buildFallbackIcon(),
+            placeholder: (context, url) => _buildFallbackIcon(color),
+            errorWidget: (context, url, error) => _buildFallbackIcon(color),
           ),
         ),
       );
     }
-    return _buildFallbackIcon();
+    return _buildFallbackIcon(color);
   }
 
-  Widget _buildFallbackIcon() {
+  Widget _buildFallbackIcon(Color color) {
     return Container(
       width: 40,
       height: 40,
       decoration: BoxDecoration(
-        color: AppColors.surface3.resolveFrom(context),
+        color: color.withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Center(
         child: Text(
           widget.displayChar[0].toUpperCase(),
           style: TextStyle(
-            color: widget.isDark ? CupertinoColors.white.withValues(alpha: 0.7) : CupertinoColors.black.withValues(alpha: 0.6),
+            color: color,
             fontSize: 18,
             fontWeight: FontWeight.w600,
           ),
