@@ -3,6 +3,7 @@ import 'package:flutter_app_lock/flutter_app_lock.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:local_auth/local_auth.dart';
 import 'package:hedge/l10n/generated/app_localizations.dart';
+import 'package:hedge/core/theme/app_colors.dart';
 import '../../providers/vault_provider.dart';
 
 class UnlockPage extends ConsumerStatefulWidget {
@@ -163,11 +164,11 @@ class _UnlockPageState extends ConsumerState<UnlockPage> {
   Widget build(BuildContext context) {
     final vaultState = ref.watch(vaultProvider);
     final l10n = AppLocalizations.of(context)!;
-    final brightness = CupertinoTheme.of(context).brightness ??
-                       MediaQuery.platformBrightnessOf(context);
-    final isDark = brightness == Brightness.dark;
+    final isDark = AppColors.isDark(context);
 
     return CupertinoPageScaffold(
+      // Intentionally uses near-black background in dark mode for a focused,
+      // secure unlock experience. The radial gradient is a deliberate design choice.
       backgroundColor: isDark ? const Color(0xFF0F0F0F) : CupertinoColors.white,
       child: Stack(
         children: [

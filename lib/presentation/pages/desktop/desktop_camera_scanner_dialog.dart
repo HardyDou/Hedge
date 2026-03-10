@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:hedge/domain/services/qr_scanner_service.dart';
 import 'package:hedge/l10n/generated/app_localizations.dart';
+import 'package:hedge/core/theme/app_colors.dart';
 
 /// 桌面端相机扫描对话框
 class DesktopCameraScannerDialog extends StatefulWidget {
@@ -60,14 +61,12 @@ class _DesktopCameraScannerDialogState extends State<DesktopCameraScannerDialog>
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final brightness = CupertinoTheme.of(context).brightness ??
-                       MediaQuery.platformBrightnessOf(context);
-    final isDark = brightness == Brightness.dark;
+    final isDark = AppColors.isDark(context);
 
     return CupertinoPageScaffold(
       backgroundColor: CupertinoColors.black,
       navigationBar: CupertinoNavigationBar(
-        backgroundColor: isDark ? const Color(0xFF1C1C1E) : CupertinoColors.white,
+        backgroundColor: AppColors.surface1.resolveFrom(context),
         middle: Text(l10n.scanQrCode),
         leading: CupertinoButton(
           padding: EdgeInsets.zero,

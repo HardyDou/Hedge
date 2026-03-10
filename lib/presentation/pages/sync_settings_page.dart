@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hedge/domain/models/sync_config.dart';
 import 'package:hedge/presentation/providers/vault_provider.dart';
 import 'package:hedge/presentation/pages/webdav_settings_page.dart';
+import 'package:hedge/core/theme/app_colors.dart';
 import 'dart:io';
 
 class SyncSettingsPage extends ConsumerWidget {
@@ -12,13 +13,12 @@ class SyncSettingsPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final vaultState = ref.watch(vaultProvider);
     final currentMode = vaultState.syncMode;
-    final brightness = CupertinoTheme.of(context).brightness;
-    final isDark = brightness == Brightness.dark;
+    final isDark = AppColors.isDark(context);
 
     return CupertinoPageScaffold(
       navigationBar: CupertinoNavigationBar(
         middle: const Text('同步'),
-        backgroundColor: isDark ? const Color(0xFF1C1C1E) : CupertinoColors.white,
+        backgroundColor: AppColors.surface1.resolveFrom(context),
       ),
       child: SafeArea(
         child: ListView(
@@ -138,7 +138,7 @@ class SyncSettingsPage extends ConsumerWidget {
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF2C2C2E) : CupertinoColors.white,
+          color: AppColors.surface2.resolveFrom(context),
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
             color: isSelected

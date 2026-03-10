@@ -1,11 +1,10 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
+import 'package:hedge/core/theme/app_colors.dart';
 
 class LargePasswordDialog {
   static void show(BuildContext context, String password) {
-    final brightness = CupertinoTheme.of(context).brightness ??
-                       MediaQuery.platformBrightnessOf(context);
-    final isDark = brightness == Brightness.dark;
+    final isDark = AppColors.isDark(context);
     final screenWidth = MediaQuery.of(context).size.width;
 
     showCupertinoDialog(
@@ -23,7 +22,7 @@ class LargePasswordDialog {
         constraints: BoxConstraints(maxWidth: maxWidth),
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF1C1C1E) : CupertinoColors.white,
+          color: AppColors.surface1.resolveFrom(context),
           borderRadius: BorderRadius.circular(12),
           boxShadow: [
             BoxShadow(

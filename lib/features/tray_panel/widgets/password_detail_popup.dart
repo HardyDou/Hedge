@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
 import 'package:hedge/src/dart/vault.dart';
 import 'package:hedge/l10n/generated/app_localizations.dart';
+import 'package:hedge/core/theme/app_colors.dart';
 
 /// 密码详情弹出面板
 class PasswordDetailPopup extends StatelessWidget {
@@ -21,7 +22,7 @@ class PasswordDetailPopup extends StatelessWidget {
     return Container(
       width: 280,
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1C1C1E) : CupertinoColors.white,
+        color: AppColors.surface1.resolveFrom(context),
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
@@ -41,7 +42,7 @@ class PasswordDetailPopup extends StatelessWidget {
             decoration: BoxDecoration(
               border: Border(
                 bottom: BorderSide(
-                  color: isDark ? const Color(0xFF38383A) : const Color(0xFFC6C6C8),
+                  color: AppColors.separator.resolveFrom(context),
                   width: 0.5,
                 ),
               ),

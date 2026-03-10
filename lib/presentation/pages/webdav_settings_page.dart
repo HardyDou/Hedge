@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hedge/domain/models/sync_config.dart';
 import 'package:hedge/presentation/providers/vault_provider.dart';
 import 'package:hedge/platform/webdav_sync_service.dart';
+import 'package:hedge/core/theme/app_colors.dart';
 
 class WebDAVSettingsPage extends ConsumerStatefulWidget {
   const WebDAVSettingsPage({super.key});
@@ -147,13 +148,12 @@ class _WebDAVSettingsPageState extends ConsumerState<WebDAVSettingsPage> {
 
   @override
   Widget build(BuildContext context) {
-    final brightness = CupertinoTheme.of(context).brightness;
-    final isDark = brightness == Brightness.dark;
+    final isDark = AppColors.isDark(context);
 
     return CupertinoPageScaffold(
       navigationBar: CupertinoNavigationBar(
         middle: const Text('WebDAV 配置'),
-        backgroundColor: isDark ? const Color(0xFF1C1C1E) : CupertinoColors.white,
+        backgroundColor: AppColors.surface1.resolveFrom(context),
       ),
       child: SafeArea(
         child: ListView(
@@ -163,7 +163,7 @@ class _WebDAVSettingsPageState extends ConsumerState<WebDAVSettingsPage> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: isDark ? const Color(0xFF2C2C2E) : CupertinoColors.white,
+                color: AppColors.surface2.resolveFrom(context),
                 borderRadius: BorderRadius.circular(10),
                 border: Border.all(
                   color: isDark
@@ -204,7 +204,7 @@ class _WebDAVSettingsPageState extends ConsumerState<WebDAVSettingsPage> {
                       color: isDark ? CupertinoColors.white : CupertinoColors.black,
                     ),
                     decoration: BoxDecoration(
-                      color: isDark ? const Color(0xFF1C1C1E) : CupertinoColors.systemGrey6,
+                      color: AppColors.surface1.resolveFrom(context),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
@@ -312,9 +312,7 @@ class _WebDAVSettingsPageState extends ConsumerState<WebDAVSettingsPage> {
                 Expanded(
                   child: CupertinoButton(
                     padding: const EdgeInsets.symmetric(vertical: 12),
-                    color: isDark
-                        ? const Color(0xFF2C2C2E)
-                        : CupertinoColors.systemGrey6,
+                    color: AppColors.surface2.resolveFrom(context),
                     borderRadius: BorderRadius.circular(10),
                     onPressed: _isLoading ? null : _testConnection,
                     child: _isLoading
@@ -384,7 +382,7 @@ class _WebDAVSettingsPageState extends ConsumerState<WebDAVSettingsPage> {
             color: isDark ? CupertinoColors.white : CupertinoColors.black,
           ),
           decoration: BoxDecoration(
-            color: isDark ? const Color(0xFF1C1C1E) : CupertinoColors.systemGrey6,
+            color: AppColors.surface1.resolveFrom(context),
             borderRadius: BorderRadius.circular(8),
           ),
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),

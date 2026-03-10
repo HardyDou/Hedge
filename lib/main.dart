@@ -3,6 +3,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hedge/core/theme/app_colors.dart';
 import 'package:flutter_app_lock/flutter_app_lock.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:window_manager/window_manager.dart';
@@ -438,8 +439,7 @@ class _AuthGuardState extends ConsumerState<AuthGuard> with WidgetsBindingObserv
     }
 
     // If authenticated, show settings dialog
-    final brightness = CupertinoTheme.of(context).brightness;
-    final isDark = brightness == Brightness.dark;
+    final isDark = AppColors.isDark(context);
 
     showCupertinoDialog(
       context: context,
@@ -449,7 +449,7 @@ class _AuthGuardState extends ConsumerState<AuthGuard> with WidgetsBindingObserv
           width: 450,
           height: 380,
           decoration: BoxDecoration(
-            color: isDark ? const Color(0xFF1C1C1E) : CupertinoColors.white,
+            color: AppColors.surface1.resolveFrom(context),
             borderRadius: BorderRadius.circular(12),
             boxShadow: [
               BoxShadow(
@@ -570,14 +570,13 @@ class _HomePageState extends ConsumerState<HomePage> {
   Widget build(BuildContext context) {
     final vaultState = ref.watch(vaultProvider);
     final l10n = AppLocalizations.of(context)!;
-    final brightness = CupertinoTheme.of(context).brightness ??
-                       MediaQuery.platformBrightnessOf(context);
-    final isDark = brightness == Brightness.dark;
+    final isDark = AppColors.isDark(context);
 
     final items = vaultState.filteredVaultItems ?? []; // Use filtered items from provider, default to empty list
     final groupedList = _buildGroupedList(items);
 
     return CupertinoPageScaffold(
+      backgroundColor: AppColors.surface2.resolveFrom(context),
       navigationBar: CupertinoNavigationBar(
         middle: Text(
           l10n.myVault.toUpperCase(),
@@ -727,9 +726,7 @@ class _HomePageState extends ConsumerState<HomePage> {
               ),
               Expanded(
                 child: Container(
-                  color: isDark 
-                      ? CupertinoColors.black
-                      : const Color(0xFFF2F2F7),
+                  color: AppColors.surface2.resolveFrom(context),
                   child: items.isEmpty
                       ? Center(
                           child: Column(
@@ -1058,25 +1055,11 @@ class _iOSListItemState extends State<_iOSListItem> {
         child: Container(
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
-            color: widget.isDark
-                ? const Color(0xFF1C1C1E)
-                : CupertinoColors.white,
+            color: AppColors.surface1.resolveFrom(context),
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: widget.isSelected
-                  ? CupertinoColors.activeBlue
-                  : widget.isDark
-                      ? CupertinoColors.white.withValues(alpha: 0.08)
-                      : CupertinoColors.black.withValues(alpha: 0.06),
-              width: widget.isSelected ? 2 : 0.5,
-            ),
-            boxShadow: widget.isDark ? null : [
-              BoxShadow(
-                color: CupertinoColors.black.withValues(alpha: 0.04),
-                blurRadius: 8,
-                offset: const Offset(0, 2),
-              ),
-            ],
+            border: widget.isSelected
+                ? Border.all(color: CupertinoColors.activeBlue, width: 2)
+                : null,
           ),
           child: Row(
             children: [

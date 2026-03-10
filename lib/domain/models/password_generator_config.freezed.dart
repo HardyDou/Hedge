@@ -26,11 +26,11 @@ mixin _$PasswordGeneratorConfig {
   /// 密码长度 (8-64)
   int get length => throw _privateConstructorUsedError;
 
-  /// 数字字符数量 (0-length)
-  int get numbersCount => throw _privateConstructorUsedError;
+  /// 是否包含数字
+  bool get includeNumbers => throw _privateConstructorUsedError;
 
-  /// 符号字符数量 (0-length)
-  int get symbolsCount => throw _privateConstructorUsedError;
+  /// 是否包含符号
+  bool get includeSymbols => throw _privateConstructorUsedError;
 
   /// 排除易混淆字符 (0/O, 1/l/I)
   bool get excludeAmbiguous => throw _privateConstructorUsedError;
@@ -54,8 +54,8 @@ abstract class $PasswordGeneratorConfigCopyWith<$Res> {
   @useResult
   $Res call({
     int length,
-    int numbersCount,
-    int symbolsCount,
+    bool includeNumbers,
+    bool includeSymbols,
     bool excludeAmbiguous,
   });
 }
@@ -79,8 +79,8 @@ class _$PasswordGeneratorConfigCopyWithImpl<
   @override
   $Res call({
     Object? length = null,
-    Object? numbersCount = null,
-    Object? symbolsCount = null,
+    Object? includeNumbers = null,
+    Object? includeSymbols = null,
     Object? excludeAmbiguous = null,
   }) {
     return _then(
@@ -89,14 +89,14 @@ class _$PasswordGeneratorConfigCopyWithImpl<
                 ? _value.length
                 : length // ignore: cast_nullable_to_non_nullable
                       as int,
-            numbersCount: null == numbersCount
-                ? _value.numbersCount
-                : numbersCount // ignore: cast_nullable_to_non_nullable
-                      as int,
-            symbolsCount: null == symbolsCount
-                ? _value.symbolsCount
-                : symbolsCount // ignore: cast_nullable_to_non_nullable
-                      as int,
+            includeNumbers: null == includeNumbers
+                ? _value.includeNumbers
+                : includeNumbers // ignore: cast_nullable_to_non_nullable
+                      as bool,
+            includeSymbols: null == includeSymbols
+                ? _value.includeSymbols
+                : includeSymbols // ignore: cast_nullable_to_non_nullable
+                      as bool,
             excludeAmbiguous: null == excludeAmbiguous
                 ? _value.excludeAmbiguous
                 : excludeAmbiguous // ignore: cast_nullable_to_non_nullable
@@ -118,8 +118,8 @@ abstract class _$$PasswordGeneratorConfigImplCopyWith<$Res>
   @useResult
   $Res call({
     int length,
-    int numbersCount,
-    int symbolsCount,
+    bool includeNumbers,
+    bool includeSymbols,
     bool excludeAmbiguous,
   });
 }
@@ -143,8 +143,8 @@ class __$$PasswordGeneratorConfigImplCopyWithImpl<$Res>
   @override
   $Res call({
     Object? length = null,
-    Object? numbersCount = null,
-    Object? symbolsCount = null,
+    Object? includeNumbers = null,
+    Object? includeSymbols = null,
     Object? excludeAmbiguous = null,
   }) {
     return _then(
@@ -153,14 +153,14 @@ class __$$PasswordGeneratorConfigImplCopyWithImpl<$Res>
             ? _value.length
             : length // ignore: cast_nullable_to_non_nullable
                   as int,
-        numbersCount: null == numbersCount
-            ? _value.numbersCount
-            : numbersCount // ignore: cast_nullable_to_non_nullable
-                  as int,
-        symbolsCount: null == symbolsCount
-            ? _value.symbolsCount
-            : symbolsCount // ignore: cast_nullable_to_non_nullable
-                  as int,
+        includeNumbers: null == includeNumbers
+            ? _value.includeNumbers
+            : includeNumbers // ignore: cast_nullable_to_non_nullable
+                  as bool,
+        includeSymbols: null == includeSymbols
+            ? _value.includeSymbols
+            : includeSymbols // ignore: cast_nullable_to_non_nullable
+                  as bool,
         excludeAmbiguous: null == excludeAmbiguous
             ? _value.excludeAmbiguous
             : excludeAmbiguous // ignore: cast_nullable_to_non_nullable
@@ -175,8 +175,8 @@ class __$$PasswordGeneratorConfigImplCopyWithImpl<$Res>
 class _$PasswordGeneratorConfigImpl implements _PasswordGeneratorConfig {
   const _$PasswordGeneratorConfigImpl({
     required this.length,
-    this.numbersCount = 0,
-    this.symbolsCount = 0,
+    this.includeNumbers = true,
+    this.includeSymbols = true,
     this.excludeAmbiguous = false,
   });
 
@@ -187,15 +187,15 @@ class _$PasswordGeneratorConfigImpl implements _PasswordGeneratorConfig {
   @override
   final int length;
 
-  /// 数字字符数量 (0-length)
+  /// 是否包含数字
   @override
   @JsonKey()
-  final int numbersCount;
+  final bool includeNumbers;
 
-  /// 符号字符数量 (0-length)
+  /// 是否包含符号
   @override
   @JsonKey()
-  final int symbolsCount;
+  final bool includeSymbols;
 
   /// 排除易混淆字符 (0/O, 1/l/I)
   @override
@@ -204,7 +204,7 @@ class _$PasswordGeneratorConfigImpl implements _PasswordGeneratorConfig {
 
   @override
   String toString() {
-    return 'PasswordGeneratorConfig(length: $length, numbersCount: $numbersCount, symbolsCount: $symbolsCount, excludeAmbiguous: $excludeAmbiguous)';
+    return 'PasswordGeneratorConfig(length: $length, includeNumbers: $includeNumbers, includeSymbols: $includeSymbols, excludeAmbiguous: $excludeAmbiguous)';
   }
 
   @override
@@ -213,10 +213,10 @@ class _$PasswordGeneratorConfigImpl implements _PasswordGeneratorConfig {
         (other.runtimeType == runtimeType &&
             other is _$PasswordGeneratorConfigImpl &&
             (identical(other.length, length) || other.length == length) &&
-            (identical(other.numbersCount, numbersCount) ||
-                other.numbersCount == numbersCount) &&
-            (identical(other.symbolsCount, symbolsCount) ||
-                other.symbolsCount == symbolsCount) &&
+            (identical(other.includeNumbers, includeNumbers) ||
+                other.includeNumbers == includeNumbers) &&
+            (identical(other.includeSymbols, includeSymbols) ||
+                other.includeSymbols == includeSymbols) &&
             (identical(other.excludeAmbiguous, excludeAmbiguous) ||
                 other.excludeAmbiguous == excludeAmbiguous));
   }
@@ -226,8 +226,8 @@ class _$PasswordGeneratorConfigImpl implements _PasswordGeneratorConfig {
   int get hashCode => Object.hash(
     runtimeType,
     length,
-    numbersCount,
-    symbolsCount,
+    includeNumbers,
+    includeSymbols,
     excludeAmbiguous,
   );
 
@@ -251,8 +251,8 @@ class _$PasswordGeneratorConfigImpl implements _PasswordGeneratorConfig {
 abstract class _PasswordGeneratorConfig implements PasswordGeneratorConfig {
   const factory _PasswordGeneratorConfig({
     required final int length,
-    final int numbersCount,
-    final int symbolsCount,
+    final bool includeNumbers,
+    final bool includeSymbols,
     final bool excludeAmbiguous,
   }) = _$PasswordGeneratorConfigImpl;
 
@@ -263,13 +263,13 @@ abstract class _PasswordGeneratorConfig implements PasswordGeneratorConfig {
   @override
   int get length;
 
-  /// 数字字符数量 (0-length)
+  /// 是否包含数字
   @override
-  int get numbersCount;
+  bool get includeNumbers;
 
-  /// 符号字符数量 (0-length)
+  /// 是否包含符号
   @override
-  int get symbolsCount;
+  bool get includeSymbols;
 
   /// 排除易混淆字符 (0/O, 1/l/I)
   @override

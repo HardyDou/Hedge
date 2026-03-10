@@ -9,6 +9,7 @@ import 'package:hedge/l10n/generated/app_localizations.dart';
 import 'package:hedge/presentation/providers/vault_provider.dart';
 import 'package:hedge/presentation/pages/desktop/large_password_dialog.dart';
 import 'package:hedge/domain/services/totp_service.dart';
+import 'package:hedge/core/theme/app_colors.dart';
 
 class DetailPanel extends ConsumerStatefulWidget {
   final VaultItem item;
@@ -99,12 +100,10 @@ class _DetailPanelState extends ConsumerState<DetailPanel> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final brightness = CupertinoTheme.of(context).brightness ??
-                       MediaQuery.platformBrightnessOf(context);
-    final isDark = brightness == Brightness.dark;
+    final isDark = AppColors.isDark(context);
 
     return Container(
-      color: isDark ? CupertinoColors.black : const Color(0xFFF2F2F7),
+      color: AppColors.surface2.resolveFrom(context),
       child: Column(
         children: [
           // 顶部导航栏 - 带编辑按钮
@@ -167,7 +166,7 @@ class _DetailPanelState extends ConsumerState<DetailPanel> {
       height: 52,
       padding: const EdgeInsets.symmetric(horizontal: 16),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1C1C1E) : CupertinoColors.white,
+        color: AppColors.surface1.resolveFrom(context),
         border: Border(
           bottom: BorderSide(
             color: isDark
@@ -397,7 +396,7 @@ class _DetailPanelState extends ConsumerState<DetailPanel> {
           ),
         Container(
           decoration: BoxDecoration(
-            color: isDark ? const Color(0xFF1C1C1E) : CupertinoColors.white,
+            color: AppColors.surface1.resolveFrom(context),
             borderRadius: BorderRadius.circular(12),
           ),
           child: Column(children: children),

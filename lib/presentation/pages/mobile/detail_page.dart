@@ -11,6 +11,7 @@ import 'package:open_file/open_file.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:hedge/l10n/generated/app_localizations.dart';
 import 'package:hedge/domain/services/totp_service.dart';
+import 'package:hedge/core/theme/app_colors.dart';
 import 'edit_page.dart';
 import 'large_password_page.dart' show LargePasswordPage;
 
@@ -140,14 +141,12 @@ class _DetailPageState extends ConsumerState<DetailPage> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final brightness = CupertinoTheme.of(context).brightness ??
-                       MediaQuery.platformBrightnessOf(context);
-    final isDark = brightness == Brightness.dark;
-    
+    final isDark = AppColors.isDark(context);
+
     return CupertinoPageScaffold(
-      backgroundColor: isDark ? CupertinoColors.black : const Color(0xFFF2F2F7),
+      backgroundColor: AppColors.surface2.resolveFrom(context),
       navigationBar: CupertinoNavigationBar(
-        backgroundColor: isDark ? const Color(0xFF1C1C1E) : CupertinoColors.white,
+        backgroundColor: AppColors.surface1.resolveFrom(context),
         middle: Text(_item.title, maxLines: 1, overflow: TextOverflow.ellipsis),
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
@@ -346,9 +345,7 @@ class _DetailPageState extends ConsumerState<DetailPage> {
     String? header,
     required List<Widget> children,
   }) {
-    final brightness = CupertinoTheme.of(context).brightness ??
-                       MediaQuery.platformBrightnessOf(context);
-    final isDark = brightness == Brightness.dark;
+    final isDark = AppColors.isDark(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -367,7 +364,7 @@ class _DetailPageState extends ConsumerState<DetailPage> {
         Container(
           margin: const EdgeInsets.symmetric(horizontal: 16),
           decoration: BoxDecoration(
-            color: isDark ? const Color(0xFF1C1C1E) : CupertinoColors.white,
+            color: AppColors.surface1.resolveFrom(context),
             borderRadius: BorderRadius.circular(10),
           ),
           child: Column(children: children),

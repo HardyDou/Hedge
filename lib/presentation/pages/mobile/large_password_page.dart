@@ -73,6 +73,8 @@ class _LargePasswordPageState extends State<LargePasswordPage> {
     final l10n = AppLocalizations.of(context)!;
     
     return CupertinoPageScaffold(
+      // Intentionally always dark — this is a focused password-reading view
+      // designed to be used in low-light conditions. Do not adapt to light theme.
       backgroundColor: const Color(0xFF1C1C1E),
       navigationBar: CupertinoNavigationBar(
         backgroundColor: const Color(0xFF1C1C1E),
