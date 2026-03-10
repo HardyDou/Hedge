@@ -1,6 +1,5 @@
-import 'dart:io';
 import 'package:flutter/cupertino.dart';
-import 'package:qr_code_scanner/qr_code_scanner.dart';
+import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:hedge/domain/services/qr_scanner_service.dart';
 import 'package:hedge/l10n/generated/app_localizations.dart';
 
@@ -13,48 +12,28 @@ class QrScannerPage extends StatefulWidget {
 }
 
 class _QrScannerPageState extends State<QrScannerPage> {
-  final GlobalKey qrKey = GlobalKey(debugLabel: 'QR');
-  QRViewController? controller;
+  final MobileScannerController _controller = MobileScannerController();
   bool _isProcessing = false;
 
   @override
-  void reassemble() {
-    super.reassemble();
-    if (Platform.isAndroid) {
-      controller?.pauseCamera();
-    }
-    controller?.resumeCamera();
-  }
-
-  @override
   void dispose() {
-    controller?.dispose();
+    _controller.dispose();
     super.dispose();
   }
 
-  void _onQRViewCreated(QRViewController controller) {
-    this.controller = controller;
-    controller.scannedDataStream.listen((scanData) {
-      if (_isProcessing) return;
-
-      final code = scanData.code;
-      if (code != null && code.isNotEmpty) {
-        _handleScannedCode(code);
-      }
-    });
-  }
-
-  void _handleScannedCode(String code) {
+  void _onDetect(BarcodeCapture capture) {
     if (_isProcessing) return;
+
+    final barcode = capture.barcodes.firstOrNull;
+    if (barcode == null || barcode.rawValue == null) return;
 
     setState(() => _isProcessing = true);
 
-    // 解析 TOTP URI
+    final code = barcode.rawValue!;
     final result = QrScannerService.parseTotpUri(code);
 
     if (result != null) {
       // 扫描成功，返回结果
-      controller?.pauseCamera();
       Navigator.pop(context, result);
     } else {
       // 扫描失败，显示错误提示
@@ -104,15 +83,22 @@ class _QrScannerPageState extends State<QrScannerPage> {
       child: Stack(
         children: [
           // 相机预览
-          QRView(
-            key: qrKey,
-            onQRViewCreated: _onQRViewCreated,
-            overlay: QrScannerOverlayShape(
-              borderColor: CupertinoColors.activeBlue,
-              borderRadius: 16,
-              borderLength: 40,
-              borderWidth: 8,
-              cutOutSize: 280,
+          MobileScanner(
+            controller: _controller,
+            onDetect: _onDetect,
+          ),
+          // 扫描框
+          Center(
+            child: Container(
+              width: 280,
+              height: 280,
+              decoration: BoxDecoration(
+                border: Border.all(
+                  color: CupertinoColors.activeBlue,
+                  width: 4,
+                ),
+                borderRadius: BorderRadius.circular(16),
+              ),
             ),
           ),
           // 提示文字

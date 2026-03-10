@@ -1,5 +1,214 @@
 # Hedge（密码本）
 
+[English](#english) | [中文](#中文)
+
+---
+
+## English
+
+# Hedge
+
+**Local-First** cross-platform password manager with native experience.
+
+Your passwords, your cloud, your control.
+
+---
+
+## ✨ Core Features
+
+- **Zero-Knowledge Architecture** - Local encryption (AES-256-GCM), never touches third-party servers
+- **Your Cloud, Your Control** - Supports iCloud Drive / WebDAV sync, no vendor lock-in
+- **Native Experience** - 100% Cupertino design, pixel-perfect on iOS/macOS/Android
+- **Biometric Unlock** - Face ID / Touch ID / Fingerprint support
+- **Cross-Platform** - iOS, Android, macOS, Linux, Windows
+- **TOTP/2FA** - Built-in authenticator, no extra app needed
+- **Desktop Quick Panel** - System tray resident, hover to show details
+
+---
+
+## 🆚 Why Choose Hedge?
+
+| Aspect | Hedge | 1Password | Bitwarden | KeePass |
+|---|:---:|:---:|:---:|:---:|
+| **Data Storage** | Your Cloud | Vendor Server | Vendor/Self-hosted | Local |
+| **Price** | Free | $2.99+/mo | Free/$10/yr | Free |
+| **UI Experience** | Native | Native | Web-style | Outdated |
+| **Cross-Platform** | ✅ All | ✅ | ✅ | ⚠️ Limited |
+| **TOTP** | ✅ | ✅ | ✅ | ⚠️ Plugin |
+| **Desktop Quick Access** | ✅ Tray Panel | ✅ | ⚠️ Basic | ❌ |
+
+---
+
+## 🚀 Quick Start
+
+### Requirements
+
+- Flutter 3.x
+- Xcode 15+ (iOS/macOS)
+- Android Studio (Android)
+
+### Build & Run
+
+```bash
+# Install dependencies
+flutter pub get
+
+# Generate code (JSON serialization, etc.)
+flutter pub run build_runner build --delete-conflicting-outputs
+
+# Generate localization files
+flutter gen-l10n
+
+# Run on macOS
+flutter run -d macos
+
+# Run on iOS Simulator
+flutter run -d iphonesimulator
+
+# Run on Android
+flutter run -d android
+```
+
+---
+
+## 📱 Features
+
+### Core
+- ✅ Password management (CRUD)
+- ✅ AES-256-GCM encryption + Argon2id key derivation
+- ✅ Biometric unlock
+- ✅ Auto-lock
+- ✅ Attachment support
+- ✅ Markdown notes editor
+
+### TOTP/2FA
+- ✅ Scan QR code to add
+- ✅ Manual secret key input
+- ✅ 6-digit code + 30s countdown
+- ✅ One-tap copy
+
+### Sync
+- ✅ Local storage
+- ✅ iCloud Drive (iOS/macOS)
+- ✅ WebDAV (all platforms)
+  - Supports Nutstore, Nextcloud, Synology NAS
+- ✅ Conflict detection & backup
+
+### User Experience
+- ✅ 100% Cupertino design
+- ✅ Dark mode (follows system)
+- ✅ Pinyin sorting (numbers → letters → pinyin)
+- ✅ Mobile alphabet index bar
+- ✅ Desktop dual-pane layout
+- ✅ Real-time search (pinyin support)
+- ✅ i18n (Chinese/English)
+
+### Desktop Features
+- ✅ System tray resident
+- ✅ Quick panel (hover to show details)
+- ✅ Background running
+- ✅ Draggable split view
+
+### Data Import
+- ✅ Chrome CSV
+- ✅ 1Password CSV
+- ✅ Bitwarden CSV
+
+---
+
+## 🏗️ Architecture
+
+```
+lib/
+├── src/dart/           # Core business logic (Vault, Crypto)
+├── domain/             # Domain layer (Services, Use Cases)
+├── presentation/       # UI layer (Cupertino widgets, Riverpod)
+│   ├── mobile/         # iOS/Android screens
+│   ├── desktop/        # macOS/Linux/Windows screens
+│   └── shared/         # Shared screens (unlock, onboarding)
+├── features/           # Feature modules (tray panel)
+├── platform/           # Platform adapters (sync services)
+└── l10n/               # Internationalization (Chinese/English)
+```
+
+**Architecture Pattern**: MVVM + Clean Architecture
+**State Management**: Riverpod
+**Detailed Design**: See `docs/技术架构.md`
+
+---
+
+## 🔒 Security
+
+- **Encryption**: AES-256-GCM
+- **Key Derivation**: Argon2id
+- **Zero Plaintext Logs**: All sensitive logs disabled in production
+- **Biometric Auth**: Local verification, keys never leave device
+- **Zero-Knowledge**: Data encrypted locally before storage, cloud only has ciphertext
+
+---
+
+## 📅 Roadmap
+
+- ✅ **v1.7.0** (Current) - TOTP/2FA support
+- 🎯 **v1.8.0** (2026-04) - Password generator + strength checker + history
+- 🎯 **v1.9.0** (2026-06) - Browser extension + security audit
+- 🎯 **v2.0.0** (2026-09) - Folder system + batch operations
+
+Detailed plan: See `docs/产品规划.md`
+
+---
+
+## 📚 Documentation
+
+- **`AGENTS.md`** - AI development assistant manual
+- **`docs/产品规划.md`** - Product roadmap
+- **`docs/PRD.md`** - Complete product requirements
+- **`docs/技术架构.md`** - System architecture design
+
+---
+
+## 🤝 Contributing
+
+Issues and Pull Requests are welcome!
+
+### Development Workflow
+1. Fork this repository
+2. Create feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to branch (`git push origin feature/AmazingFeature`)
+5. Create Pull Request
+
+### Code Standards
+- 100% Cupertino components (Material disabled)
+- Follow technical conventions in `AGENTS.md`
+- Run `flutter analyze` and `flutter test` before committing
+
+---
+
+## 📄 License
+
+MIT License
+
+---
+
+## 🙏 Acknowledgments
+
+- [Flutter](https://flutter.dev/) - Cross-platform UI framework
+- [Riverpod](https://riverpod.dev/) - State management
+- [otp](https://pub.dev/packages/otp) - TOTP generation
+- [lpinyin](https://pub.dev/packages/lpinyin) - Chinese pinyin conversion
+
+---
+
+**Made with ❤️ by Hedge Team**
+
+---
+---
+
+## 中文
+
+# Hedge（密码本）
+
 **Local-First** 跨平台密码管理器，原生体验。
 
 你的密码，你的云盘，你的掌控。
