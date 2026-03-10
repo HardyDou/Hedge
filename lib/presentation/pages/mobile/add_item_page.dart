@@ -587,7 +587,7 @@ class _iOSTextFieldState extends State<_iOSTextField> {
   @override
   Widget build(BuildContext context) {
     final isDark = widget.isDark;
-    final bool actualObscured = widget.isPassword && !_isVisible && !widget.showPasswordToggle;
+    final bool actualObscured = widget.isPassword && !_isVisible;
 
     return Container(
       decoration: BoxDecoration(
@@ -642,20 +642,21 @@ class _iOSTextFieldState extends State<_iOSTextField> {
                   ),
                 ),
                 if (widget.showGenerateButton)
-                  Padding(
-                    padding: const EdgeInsets.only(left: 8),
-                    child: GestureDetector(
-                      onTap: widget.onGeneratePassword,
-                      child: Icon(
-                        CupertinoIcons.wand_stars,
-                        color: CupertinoColors.activeBlue,
-                        size: 20,
-                      ),
+                  CupertinoButton(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    minSize: 44,
+                    onPressed: widget.onGeneratePassword,
+                    child: const Icon(
+                      CupertinoIcons.wand_stars,
+                      color: CupertinoColors.activeBlue,
+                      size: 20,
                     ),
                   ),
                 if (widget.showPasswordToggle)
-                  GestureDetector(
-                    onTap: () {
+                  CupertinoButton(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    minSize: 44,
+                    onPressed: () {
                       setState(() {
                         _isVisible = !_isVisible;
                       });

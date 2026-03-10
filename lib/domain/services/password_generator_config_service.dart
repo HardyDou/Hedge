@@ -46,7 +46,8 @@ class PasswordGeneratorConfigService {
         data['symbolsCount'] = 2;
       }
 
-      return PasswordGeneratorConfig.fromJson(data);
+      final loaded = PasswordGeneratorConfig.fromJson(data);
+      return _clampConfig(loaded);
     } catch (e) {
       // 如果解析失败，清除旧配置并返回默认配置
       print('配置解析失败: $e，使用默认配置');
@@ -80,5 +81,16 @@ class PasswordGeneratorConfigService {
   static Future<void> clearConfig() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_key);
+  }
+
+  /// 确保 numbersCount + symbolsCount <= length
+  static PasswordGeneratorConfig _clampConfig(PasswordGeneratorConfig config) {
+    final maxTotal = config.length;
+    final numbers = config.numbersCount.clamp(0, maxTotal);
+    final symbols = config.symbolsCount.clamp(0, maxTotal - numbers);
+    if (numbers == config.numbersCount && symbols == config.symbolsCount) {
+      return config;
+    }
+    return config.copyWith(numbersCount: numbers, symbolsCount: symbols);
   }
 }

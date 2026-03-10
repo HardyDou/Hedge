@@ -83,7 +83,7 @@ class PasswordGeneratorPopover extends ConsumerWidget {
         // 内容区域
         Flexible(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.all(16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
@@ -177,7 +177,7 @@ class PasswordGeneratorPopover extends ConsumerWidget {
           l10n,
           '数字',
           config.numbersCount,
-          config.length,
+          config.length - config.symbolsCount,
           (value) {
             final newConfig = config.copyWith(numbersCount: value);
             ref.read(passwordGeneratorProvider.notifier).updateConfig(newConfig);
@@ -193,7 +193,7 @@ class PasswordGeneratorPopover extends ConsumerWidget {
           l10n,
           '符号',
           config.symbolsCount,
-          config.length,
+          config.length - config.numbersCount,
           (value) {
             final newConfig = config.copyWith(symbolsCount: value);
             ref.read(passwordGeneratorProvider.notifier).updateConfig(newConfig);
@@ -260,7 +260,14 @@ class PasswordGeneratorPopover extends ConsumerWidget {
               divisions: 56,
               onChanged: (value) {
                 HapticFeedback.selectionClick();
-                final newConfig = config.copyWith(length: value.toInt());
+                final newLength = value.toInt();
+                final numbers = config.numbersCount.clamp(0, newLength);
+                final symbols = config.symbolsCount.clamp(0, newLength - numbers);
+                final newConfig = config.copyWith(
+                  length: newLength,
+                  numbersCount: numbers,
+                  symbolsCount: symbols,
+                );
                 ref.read(passwordGeneratorProvider.notifier).updateConfig(newConfig);
               },
             ),
@@ -319,7 +326,7 @@ class PasswordGeneratorPopover extends ConsumerWidget {
           child: SizedBox(
             width: double.infinity,
             child: CupertinoSlider(
-              value: currentValue.toDouble(),
+              value: currentValue.toDouble().clamp(0.0, maxValue.toDouble()),
               min: 0,
               max: maxValue.toDouble(),
               divisions: maxValue,
@@ -391,7 +398,7 @@ class PasswordGeneratorPopover extends ConsumerWidget {
     String password,
   ) {
     return Padding(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
       child: Row(
         children: [
           Flexible(
