@@ -26,7 +26,7 @@ class _AddItemPanelState extends ConsumerState<AddItemPanel> {
   final _notesController = TextEditingController();
   bool _isLoading = false;
   bool _notesPreview = false;
-  bool _passwordVisible = false;
+  bool _passwordVisible = true;
   String? _totpSecret;
   String? _totpIssuer;
 
