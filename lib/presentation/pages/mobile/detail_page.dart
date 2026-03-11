@@ -143,7 +143,13 @@ class _DetailPageState extends ConsumerState<DetailPage> {
     final l10n = AppLocalizations.of(context)!;
     final isDark = AppColors.isDark(context);
 
-    return CupertinoPageScaffold(
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: SystemUiOverlayStyle(
+        statusBarColor: const Color(0x00000000), // Transparent
+        statusBarIconBrightness: isDark ? Brightness.light : Brightness.dark,
+        statusBarBrightness: isDark ? Brightness.dark : Brightness.light,
+      ),
+      child: CupertinoPageScaffold(
       backgroundColor: AppColors.surface2.resolveFrom(context),
       navigationBar: CupertinoNavigationBar(
         backgroundColor: AppColors.surface1.resolveFrom(context),
@@ -302,10 +308,11 @@ class _DetailPageState extends ConsumerState<DetailPage> {
                 ),
               ),
             ),
-            
+
             const SizedBox(height: 40),
           ],
         ),
+      ),
       ),
     );
   }

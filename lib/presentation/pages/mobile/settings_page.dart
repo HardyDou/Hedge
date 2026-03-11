@@ -1,5 +1,6 @@
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_app_lock/flutter_app_lock.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hedge/domain/services/importer/concrete_strategies.dart';
@@ -104,7 +105,13 @@ class SettingsPage extends ConsumerWidget {
     final l10n = AppLocalizations.of(context)!;
     final isDark = AppColors.isDark(context);
 
-    return CupertinoPageScaffold(
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: SystemUiOverlayStyle(
+        statusBarColor: const Color(0x00000000), // Transparent
+        statusBarIconBrightness: isDark ? Brightness.light : Brightness.dark,
+        statusBarBrightness: isDark ? Brightness.dark : Brightness.light,
+      ),
+      child: CupertinoPageScaffold(
       backgroundColor: AppColors.surface2.resolveFrom(context),
       child: _CustomNavBar(
         title: l10n.settings,
@@ -225,6 +232,7 @@ class SettingsPage extends ConsumerWidget {
           ],
         ),
         ),
+      ),
       ),
     );
   }
