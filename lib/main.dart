@@ -580,6 +580,8 @@ class _HomePageState extends ConsumerState<HomePage> {
         statusBarColor: const Color(0x00000000), // Transparent
         statusBarIconBrightness: isDark ? Brightness.light : Brightness.dark,
         statusBarBrightness: isDark ? Brightness.dark : Brightness.light,
+        systemNavigationBarColor: AppColors.surface2.resolveFrom(context),
+        systemNavigationBarIconBrightness: isDark ? Brightness.light : Brightness.dark,
       ),
       child: CupertinoPageScaffold(
         backgroundColor: AppColors.surface2.resolveFrom(context),
