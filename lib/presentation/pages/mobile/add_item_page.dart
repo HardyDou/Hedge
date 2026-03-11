@@ -1,5 +1,6 @@
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hedge/l10n/generated/app_localizations.dart';
@@ -94,7 +95,13 @@ class _AddItemPageState extends ConsumerState<AddItemPage> {
     final l10n = AppLocalizations.of(context)!;
     final isDark = AppColors.isDark(context);
 
-    return CupertinoPageScaffold(
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: SystemUiOverlayStyle(
+        statusBarColor: const Color(0x00000000), // Transparent
+        statusBarIconBrightness: isDark ? Brightness.light : Brightness.dark,
+        statusBarBrightness: isDark ? Brightness.dark : Brightness.light,
+      ),
+      child: CupertinoPageScaffold(
       backgroundColor: AppColors.surface2.resolveFrom(context),
       navigationBar: CupertinoNavigationBar(
         backgroundColor: AppColors.surface1.resolveFrom(context),
@@ -205,6 +212,7 @@ class _AddItemPageState extends ConsumerState<AddItemPage> {
             const SizedBox(height: 48),
           ],
         ),
+      ),
       ),
     );
   }

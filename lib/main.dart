@@ -575,9 +575,15 @@ class _HomePageState extends ConsumerState<HomePage> {
     final items = vaultState.filteredVaultItems ?? []; // Use filtered items from provider, default to empty list
     final groupedList = _buildGroupedList(items);
 
-    return CupertinoPageScaffold(
-      backgroundColor: AppColors.surface2.resolveFrom(context),
-      navigationBar: CupertinoNavigationBar(
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: SystemUiOverlayStyle(
+        statusBarColor: const Color(0x00000000), // Transparent
+        statusBarIconBrightness: isDark ? Brightness.light : Brightness.dark,
+        statusBarBrightness: isDark ? Brightness.dark : Brightness.light,
+      ),
+      child: CupertinoPageScaffold(
+        backgroundColor: AppColors.surface2.resolveFrom(context),
+        navigationBar: CupertinoNavigationBar(
         middle: Text(
           l10n.myVault.toUpperCase(),
           style: const TextStyle(fontWeight: FontWeight.w900, letterSpacing: 2),
@@ -868,6 +874,7 @@ class _HomePageState extends ConsumerState<HomePage> {
             ),
           ),
         ],
+      ),
       ),
       ),
     );
