@@ -212,25 +212,30 @@ $ hedge lock
   - `--no-app` 标志强制独立模式
 
 **3. 会话管理**
-- 会话令牌存储在系统 Keychain（macOS Keychain / Linux Secret Service / Windows Credential Manager）
-- 使用 `flutter_secure_storage` 包实现跨平台存储
+- 会话令牌存储在加密文件 `~/.hedge/cli-session.enc`
+- 使用 AES-256-GCM 加密，密钥从设备特征派生：`HMAC-SHA256(hostname + username + fixed-salt)`
+- 文件权限：0600（仅所有者可读写）
 - 令牌为不透明 UUID，由 Desktop App 维护会话注册表验证
 - 过期时间：
   - 生物识别模式：15 分钟不活动
   - 独立模式：5 分钟不活动
   - Desktop App 锁定时立即失效（Desktop App 调用 `revokeAllSessions()`）
 - 支持多个并发 CLI 进程（每个进程独立的令牌）
-- CLI 启动时自动清理 Keychain 中的过期令牌
+- CLI 启动时自动清理过期令牌
+
+**注**：由于 `dart compile exe` 限制，无法使用系统 Keychain（需要 Flutter 插件）。加密文件存储安全性略低于 Keychain，但对于短期令牌（5-15 分钟）是可接受的。
 
 **4. IPC 协议**
-- 协议：JSON-RPC 2.0
+- 协议：JSON-RPC 2.0（自定义实现，长度前缀格式）
 - 传输：Unix domain socket (macOS/Linux), Named pipe (Windows)
-- Socket 路径：
-  - macOS/Linux: `$XDG_RUNTIME_DIR/hedge-ipc.sock` 或 `/tmp/hedge-ipc-$UID.sock`
-  - Windows: `\\.\pipe\hedge-ipc-$USERNAME`
+- Socket 路径：`/tmp/hedge-ipc-$UID.sock`（macOS/Linux 统一使用此路径）
 - Socket 文件权限：0600（仅所有者可读写）
 - **主要安全机制**：UID 验证（Desktop App 检查连接进程的 UID，拒绝其他用户）
+- **超时策略**：CLI 端 5 秒超时，超时后降级到独立模式
+- **Socket 清理**：Desktop App 启动时检查并删除陈旧的 socket 文件
+- **协议格式**：长度前缀 JSON：`[4字节长度（网络字节序）][JSON payload]`
 - 方法：
+  - `get_version` - 获取 Desktop App 版本（用于兼容性检查）
   - `authenticate` - 请求生物识别认证
   - `get_password` - 获取密码
   - `list_items` - 列出条目
@@ -240,12 +245,13 @@ $ hedge lock
   - `revoke_token` - 撤销会话令牌
 
 **5. Desktop App IPC Server**
-- 在后台 isolate 运行
+- 在主 isolate 运行（MVP 阶段，v2.0 考虑移到后台 isolate）
 - 监听 IPC socket
 - 验证连接进程的 UID
 - 处理 CLI 请求
 - 推送 "vault locked" 事件到所有连接的 CLI 客户端
 - 可选功能（设置：Enable CLI Access，默认启用）
+- 启动时清理陈旧的 socket 文件
 
 ---
 
@@ -315,19 +321,20 @@ $ hedge lock
 
 ### 代码结构与共享策略
 
-**策略**：CLI 作为独立 Dart 包，依赖主应用的 domain 层代码。
+**策略**：CLI 作为独立 Dart 包，通过相对路径导入主应用的纯 Dart 代码。
 
 ```
 hedge/
-├── lib/                                  # 主应用代码（Flutter）
-│   ├── domain/                           # 共享业务逻辑层
+├── lib/
+│   ├── src/dart/                         # 纯 Dart 代码（无 Flutter 依赖）
+│   │   ├── crypto.dart                   # ✅ CLI 复用（Argon2id, AES-GCM）
+│   │   └── vault.dart                    # ✅ CLI 复用（vault 解密）
+│   ├── domain/                           # 业务逻辑层
 │   │   ├── models/
 │   │   │   ├── vault_item.dart          # ✅ CLI 复用
 │   │   │   ├── vault.dart               # ✅ CLI 复用
 │   │   │   └── cli_session.dart         # 会话令牌模型
 │   │   └── services/
-│   │       ├── crypto_service.dart      # ✅ CLI 复用（Argon2id, AES-GCM）
-│   │       ├── vault_service.dart       # ✅ CLI 复用（vault 解密）
 │   │       ├── ipc_server_service.dart  # Desktop App IPC 服务
 │   │       └── cli_session_service.dart # 会话管理服务
 │   ├── presentation/                     # Flutter UI（CLI 不使用）
@@ -346,32 +353,37 @@ hedge/
 │   │   ├── ipc/
 │   │   │   ├── ipc_client.dart          # IPC 客户端
 │   │   │   ├── ipc_transport.dart       # 传输层抽象
-│   │   │   ├── unix_socket_transport.dart
-│   │   │   └── named_pipe_transport.dart
+│   │   │   └── unix_socket_transport.dart
 │   │   ├── auth/
 │   │   │   ├── auth_manager.dart        # 认证管理器
 │   │   │   └── password_auth.dart       # 主密码认证
 │   │   └── session/
 │   │       ├── session_manager.dart     # 会话管理
-│   │       └── session_storage.dart     # 会话存储（Keychain）
+│   │       └── session_storage.dart     # 会话存储（加密文件）
 │   └── pubspec.yaml
 │       # dependencies:
-│       #   hedge:
-│       #     path: ../                   # 依赖主应用的 domain 层
-│       #   args: ^2.4.0
-│       #   flutter_secure_storage: ^9.0.0
+│       #   args: ^2.4.0                  # 命令行参数解析
+│       #   uuid: ^4.5.1                  # UUID 生成
+│       #   encrypt: ^5.0.3               # AES-GCM 加密
+│       #   cryptography: ^2.7.0         # 密码学算法
+│       #   lpinyin: ^2.0.3               # 拼音搜索
+│       #   path: ^1.8.3                  # 路径处理
+│       # 注：不使用 flutter_secure_storage（Flutter 插件）
 └── ...
 ```
 
-**共享代码**：
-- ✅ `VaultItem`, `Vault` 模型
-- ✅ `CryptoService`（Argon2id, AES-GCM）
-- ✅ `VaultService`（vault 解密逻辑）
+**共享代码**（通过相对导入）：
+```dart
+// cli/lib/commands/get_command.dart
+import '../../lib/src/dart/crypto.dart';  // 相对导入
+import '../../lib/src/dart/vault.dart';
+import '../../lib/domain/models/vault_item.dart';
+```
 
 **CLI 独有代码**：
 - IPC 客户端（连接 Desktop App）
 - 命令行参数解析
-- 会话管理（Keychain 存储）
+- 会话管理（加密文件存储）
 - 错误提示（终端输出）
 
 **编译**：
@@ -380,7 +392,7 @@ hedge/
 cd cli
 dart compile exe bin/hedge.dart -o ../build/hedge-cli
 
-# 二进制大小约 10-15MB（包含 Dart VM）
+# 二进制大小约 8-10MB（包含 Dart VM）
 ```
 
 ### 会话令牌格式
@@ -433,13 +445,39 @@ class SessionRegistry {
 }
 ```
 
-**CLI 端存储**：令牌存储在系统 Keychain，而非加密文件。
+**CLI 端存储**：令牌存储在加密文件，而非系统 Keychain。
 
 ```dart
-// CLI 使用 flutter_secure_storage 存储令牌
-final storage = FlutterSecureStorage();
-await storage.write(key: 'hedge_cli_session_token', value: tokenId);
+// CLI 使用 AES-256-GCM 加密存储令牌
+class SessionStorage {
+  static const _filePath = '~/.hedge/cli-session.enc';
+
+  // 密钥派生：HMAC-SHA256(hostname + username + fixed-salt)
+  Uint8List _deriveKey() {
+    final hostname = Platform.localHostname;
+    final username = Platform.environment['USER'] ?? '';
+    final salt = 'hedge-cli-session-v1'; // 固定 salt
+    final hmac = Hmac(sha256, utf8.encode(salt));
+    return hmac.convert(utf8.encode('$hostname:$username')).bytes;
+  }
+
+  Future<void> saveToken(String tokenId) async {
+    final key = _deriveKey();
+    final encrypted = await encryptAesGcm(tokenId, key);
+    await File(_filePath).writeAsBytes(encrypted);
+    await File(_filePath).setMode(0x180); // 0600
+  }
+
+  Future<String?> loadToken() async {
+    if (!await File(_filePath).exists()) return null;
+    final encrypted = await File(_filePath).readAsBytes();
+    final key = _deriveKey();
+    return await decryptAesGcm(encrypted, key);
+  }
+}
 ```
+
+**注**：由于 `dart compile exe` 限制，无法使用 `flutter_secure_storage`（Flutter 插件）。加密文件存储对于短期令牌（5-15 分钟）是可接受的安全方案。
 
 ### IPC 协议示例
 
@@ -609,10 +647,16 @@ CLI 行为：
 **macOS**：
 1. 用户安装 Hedge.app
 2. Desktop App 首次启动时：
-   - 检查 `/usr/local/bin/hedge` 是否存在
-   - 如果不存在，创建 symlink：`ln -s /Applications/Hedge.app/Contents/MacOS/hedge-cli /usr/local/bin/hedge`
-   - 安装 Native Messaging manifest（如果用户安装了 Chrome/Edge）
-3. 用户在终端运行 `hedge --version` 验证安装
+   - 显示一次性设置对话框：
+     ```
+     To use the CLI, run this command in Terminal:
+     sudo ln -s /Applications/Hedge.app/Contents/MacOS/hedge-cli /usr/local/bin/hedge
+     ```
+   - 用户手动执行命令创建 symlink
+3. Desktop App 每次启动时验证 symlink 是否有效，如果失效则再次显示设置对话框
+4. 用户在终端运行 `hedge --version` 验证安装
+
+**注**：不自动创建 symlink（避免 sudo 提示），提供清晰的手动安装指引。
 
 **Linux**：
 1. 用户通过 .deb / .rpm 安装 Hedge
@@ -830,7 +874,8 @@ if (!supportedVersions.contains(vaultFormatVersion)) {
 
 ### 安全性
 - ✅ 会话令牌使用不透明 UUID（无法伪造）
-- ✅ 会话令牌存储在系统 Keychain（macOS Keychain / Linux Secret Service / Windows Credential Manager）
+- ✅ 会话令牌存储在加密文件（AES-256-GCM + 设备特征派生密钥）
+- ✅ 文件权限 0600（仅所有者可读写）
 - ✅ Desktop App 维护会话注册表（内存，不持久化）
 - ✅ IPC socket 权限限制（0600）
 - ✅ UID 验证（防止跨用户攻击）
@@ -838,6 +883,7 @@ if (!supportedVersions.contains(vaultFormatVersion)) {
 - ✅ 失败重试指数退避
 - ✅ 无敏感信息日志
 - ✅ 浏览器插件无法触发生物识别（防钓鱼）
+- ✅ IPC 超时 5 秒（防止 Desktop App 挂起）
 
 ### 用户体验
 - ✅ 自动检测认证模式（零配置）
@@ -894,6 +940,56 @@ A: 支持。每个 CLI 进程可以有独立的会话令牌（Desktop App 的 `S
 
 **Q5: 浏览器插件如何使用 CLI？**
 A: 浏览器插件通过 Native Messaging 调用 CLI，CLI 通过 IPC 访问 Desktop App 的 vault。
+
+---
+
+## ⚠️ 技术风险与缓解措施
+
+### 高风险
+
+**1. IPC 连接可靠性**
+- **风险**：Desktop App 崩溃或挂起导致 CLI 无法响应
+- **缓解**：5 秒超时 + 自动降级到独立模式
+- **状态**：已设计
+
+**2. 会话令牌安全性**
+- **风险**：加密文件存储不如系统 Keychain 安全
+- **缓解**：AES-256-GCM + 设备特征派生密钥 + 短期过期（5-15 分钟）
+- **状态**：已设计，文档化为已知限制
+
+### 中风险
+
+**3. Dart SDK 版本不匹配**
+- **风险**：CLI 和 Desktop App 使用不同 Dart SDK 导致加密行为不一致
+- **缓解**：CI 强制检查 SDK 版本一致性 + 文档说明
+- **状态**：需要在 CI 中实现
+
+**4. Vault 格式版本兼容性**
+- **风险**：Desktop App 更新 vault 格式后 CLI 无法读取
+- **缓解**：CLI 启动时检查 vault 格式版本，拒绝不支持的版本
+- **状态**：已设计
+
+**5. IPC Server 阻塞 UI**
+- **风险**：IPC Server 在主 isolate 运行可能阻塞 UI
+- **缓解**：监控测试，如有问题则移到后台 isolate（v2.0）
+- **状态**：MVP 接受此风险
+
+### 低风险
+
+**6. 搜索性能（大型 vault）**
+- **风险**：10,000+ 条目时搜索可能慢
+- **缓解**：线性搜索约 10ms，可接受；v2.0 优化
+- **状态**：MVP 接受此风险
+
+**7. Symlink 创建失败**
+- **风险**：用户权限不足或路径不存在
+- **缓解**：提供清晰的手动安装指引 + 验证机制
+- **状态**：已设计
+
+**8. Native Messaging 设置复杂性**
+- **风险**：多浏览器、多配置文件场景复杂
+- **缓解**：MVP 提供手动指引，v1.9.1 自动化
+- **状态**：延后到 v1.9.1
 
 ---
 
