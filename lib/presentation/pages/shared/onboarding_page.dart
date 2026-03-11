@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hedge/l10n/generated/app_localizations.dart';
 import '../../providers/vault_provider.dart';
@@ -102,7 +103,15 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
                        MediaQuery.platformBrightnessOf(context);
     final isDark = brightness == Brightness.dark;
 
-    return CupertinoPageScaffold(
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: SystemUiOverlayStyle(
+        statusBarColor: const Color(0x00000000), // Transparent
+        statusBarIconBrightness: isDark ? Brightness.light : Brightness.dark,
+        statusBarBrightness: isDark ? Brightness.dark : Brightness.light,
+        systemNavigationBarColor: isDark ? CupertinoColors.black : CupertinoColors.white,
+        systemNavigationBarIconBrightness: isDark ? Brightness.light : Brightness.dark,
+      ),
+      child: CupertinoPageScaffold(
       backgroundColor: isDark ? CupertinoColors.black : CupertinoColors.white,
       child: Center(
         child: ConstrainedBox(
@@ -204,6 +213,7 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
             ),
           ),
         ),
+      ),
       ),
     );
   }

@@ -1,4 +1,5 @@
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/services.dart';
 import 'package:hedge/l10n/generated/app_localizations.dart';
 
 /// 启动页面 - 显示应用 Logo 和加载动画
@@ -12,7 +13,15 @@ class SplashPage extends StatelessWidget {
     final isDark = brightness == Brightness.dark;
     final l10n = AppLocalizations.of(context);
 
-    return CupertinoPageScaffold(
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: SystemUiOverlayStyle(
+        statusBarColor: const Color(0x00000000), // Transparent
+        statusBarIconBrightness: isDark ? Brightness.light : Brightness.dark,
+        statusBarBrightness: isDark ? Brightness.dark : Brightness.light,
+        systemNavigationBarColor: isDark ? CupertinoColors.black : CupertinoColors.white,
+        systemNavigationBarIconBrightness: isDark ? Brightness.light : Brightness.dark,
+      ),
+      child: CupertinoPageScaffold(
       backgroundColor: isDark ? CupertinoColors.black : CupertinoColors.white,
       child: Center(
         child: Column(
@@ -66,6 +75,7 @@ class SplashPage extends StatelessWidget {
             ),
           ],
         ),
+      ),
       ),
     );
   }

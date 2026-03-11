@@ -1,4 +1,5 @@
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_app_lock/flutter_app_lock.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:local_auth/local_auth.dart';
@@ -166,7 +167,15 @@ class _UnlockPageState extends ConsumerState<UnlockPage> {
     final l10n = AppLocalizations.of(context)!;
     final isDark = AppColors.isDark(context);
 
-    return CupertinoPageScaffold(
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: SystemUiOverlayStyle(
+        statusBarColor: const Color(0x00000000), // Transparent
+        statusBarIconBrightness: Brightness.light, // Always light icons on dark unlock screen
+        statusBarBrightness: Brightness.dark,
+        systemNavigationBarColor: isDark ? const Color(0xFF0F0F0F) : CupertinoColors.white,
+        systemNavigationBarIconBrightness: isDark ? Brightness.light : Brightness.dark,
+      ),
+      child: CupertinoPageScaffold(
       // Intentionally uses near-black background in dark mode for a focused,
       // secure unlock experience. The radial gradient is a deliberate design choice.
       backgroundColor: isDark ? const Color(0xFF0F0F0F) : CupertinoColors.white,
@@ -362,6 +371,7 @@ class _UnlockPageState extends ConsumerState<UnlockPage> {
             ),
           ),
         ],
+      ),
       ),
     );
   }

@@ -1,4 +1,5 @@
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:hedge/l10n/generated/app_localizations.dart';
 
@@ -62,7 +63,15 @@ class _IntroductionPageState extends State<IntroductionPage> {
       ),
     ];
 
-    return CupertinoPageScaffold(
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: SystemUiOverlayStyle(
+        statusBarColor: const Color(0x00000000), // Transparent
+        statusBarIconBrightness: isDark ? Brightness.light : Brightness.dark,
+        statusBarBrightness: isDark ? Brightness.dark : Brightness.light,
+        systemNavigationBarColor: isDark ? CupertinoColors.black : CupertinoColors.white,
+        systemNavigationBarIconBrightness: isDark ? Brightness.light : Brightness.dark,
+      ),
+      child: CupertinoPageScaffold(
       backgroundColor: isDark ? CupertinoColors.black : CupertinoColors.white,
       child: SafeArea(
         child: Column(
@@ -117,6 +126,7 @@ class _IntroductionPageState extends State<IntroductionPage> {
             const SizedBox(height: 40),
           ],
         ),
+      ),
       ),
     );
   }
