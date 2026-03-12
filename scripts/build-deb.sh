@@ -37,14 +37,14 @@ Description: Secure, local-first password manager CLI
  Hedge CLI lets you access your Hedge vault from the terminal.
  Requires the Hedge desktop app to be running for IPC access,
  or can read vault files directly with a master password.
-Homepage: https://github.com/yourusername/hedge
+Homepage: https://github.com/HardyDou/hedge
 EOF
 
 # DEBIAN/copyright
 cat > "${PKG_DIR}/usr/share/doc/${PKG_NAME}/copyright" << EOF
 Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
 Upstream-Name: hedge-cli
-Source: https://github.com/yourusername/hedge
+Source: https://github.com/HardyDou/hedge
 
 Files: *
 Copyright: $(date +%Y) Hedge Team

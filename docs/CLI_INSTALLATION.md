@@ -4,7 +4,7 @@
 
 ```bash
 # Add the tap
-brew tap yourusername/hedge
+brew tap HardyDou/hedge
 
 # Install
 brew install hedge
@@ -19,7 +19,7 @@ hedge --version
 
 ```bash
 # Download the latest .deb from releases
-wget https://github.com/yourusername/hedge/releases/latest/download/hedge-cli_1.9.0_amd64.deb
+wget https://github.com/HardyDou/hedge/releases/latest/download/hedge-cli_1.9.0_amd64.deb
 
 # Install
 sudo dpkg -i hedge-cli_1.9.0_amd64.deb
@@ -48,7 +48,7 @@ sudo apt install hedge-cli
 
 ```bash
 # Download the latest .rpm from releases
-wget https://github.com/yourusername/hedge/releases/latest/download/hedge-cli-1.9.0-1.x86_64.rpm
+wget https://github.com/HardyDou/hedge/releases/latest/download/hedge-cli-1.9.0-1.x86_64.rpm
 
 # Install (Fedora/RHEL 8+)
 sudo dnf install ./hedge-cli-1.9.0-1.x86_64.rpm
@@ -84,7 +84,7 @@ hedge --version
 
 ```bash
 # Download tarball
-wget https://github.com/yourusername/hedge/releases/latest/download/hedge-cli-linux-x64.tar.gz
+wget https://github.com/HardyDou/hedge/releases/latest/download/hedge-cli-linux-x64.tar.gz
 
 # Extract
 tar -xzf hedge-cli-linux-x64.tar.gz
@@ -100,7 +100,7 @@ hedge --version
 
 ```powershell
 # Download from releases
-Invoke-WebRequest -Uri "https://github.com/yourusername/hedge/releases/latest/download/hedge-cli-windows-x64.zip" -OutFile "hedge-cli.zip"
+Invoke-WebRequest -Uri "https://github.com/HardyDou/hedge/releases/latest/download/hedge-cli-windows-x64.zip" -OutFile "hedge-cli.zip"
 
 # Extract
 Expand-Archive -Path hedge-cli.zip -DestinationPath C:\Program Files\Hedge
@@ -116,7 +116,7 @@ hedge --version
 
 ```bash
 # Clone repository
-git clone https://github.com/yourusername/hedge.git
+git clone https://github.com/HardyDou/hedge.git
 cd hedge/cli
 
 # Install dependencies

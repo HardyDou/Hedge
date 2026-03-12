@@ -30,7 +30,7 @@ Version:        ${VERSION}
 Release:        1%{?dist}
 Summary:        Secure, local-first password manager CLI
 License:        MIT
-URL:            https://github.com/yourusername/hedge
+URL:            https://github.com/HardyDou/hedge
 BuildArch:      ${ARCH}
 
 %description

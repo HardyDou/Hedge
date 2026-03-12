@@ -224,7 +224,7 @@ jobs:
       - name: Checkout homebrew tap
         uses: actions/checkout@v4
         with:
-          repository: yourusername/homebrew-hedge
+          repository: HardyDou/homebrew-hedge
           token: ${{ secrets.HOMEBREW_TAP_TOKEN }}
           path: homebrew-tap
 
@@ -232,7 +232,7 @@ jobs:
         id: sha
         run: |
           VERSION="${{ github.ref_name }}"
-          BASE="https://github.com/yourusername/hedge/releases/download/${VERSION}"
+          BASE="https://github.com/HardyDou/hedge/releases/download/${VERSION}"
           SHA_MACOS=$(curl -sL "${BASE}/hedge-cli-macos-arm64.tar.gz" | sha256sum | awk '{print $1}')
           SHA_LINUX=$(curl -sL "${BASE}/hedge-cli-linux-x64.tar.gz" | sha256sum | awk '{print $1}')
           echo "sha_macos=${SHA_MACOS}" >> $GITHUB_OUTPUT
