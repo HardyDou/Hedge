@@ -195,7 +195,7 @@ jobs:
           path: hedge-cli-windows-x64.zip
 
   release:
-    needs: [build-android, build-linux, build-windows, build-macos]
+    needs: [build-android, build-linux, build-windows, build-macos, build-cli]
     runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/tags/') && always()
     steps:
@@ -213,6 +213,9 @@ jobs:
             linux-x64/hedge-linux-x64.tar.gz
             windows-x64/hedge-windows-x64.zip
             macos/hedge-macos.zip
+            hedge-cli-macos-arm64/hedge-cli-macos-arm64.tar.gz
+            hedge-cli-linux-x64/hedge-cli-linux-x64.tar.gz
+            hedge-cli-windows-x64.exe/hedge-cli-windows-x64.zip
           draft: false
           prerelease: false
           generate_release_notes: true
