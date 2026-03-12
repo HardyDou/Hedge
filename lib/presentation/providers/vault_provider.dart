@@ -147,6 +147,7 @@ class VaultNotifier extends StateNotifier<VaultState> {
 
 
   VaultNotifier() : super(VaultState(isLoading: true, filteredVaultItems: [])) {
+    debugPrint('[IPC] VaultNotifier constructor, isMacOS=${Platform.isMacOS}, isLinux=${Platform.isLinux}');
     // 仅在桌面平台启动 IPC Server
     if (Platform.isMacOS || Platform.isLinux) {
       _initIpcServer();
@@ -154,6 +155,7 @@ class VaultNotifier extends StateNotifier<VaultState> {
   }
 
   void _initIpcServer() {
+    debugPrint('[IPC] _initIpcServer called, Platform.isMacOS=${Platform.isMacOS}');
     _ipcServer = IpcServerService(
       authenticateWithBiometrics: () async {
         try {
@@ -170,6 +172,11 @@ class VaultNotifier extends StateNotifier<VaultState> {
       },
       getCurrentVault: () => state.vault,
       isVaultUnlocked: () => state.isAuthenticated,
+      requestUnlockForCli: () async {
+        if (state.isAuthenticated) return true;
+        // 直接触发 Touch ID 解锁，无需 app 到前台
+        return await unlockWithBiometrics();
+      },
     );
   }
 
@@ -344,9 +351,18 @@ Future<bool> setupVault(String masterPassword) async {
       );
 
       // 启动 IPC Server（桌面平台）
+      debugPrint('[Vault] setupVault: _ipcServer = $_ipcServer');
       if (_ipcServer != null) {
-        await _ipcServer!.start();
+        debugPrint('[Vault] Starting IPC Server...');
+        try {
+          await _ipcServer!.start();
+          debugPrint('[Vault] IPC Server started');
+        } catch (e) {
+          debugPrint('[Vault] IPC Server error: $e');
+        }
       }
+
+      // 通知 CLI 解锁完成（setupVault 路径）
 
       return true;
     } catch (e) {
@@ -402,8 +418,15 @@ Future<bool> unlockVault(String masterPassword) async {
       );
 
       // 启动 IPC Server（桌面平台）
+      debugPrint('[Vault] unlockVault: _ipcServer = $_ipcServer');
       if (_ipcServer != null) {
-        await _ipcServer!.start();
+        debugPrint('[Vault] Starting IPC Server...');
+        try {
+          await _ipcServer!.start();
+          debugPrint('[Vault] IPC Server started');
+        } catch (e) {
+          debugPrint('[Vault] IPC Server error: $e');
+        }
       }
 
       // 检查是否有待同步的数据

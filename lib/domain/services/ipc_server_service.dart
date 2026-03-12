@@ -17,17 +17,16 @@ class IpcServerService {
   final Future<bool> Function() authenticateWithBiometrics;
   final Vault? Function() getCurrentVault;
   final bool Function() isVaultUnlocked;
+  final Future<bool> Function() requestUnlockForCli;
 
   IpcServerService({
     required this.authenticateWithBiometrics,
     required this.getCurrentVault,
     required this.isVaultUnlocked,
+    required this.requestUnlockForCli,
   });
 
-  String get _socketPath {
-    final uid = _getUid();
-    return '/tmp/hedge-ipc-$uid.sock';
-  }
+  String get _socketPath => '/tmp/hedge-ipc.sock';
 
   Future<void> start() async {
     if (_isRunning) return;
@@ -146,12 +145,14 @@ class IpcServerService {
 
   Future<Map<String, dynamic>> _handleAuthenticate(dynamic id) async {
     if (!isVaultUnlocked()) {
-      return _buildError(id, 1007, 'Vault is locked');
-    }
-
-    final success = await authenticateWithBiometrics();
-    if (!success) {
-      return _buildError(id, 1004, 'Biometric authentication failed');
+      // vault 锁定，等待用户解锁（可能触发 Touch ID 或主密码）
+      final unlocked = await requestUnlockForCli();
+      if (!unlocked) return _buildError(id, 1007, 'Vault is locked');
+      // 用户刚完成解锁，无需再次 Touch ID
+    } else {
+      // vault 已解锁，需要 Touch ID 确认 CLI 访问
+      final success = await authenticateWithBiometrics();
+      if (!success) return _buildError(id, 1004, 'Biometric authentication failed');
     }
 
     final vault = getCurrentVault();
@@ -161,7 +162,7 @@ class IpcServerService {
 
     final token = _sessionRegistry.createSession(
       AuthMode.biometric,
-      'vault-id', // TODO: 使用实际的 vault ID
+      'vault-id',
     );
 
     return _buildResponse(id, {
@@ -206,11 +207,14 @@ class IpcServerService {
     final item = matches.first;
     return _buildResponse(id, {
       'result': {
-        'item_id': item.id,
+        'id': item.id,
         'title': item.title,
         'username': item.username,
         'password': item.password,
         'url': item.url,
+        'notes': item.notes,
+        'createdAt': item.createdAt.toIso8601String(),
+        'updatedAt': item.updatedAt.toIso8601String(),
       }
     });
   }
@@ -234,6 +238,8 @@ class IpcServerService {
               'title': item.title,
               'username': item.username,
               'url': item.url,
+              'createdAt': item.createdAt.toIso8601String(),
+              'updatedAt': item.updatedAt.toIso8601String(),
             })
         .toList();
 
@@ -305,15 +311,5 @@ class IpcServerService {
       await socketFile.delete();
     }
     debugPrint('[IPC] Server stopped');
-  }
-
-  String _getUid() {
-    try {
-      final result = Process.runSync('id', ['-u']);
-      if (result.exitCode == 0) {
-        return result.stdout.toString().trim();
-      }
-    } catch (_) {}
-    return '0';
   }
 }

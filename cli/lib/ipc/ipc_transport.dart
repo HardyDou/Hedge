@@ -6,7 +6,7 @@ import 'dart:typed_data';
 /// IPC 传输层抽象
 abstract class IpcTransport {
   Future<void> connect();
-  Future<Map<String, dynamic>> sendRequest(Map<String, dynamic> request);
+  Future<Map<String, dynamic>> sendRequest(Map<String, dynamic> request, {Duration? timeout});
   Future<void> close();
   bool get isConnected;
 }
@@ -92,7 +92,7 @@ class UnixSocketTransport implements IpcTransport {
 
   @override
   Future<Map<String, dynamic>> sendRequest(
-      Map<String, dynamic> request) async {
+      Map<String, dynamic> request, {Duration? timeout}) async {
     if (!_connected || _socket == null) {
       throw Exception('Not connected');
     }
@@ -114,9 +114,10 @@ class UnixSocketTransport implements IpcTransport {
     final completer = Completer<Map<String, dynamic>>();
     _pendingRequests[id] = completer;
 
-    return completer.future.timeout(timeout, onTimeout: () {
+    final effectiveTimeout = timeout ?? this.timeout;
+    return completer.future.timeout(effectiveTimeout, onTimeout: () {
       _pendingRequests.remove(id);
-      throw TimeoutException('IPC request timed out', timeout);
+      throw TimeoutException('IPC request timed out', effectiveTimeout);
     });
   }
 

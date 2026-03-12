@@ -3,12 +3,11 @@ import 'ipc_transport.dart';
 
 /// IPC 客户端（连接 Desktop App）
 class IpcClient {
-  static String get _socketPath {
-    final uid = _getUid();
-    return '/tmp/hedge-ipc-$uid.sock';
-  }
+  static String get _socketPath => '/tmp/hedge-ipc.sock';
 
   IpcTransport? _transport;
+
+  bool get isConnected => _transport?.isConnected ?? false;
 
   /// 检查 Desktop App 是否在运行（socket 文件是否存在）
   static bool isDesktopAppRunning() {
@@ -49,14 +48,16 @@ class IpcClient {
     }
   }
 
-  /// 请求生物识别认证，返回会话令牌
-  Future<String?> authenticate() async {
+  /// 请求生物识别认证，返回会话令牌或错误码
+  Future<({String? token, int? errorCode})> authenticate() async {
     try {
-      final response = await _call('authenticate', {});
-      if (response.containsKey('error')) return null;
-      return response['result']?['session_token'] as String?;
+      final response = await _call('authenticate', {}, timeout: Duration(seconds: 30));
+      if (response.containsKey('error')) {
+        return (token: null, errorCode: response['error']?['code'] as int?);
+      }
+      return (token: response['result']?['session_token'] as String?, errorCode: null);
     } catch (_) {
-      return null;
+      return (token: null, errorCode: null);
     }
   }
 
@@ -109,7 +110,7 @@ class IpcClient {
   }
 
   Future<Map<String, dynamic>> _call(
-      String method, Map<String, dynamic> params) async {
+      String method, Map<String, dynamic> params, {Duration? timeout}) async {
     if (_transport == null || !_transport!.isConnected) {
       throw Exception('Not connected to Desktop App');
     }
@@ -117,21 +118,11 @@ class IpcClient {
       'jsonrpc': '2.0',
       'method': method,
       'params': params,
-    });
+    }, timeout: timeout);
   }
 
   Future<void> disconnect() async {
     await _transport?.close();
     _transport = null;
-  }
-
-  static String _getUid() {
-    try {
-      final result = Process.runSync('id', ['-u']);
-      if (result.exitCode == 0) {
-        return result.stdout.toString().trim();
-      }
-    } catch (_) {}
-    return '0';
   }
 }
