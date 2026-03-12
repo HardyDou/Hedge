@@ -96,37 +96,6 @@ jobs:
           name: windows-x64
           path: hedge-windows-x64.zip
 
-  build-macos:
-    runs-on: macos-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup Flutter
-        uses: subosito/flutter-action@v2
-        with:
-          channel: 'stable'
-
-      - name: Install dependencies
-        run: flutter pub get
-
-      - name: Build macOS
-        run: flutter build macos --release
-        env:
-          CODE_SIGN_IDENTITY: "-"
-          CODE_SIGNING_REQUIRED: "NO"
-          CODE_SIGNING_ALLOWED: "NO"
-
-      - name: Package macOS
-        run: |
-          cd build/macos/Build/Products/Release
-          zip -r ../../../../../hedge-macos.zip hedge.app
-
-      - name: Upload macOS build
-        uses: actions/upload-artifact@v4
-        with:
-          name: macos
-          path: hedge-macos.zip
-
   build-cli:
     runs-on: ${{ matrix.os }}
     strategy:
@@ -161,6 +130,16 @@ jobs:
           cd cli
           tar -czf ../hedge-cli-linux-x64.tar.gz ${{ matrix.output }}
 
+      - name: Build .deb and .rpm packages
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          mkdir -p build
+          cp cli/${{ matrix.output }} build/hedge
+          chmod +x scripts/build-deb.sh scripts/build-rpm.sh
+          ./scripts/build-deb.sh ${{ github.ref_name }}
+          sudo apt-get install -y rpm
+          ./scripts/build-rpm.sh ${{ github.ref_name }}
+
       - name: Package CLI Artifact (macOS)
         if: matrix.os == 'macos-latest'
         run: |
@@ -180,6 +159,20 @@ jobs:
           name: ${{ matrix.artifact }}
           path: hedge-cli-linux-x64.tar.gz
 
+      - name: Upload .deb package
+        if: matrix.os == 'ubuntu-latest'
+        uses: actions/upload-artifact@v4
+        with:
+          name: hedge-cli-deb
+          path: dist/deb/*.deb
+
+      - name: Upload .rpm package
+        if: matrix.os == 'ubuntu-latest'
+        uses: actions/upload-artifact@v4
+        with:
+          name: hedge-cli-rpm
+          path: dist/rpm/output/*.rpm
+
       - name: Upload CLI Artifact (macOS)
         if: matrix.os == 'macos-latest'
         uses: actions/upload-artifact@v4
@@ -195,7 +188,7 @@ jobs:
           path: hedge-cli-windows-x64.zip
 
   release:
-    needs: [build-android, build-linux, build-windows, build-macos, build-cli]
+    needs: [build-android, build-linux, build-windows, build-cli]
     runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/tags/') && always()
     steps:
@@ -212,12 +205,52 @@ jobs:
             android-apk/app-release.apk
             linux-x64/hedge-linux-x64.tar.gz
             windows-x64/hedge-windows-x64.zip
-            macos/hedge-macos.zip
             hedge-cli-macos-arm64/hedge-cli-macos-arm64.tar.gz
             hedge-cli-linux-x64/hedge-cli-linux-x64.tar.gz
             hedge-cli-windows-x64.exe/hedge-cli-windows-x64.zip
+            hedge-cli-deb/*.deb
+            hedge-cli-rpm/*.rpm
           draft: false
           prerelease: false
           generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  update-homebrew:
+    needs: release
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
+    steps:
+      - name: Checkout homebrew tap
+        uses: actions/checkout@v4
+        with:
+          repository: yourusername/homebrew-hedge
+          token: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+          path: homebrew-tap
+
+      - name: Compute SHA256 checksums
+        id: sha
+        run: |
+          VERSION="${{ github.ref_name }}"
+          BASE="https://github.com/yourusername/hedge/releases/download/${VERSION}"
+          SHA_MACOS=$(curl -sL "${BASE}/hedge-cli-macos-arm64.tar.gz" | sha256sum | awk '{print $1}')
+          SHA_LINUX=$(curl -sL "${BASE}/hedge-cli-linux-x64.tar.gz" | sha256sum | awk '{print $1}')
+          echo "sha_macos=${SHA_MACOS}" >> $GITHUB_OUTPUT
+          echo "sha_linux=${SHA_LINUX}" >> $GITHUB_OUTPUT
+          echo "version=${VERSION#v}" >> $GITHUB_OUTPUT
+
+      - name: Update formula
+        run: |
+          VERSION="${{ steps.sha.outputs.version }}"
+          sed -i "s/version \".*\"/version \"${VERSION}\"/" homebrew-tap/Formula/hedge.rb
+          sed -i "/hedge-cli-macos-arm64/{n;s/sha256 \".*\"/sha256 \"${{ steps.sha.outputs.sha_macos }}\"/}" homebrew-tap/Formula/hedge.rb
+          sed -i "/hedge-cli-linux-x64/{n;s/sha256 \".*\"/sha256 \"${{ steps.sha.outputs.sha_linux }}\"/}" homebrew-tap/Formula/hedge.rb
+
+      - name: Commit and push
+        run: |
+          cd homebrew-tap
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add Formula/hedge.rb
+          git commit -m "chore: update hedge to ${{ github.ref_name }}"
+          git push
