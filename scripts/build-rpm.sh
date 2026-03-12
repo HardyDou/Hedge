@@ -4,7 +4,8 @@
 
 set -e
 
-VERSION="${1:-1.9.0}"
+VERSION="${1:-1.9.1}"
+VERSION="${VERSION#v}"  # strip leading 'v' if present
 ARCH="x86_64"
 PKG_NAME="hedge-cli"
 BUILD_ROOT="dist/rpm/BUILD"

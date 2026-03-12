@@ -4,7 +4,8 @@
 
 set -e
 
-VERSION="${1:-1.9.0}"
+VERSION="${1:-1.9.1}"
+VERSION="${VERSION#v}"  # strip leading 'v' if present
 ARCH="amd64"
 PKG_NAME="hedge-cli"
 PKG_DIR="dist/deb/${PKG_NAME}_${VERSION}_${ARCH}"
