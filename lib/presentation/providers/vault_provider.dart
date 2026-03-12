@@ -12,6 +12,7 @@ import 'package:hedge/domain/services/importer/csv_import_service.dart';
 import 'package:hedge/domain/services/importer/import_strategy.dart';
 import 'package:hedge/domain/services/sort_service.dart';
 import 'package:hedge/domain/models/sync_config.dart';
+import 'package:hedge/domain/services/ipc_server_service.dart';
 import 'package:hedge/l10n/generated/app_localizations.dart';
 import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
@@ -106,7 +107,8 @@ class VaultNotifier extends StateNotifier<VaultState> {
   SyncService _syncService = SyncServiceFactory.getService();
   StreamSubscription? _syncSubscription;
   DateTime? _lastKnownModification;
-  String _currentSearchQuery = ""; // Add this line
+  String _currentSearchQuery = "";
+  IpcServerService? _ipcServer;
 
   // Use Cases
   final _copyPasswordUseCase = CopyPasswordUseCase();
@@ -144,7 +146,39 @@ class VaultNotifier extends StateNotifier<VaultState> {
 
 
 
-  VaultNotifier() : super(VaultState(isLoading: true, filteredVaultItems: []));
+  VaultNotifier() : super(VaultState(isLoading: true, filteredVaultItems: [])) {
+    debugPrint('[IPC] VaultNotifier constructor, isMacOS=${Platform.isMacOS}, isLinux=${Platform.isLinux}');
+    // 仅在桌面平台启动 IPC Server
+    if (Platform.isMacOS || Platform.isLinux) {
+      _initIpcServer();
+    }
+  }
+
+  void _initIpcServer() {
+    debugPrint('[IPC] _initIpcServer called, Platform.isMacOS=${Platform.isMacOS}');
+    _ipcServer = IpcServerService(
+      authenticateWithBiometrics: () async {
+        try {
+          return await _localAuth.authenticate(
+            localizedReason: 'Authenticate to access vault via CLI',
+            options: const AuthenticationOptions(
+              stickyAuth: true,
+              biometricOnly: true,
+            ),
+          );
+        } catch (_) {
+          return false;
+        }
+      },
+      getCurrentVault: () => state.vault,
+      isVaultUnlocked: () => state.isAuthenticated,
+      requestUnlockForCli: () async {
+        if (state.isAuthenticated) return true;
+        // 直接触发 Touch ID 解锁，无需 app 到前台
+        return await unlockWithBiometrics();
+      },
+    );
+  }
 
 Future<void> checkInitialStatus() async {
     state = state.copyWith(isLoading: true);
@@ -315,6 +349,21 @@ Future<bool> setupVault(String masterPassword) async {
         vaultPath: path,
         filteredVaultItems: SortService.sort(vault?.items ?? []),
       );
+
+      // 启动 IPC Server（桌面平台）
+      debugPrint('[Vault] setupVault: _ipcServer = $_ipcServer');
+      if (_ipcServer != null) {
+        debugPrint('[Vault] Starting IPC Server...');
+        try {
+          await _ipcServer!.start();
+          debugPrint('[Vault] IPC Server started');
+        } catch (e) {
+          debugPrint('[Vault] IPC Server error: $e');
+        }
+      }
+
+      // 通知 CLI 解锁完成（setupVault 路径）
+
       return true;
     } catch (e) {
       state = state.copyWith(isLoading: false, error: "Setup failed: $e");
@@ -367,6 +416,18 @@ Future<bool> unlockVault(String masterPassword) async {
         vaultPath: path,
         filteredVaultItems: SortService.sort(vault?.items ?? []),
       );
+
+      // 启动 IPC Server（桌面平台）
+      debugPrint('[Vault] unlockVault: _ipcServer = $_ipcServer');
+      if (_ipcServer != null) {
+        debugPrint('[Vault] Starting IPC Server...');
+        try {
+          await _ipcServer!.start();
+          debugPrint('[Vault] IPC Server started');
+        } catch (e) {
+          debugPrint('[Vault] IPC Server error: $e');
+        }
+      }
 
       // 检查是否有待同步的数据
       _checkAndUploadPendingSync();
@@ -718,6 +779,10 @@ Future<void> deleteItem(String id) async {
 
   void lock() {
     _stopSyncWatch();
+
+    // 通知 IPC Server vault 已锁定，撤销所有会话
+    _ipcServer?.onVaultLocked();
+
     state = state.copyWith(
       vault: null,
       isAuthenticated: false,
