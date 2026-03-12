@@ -1,10 +1,10 @@
 # CLI Foundation - 产品规划与开发计划
 
-**功能名称**: CLI Foundation with Biometric Authentication
+**功能名称**: CLI Foundation with Biometric Authentication + WebDAV Sync
 **目标版本**: v1.9.0
 **优先级**: P0（必须完成，浏览器插件依赖）
 **日期**: 2026-03-11
-**文档状态**: 评审通过
+**文档状态**: 最终版本（已整合 Keychain 共享方案）
 
 ---
 
@@ -145,7 +145,9 @@ $ hedge lock
 3. **`hedge search <query>`** - 搜索密码条目
 4. **`hedge lock`** - 锁定 CLI 会话
 5. **`hedge unlock`** - 手动创建会话令牌
-6. **`hedge --help`** - 显示帮助信息
+6. **`hedge sync`** - WebDAV 同步（新增）
+7. **`hedge config`** - 配置管理（新增）
+8. **`hedge --help`** - 显示帮助信息
 
 ### 认证模式
 1. **生物识别模式** - CLI 通过 IPC 连接 Desktop App，使用 Touch ID/Face ID
@@ -161,8 +163,9 @@ $ hedge lock
 - 无需手动配置 IPC 路径或认证模式
 - 开箱即用
 
-### 2. 安全优先
+### 2. 安全优先 + 配置共享
 - 会话令牌加密存储（`~/.hedge/cli-session.enc`）
+- **WebDAV 配置自动共享**（从系统 Keychain 读取，与 Desktop App 共享）
 - 短期过期（生物识别 15 分钟，主密码 5 分钟）
 - IPC socket 权限限制（0600）
 - 支持手动锁定（`hedge lock`）
@@ -194,6 +197,15 @@ $ hedge lock
 - `hedge search <query>` - 搜索条目（支持标题、URL、用户名）
 - `hedge lock` - 锁定 CLI 会话
 - `hedge unlock` - 创建会话令牌（可选 `--output-token` 输出令牌）
+- `hedge sync` - WebDAV 同步（新增）
+  - `hedge sync` - 执行同步
+  - `hedge sync --status` - 查看同步状态
+  - `hedge sync --force-upload` - 强制上传（覆盖远程）
+  - `hedge sync --force-download` - 强制下载（覆盖本地）
+- `hedge config` - 配置管理（新增）
+  - `hedge config show` - 查看当前配置
+  - `hedge config webdav` - 配置 WebDAV
+  - `hedge config delete` - 删除 CLI 配置
 - `hedge --help` - 帮助信息
 - `hedge --version` - 版本信息
 
@@ -223,7 +235,16 @@ $ hedge lock
 - 支持多个并发 CLI 进程（每个进程独立的令牌）
 - CLI 启动时自动清理过期令牌
 
-**注**：由于 `dart compile exe` 限制，无法使用系统 Keychain（需要 Flutter 插件）。加密文件存储安全性略低于 Keychain，但对于短期令牌（5-15 分钟）是可接受的。
+**WebDAV 配置共享**：
+- Desktop App 使用 `flutter_secure_storage` 写入系统 Keychain
+- CLI 使用系统命令读取 Keychain：
+  - macOS: `security find-generic-password -s flutter_secure_storage.<key> -w`
+  - Linux: `secret-tool lookup service flutter_secure_storage account <key>`
+  - Windows: Credential Manager（v2.0 实现）
+- 配置读取优先级：环境变量 > Keychain > CLI 配置文件 > IPC > 提示用户
+- 无需重复配置，Desktop App 配置后 CLI 自动可用
+
+**注**：由于 `dart compile exe` 限制，会话令牌无法使用系统 Keychain（需要 Flutter 插件），但 WebDAV 配置可以通过系统命令行工具读取 Keychain。加密文件存储安全性略低于 Keychain，但对于短期令牌（5-15 分钟）是可接受的。
 
 **4. IPC 协议**
 - 协议：JSON-RPC 2.0（自定义实现，长度前缀格式）
@@ -243,6 +264,7 @@ $ hedge lock
   - `ping` - 健康检查
   - `vault_status` - 检查 vault 状态
   - `revoke_token` - 撤销会话令牌
+  - `get_webdav_config` - 获取 WebDAV 配置（新增）
 
 **5. Desktop App IPC Server**
 - 在主 isolate 运行（MVP 阶段，v2.0 考虑移到后台 isolate）
@@ -349,7 +371,9 @@ hedge/
 │   │   │   ├── list_command.dart
 │   │   │   ├── search_command.dart
 │   │   │   ├── lock_command.dart
-│   │   │   └── unlock_command.dart
+│   │   │   ├── unlock_command.dart
+│   │   │   ├── sync_command.dart         # 新增：WebDAV 同步
+│   │   │   └── config_command.dart       # 新增：配置管理
 │   │   ├── ipc/
 │   │   │   ├── ipc_client.dart          # IPC 客户端
 │   │   │   ├── ipc_transport.dart       # 传输层抽象
@@ -357,6 +381,10 @@ hedge/
 │   │   ├── auth/
 │   │   │   ├── auth_manager.dart        # 认证管理器
 │   │   │   └── password_auth.dart       # 主密码认证
+│   │   ├── services/
+│   │   │   ├── keychain_service.dart    # 新增：系统 Keychain 访问
+│   │   │   ├── config_service.dart      # 新增：配置管理
+│   │   │   └── webdav_sync_service.dart # 新增：WebDAV 同步
 │   │   └── session/
 │   │       ├── session_manager.dart     # 会话管理
 │   │       └── session_storage.dart     # 会话存储（加密文件）
@@ -368,6 +396,7 @@ hedge/
 │       #   cryptography: ^2.7.0         # 密码学算法
 │       #   lpinyin: ^2.0.3               # 拼音搜索
 │       #   path: ^1.8.3                  # 路径处理
+│       #   webdav_client: ^1.2.5        # 新增：WebDAV 客户端
 │       # 注：不使用 flutter_secure_storage（Flutter 插件）
 └── ...
 ```
@@ -554,6 +583,181 @@ class SessionStorage {
 | 5001 | ClipboardFailed | 剪贴板操作失败 | ❌ Failed to copy to clipboard. |
 | 5002 | KeychainFailed | Keychain 访问失败 | ❌ Failed to access system keychain. |
 | 5003 | PermissionDenied | 权限不足 | ❌ Permission denied. Please check file permissions. |
+
+---
+
+## 🔄 WebDAV 同步支持
+
+### 配置共享架构
+
+**Desktop App 写入 Keychain**（无变化）：
+```dart
+final storage = FlutterSecureStorage();
+await storage.write(key: 'webdav_server_url', value: 'https://...');
+await storage.write(key: 'webdav_username', value: 'user@example.com');
+await storage.write(key: 'webdav_password', value: 'xxx');
+await storage.write(key: 'webdav_remote_path', value: 'Hedge/vault.db');
+```
+
+**CLI 读取 Keychain**（新增）：
+```dart
+// cli/lib/services/keychain_service.dart
+class KeychainService {
+  static Future<String?> read(String key) async {
+    if (Platform.isMacOS) {
+      return _readFromMacOSKeychain(key);
+    } else if (Platform.isLinux) {
+      return _readFromLinuxSecretService(key);
+    } else if (Platform.isWindows) {
+      return _readFromWindowsCredentialManager(key);
+    }
+    return null;
+  }
+
+  static Future<String?> _readFromMacOSKeychain(String key) async {
+    // flutter_secure_storage 在 Keychain 中的服务名格式
+    final serviceName = 'flutter_secure_storage.$key';
+
+    final result = await Process.run('security', [
+      'find-generic-password',
+      '-s', serviceName,
+      '-w',  // 只输出密码值
+    ]);
+
+    if (result.exitCode == 0) {
+      return result.stdout.toString().trim();
+    }
+    return null;
+  }
+
+  static Future<String?> _readFromLinuxSecretService(String key) async {
+    final result = await Process.run('secret-tool', [
+      'lookup',
+      'service', 'flutter_secure_storage',
+      'account', key,
+    ]);
+
+    if (result.exitCode == 0) {
+      return result.stdout.toString().trim();
+    }
+    return null;
+  }
+
+  static Future<String?> _readFromWindowsCredentialManager(String key) async {
+    // Windows 实现（使用 PowerShell 或 FFI）
+    // 待实现（v2.0）
+    return null;
+  }
+}
+```
+
+### 配置加载优先级
+
+```dart
+class CliConfigService {
+  static Future<WebDAVConfig?> loadWebDAVConfig() async {
+    // 1. 环境变量（最高优先级，适用于 CI/CD）
+    if (Platform.environment.containsKey('HEDGE_WEBDAV_URL')) {
+      return WebDAVConfig(
+        serverUrl: Platform.environment['HEDGE_WEBDAV_URL']!,
+        username: Platform.environment['HEDGE_WEBDAV_USERNAME']!,
+        password: Platform.environment['HEDGE_WEBDAV_PASSWORD']!,
+        remotePath: Platform.environment['HEDGE_WEBDAV_PATH'] ?? 'Hedge/vault.db',
+      );
+    }
+
+    // 2. 系统 Keychain（与 Desktop App 共享）
+    try {
+      final serverUrl = await KeychainService.read('webdav_server_url');
+      final username = await KeychainService.read('webdav_username');
+      final password = await KeychainService.read('webdav_password');
+      final remotePath = await KeychainService.read('webdav_remote_path');
+
+      if (serverUrl != null && username != null && password != null) {
+        print('✓ Using WebDAV config from system Keychain');
+        return WebDAVConfig(
+          serverUrl: serverUrl,
+          username: username,
+          password: password,
+          remotePath: remotePath ?? 'Hedge/vault.db',
+        );
+      }
+    } catch (e) {
+      print('⚠️  Failed to read from Keychain: $e');
+    }
+
+    // 3. CLI 配置文件
+    final cliConfig = await _loadFromFile();
+    if (cliConfig != null) {
+      print('✓ Using WebDAV config from ~/.hedge/cli-config.json');
+      return cliConfig;
+    }
+
+    // 4. IPC 从 Desktop App 获取
+    if (await isDesktopAppRunning()) {
+      try {
+        final config = await ipcClient.call('get_webdav_config');
+        print('✓ Using WebDAV config from Desktop App (IPC)');
+        return config;
+      } catch (e) {
+        // Desktop App 未解锁或拒绝
+      }
+    }
+
+    // 5. 无配置
+    return null;
+  }
+}
+```
+
+### 同步命令实现
+
+**`hedge sync`** - 基本同步：
+```bash
+$ hedge sync
+🔄 Loading WebDAV config from system Keychain...
+✓ Config loaded: https://dav.jianguoyun.com/dav/
+🔄 Uploading vault.hedge...
+✓ Synced successfully
+```
+
+**`hedge sync --status`** - 查看状态：
+```bash
+$ hedge sync --status
+✓ Last synced: 2 minutes ago
+✓ Remote: https://dav.jianguoyun.com/dav/Hedge/vault.db
+✓ No conflicts
+```
+
+**冲突处理**：
+```bash
+$ hedge sync
+⚠️  Conflict detected!
+
+Local:  vault.hedge (modified 2 minutes ago)
+Remote: vault.hedge (modified 1 minute ago)
+
+Creating backup: vault.hedge.conflict.2026-03-11-10-30-00
+✓ Backup created
+✓ Using remote version (newer)
+```
+
+### 平台兼容性
+
+**macOS**（MVP）：
+- ✅ `security` 命令内置
+- ✅ 完整支持
+
+**Linux**（v2.0）：
+- ⚠️ 需要 `libsecret-tools`
+- 检测：`which secret-tool`
+- 安装：`sudo apt install libsecret-tools`
+- 降级：如果未安装，使用 CLI 配置文件
+
+**Windows**（v2.0）：
+- ⚠️ 需要 PowerShell 或 FFI
+- 实现复杂度较高
+- 降级：使用 CLI 配置文件
 
 ---
 
