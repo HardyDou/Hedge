@@ -8,23 +8,22 @@ VERSION="${1:-1.9.1}"
 VERSION="${VERSION#v}"  # strip leading 'v' if present
 ARCH="x86_64"
 PKG_NAME="hedge-cli"
-BUILD_ROOT="dist/rpm/BUILD"
-RPMS_DIR="dist/rpm/RPMS/${ARCH}"
+BUILDROOT="$(pwd)/dist/rpm/BUILDROOT/${PKG_NAME}-${VERSION}-1.${ARCH}"
 
 echo "Building .rpm for ${PKG_NAME} v${VERSION}..."
 
 # Create RPM build directory structure
 mkdir -p "dist/rpm"/{BUILD,RPMS,SOURCES,SPECS,SRPMS}
-mkdir -p "${BUILD_ROOT}/usr/local/bin"
-mkdir -p "${BUILD_ROOT}/usr/share/doc/${PKG_NAME}"
+mkdir -p "${BUILDROOT}/usr/local/bin"
+mkdir -p "${BUILDROOT}/usr/share/doc/${PKG_NAME}"
 
 # Copy binary (must be pre-built)
 if [ ! -f "build/hedge" ]; then
   echo "Error: build/hedge not found. Run: cd cli && dart compile exe bin/hedge.dart -o ../build/hedge"
   exit 1
 fi
-cp build/hedge "${BUILD_ROOT}/usr/local/bin/hedge"
-chmod 755 "${BUILD_ROOT}/usr/local/bin/hedge"
+cp build/hedge "${BUILDROOT}/usr/local/bin/hedge"
+chmod 755 "${BUILDROOT}/usr/local/bin/hedge"
 
 # Create spec file
 cat > "dist/rpm/SPECS/${PKG_NAME}.spec" << EOF
@@ -42,10 +41,7 @@ Requires the Hedge desktop app to be running for IPC access,
 or can read vault files directly with a master password.
 
 %install
-mkdir -p %{buildroot}/usr/local/bin
-mkdir -p %{buildroot}/usr/share/doc/%{name}
-cp %{_builddir}/usr/local/bin/hedge %{buildroot}/usr/local/bin/hedge
-chmod 755 %{buildroot}/usr/local/bin/hedge
+# files already staged in buildroot by build script
 
 %files
 /usr/local/bin/hedge
@@ -57,11 +53,10 @@ EOF
 
 # Build the RPM
 rpmbuild --define "_topdir $(pwd)/dist/rpm" \
-         --define "_builddir ${BUILD_ROOT}" \
-         --buildroot "${BUILD_ROOT}" \
+         --buildroot "${BUILDROOT}" \
          -bb "dist/rpm/SPECS/${PKG_NAME}.spec"
 
 # Move the built RPM to a predictable location
 mkdir -p dist/rpm/output
-cp "${RPMS_DIR}/${PKG_NAME}-${VERSION}-"*.rpm dist/rpm/output/
+cp "dist/rpm/RPMS/${ARCH}/${PKG_NAME}-${VERSION}-"*.rpm dist/rpm/output/
 echo "Built: dist/rpm/output/${PKG_NAME}-${VERSION}-1.${ARCH}.rpm"
