@@ -170,14 +170,26 @@ jobs:
         run: |
           powershell Compress-Archive -Path ${{ matrix.output }} -DestinationPath hedge-cli-windows-x64.zip
 
-      - name: Upload CLI Artifact
+      - name: Upload CLI Artifact (Linux)
+        if: matrix.os == 'ubuntu-latest'
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.artifact }}
-          path: |
-            ${{ matrix.os == 'ubuntu-latest' && 'hedge-cli-linux-x64.tar.gz' || '' }}
-            ${{ matrix.os == 'macos-latest' && 'hedge-cli-macos-arm64.tar.gz' || '' }}
-            ${{ matrix.os == 'windows-latest' && 'hedge-cli-windows-x64.zip' || '' }}
+          path: hedge-cli-linux-x64.tar.gz
+
+      - name: Upload CLI Artifact (macOS)
+        if: matrix.os == 'macos-latest'
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact }}
+          path: hedge-cli-macos-arm64.tar.gz
+
+      - name: Upload CLI Artifact (Windows)
+        if: matrix.os == 'windows-latest'
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact }}
+          path: hedge-cli-windows-x64.zip
 
   release:
     needs: [build-android, build-linux, build-windows, build-macos]
