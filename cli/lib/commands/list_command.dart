@@ -5,8 +5,8 @@ class ListCommand {
 
   ListCommand(this.authManager);
 
-  Future<int> execute() async {
-    final vault = await authManager.authenticate();
+  Future<int> execute({bool forceStandalone = false}) async {
+    final vault = await authManager.authenticate(forceStandalone: forceStandalone);
     if (vault == null) return 1;
 
     final items = await authManager.listItems();

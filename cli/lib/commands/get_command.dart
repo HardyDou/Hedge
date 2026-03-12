@@ -6,8 +6,8 @@ class GetCommand {
 
   GetCommand(this.authManager);
 
-  Future<int> execute(String query, {String? field, bool noCopy = false}) async {
-    final vault = await authManager.authenticate();
+  Future<int> execute(String query, {String? field, bool noCopy = false, bool forceStandalone = false}) async {
+    final vault = await authManager.authenticate(forceStandalone: forceStandalone);
     if (vault == null) return 1;
 
     final item = await authManager.getItem(query);

@@ -12,21 +12,25 @@ class AuthManager {
   Vault? _vault;
 
   /// 认证并获取 vault（自动选择模式）
+  /// 保证返回后 _currentSession 有效，整个命令生命周期内只认证一次
   Future<Vault?> authenticate({bool forceStandalone = false}) async {
-    // 1. 尝试复用现有会话
+    // 1. 尝试复用现有会话（验证 token 是否仍然有效）
     final existingSession = await SessionStorage.loadSession();
-    if (existingSession != null && !existingSession.isExpired) {
-      _currentSession = existingSession;
-
-      // 通过 IPC 验证会话是否仍然有效
-      if (!forceStandalone && await _ipcClient.connect()) {
-        if (await _ipcClient.ping()) {
-          return await _loadVaultViaIpc();
+    if (existingSession != null && !existingSession.isExpired && !forceStandalone) {
+      if (IpcClient.isDesktopAppRunning() && await _ipcClient.connect()) {
+        // 用实际请求验证 token，而不只是 ping
+        final test = await _ipcClient.listItems(existingSession.tokenId);
+        if (test != null) {
+          _currentSession = existingSession;
+          return _loadVaultViaIpc();
         }
+        // Token 失效，清除会话，重新认证
+        await SessionStorage.clearSession();
+        await _ipcClient.disconnect();
       }
     }
 
-    // 2. 尝试 IPC 模式（生物识别）
+    // 2. IPC 模式（生物识别）
     if (!forceStandalone && IpcClient.isDesktopAppRunning()) {
       final vault = await _authenticateViaIpc();
       if (vault != null) return vault;
@@ -38,98 +42,110 @@ class AuthManager {
 
   Future<Vault?> _authenticateViaIpc() async {
     try {
-      print('🔐 Authenticating via Desktop App (Touch ID)...');
+      if (!_ipcClient.isConnected && !await _ipcClient.connect()) return null;
 
-      if (!await _ipcClient.connect()) {
+      var result = await _ipcClient.authenticate();
+
+      // Vault 锁定时，提示用户解锁后重试（一次）
+      if (result.errorCode == 1007) {
+        print('🔒 Hedge vault is locked.');
+        stdout.write('   Please unlock Hedge, then press Enter to continue...');
+        stdin.readLineSync();
+        await _ipcClient.disconnect();
+        if (!await _ipcClient.connect()) return null;
+        result = await _ipcClient.authenticate();
+      }
+
+      if (result.token == null) {
+        print(result.errorCode == 1007 ? '❌ Vault is still locked.' : '❌ Authentication failed');
         return null;
       }
 
-      final token = await _ipcClient.authenticate();
-      if (token == null) {
-        print('❌ Authentication failed');
-        return null;
-      }
-
-      // 创建会话（15 分钟）
+      print('✓ Authenticated via Touch ID');
       _currentSession = CliSession(
-        tokenId: token,
+        tokenId: result.token!,
         issuedAt: DateTime.now(),
-        expiresAt: DateTime.now().add(Duration(minutes: 15)),
+        expiresAt: DateTime.now().add(const Duration(minutes: 15)),
         mode: AuthMode.biometric,
       );
       await SessionStorage.saveSession(_currentSession!);
-
-      return await _loadVaultViaIpc();
-    } catch (e) {
+      return _loadVaultViaIpc();
+    } catch (_) {
       return null;
     }
   }
 
-  Future<Vault?> _loadVaultViaIpc() async {
-    // IPC 模式下，vault 数据通过 IPC 获取，不直接读取文件
-    // 这里返回一个占位符，实际数据在命令执行时通过 IPC 获取
+  Vault _loadVaultViaIpc() {
     _vault = Vault(items: []);
-    return _vault;
+    return _vault!;
   }
 
   Future<Vault?> _authenticateStandalone() async {
-    print('⚠️  Desktop App not detected. Falling back to master password mode.');
+    stderr.writeln('⚠️  Desktop App not detected. Falling back to master password mode.');
 
     final vaultPath = await VaultLoader.discoverVaultPath();
     if (vaultPath == null) {
-      print('❌ Vault file not found. Please specify path with HEDGE_VAULT_PATH.');
+      stderr.writeln('❌ Vault file not found. Please specify path with HEDGE_VAULT_PATH.');
       return null;
     }
 
-    stdout.write('🔑 Enter master password: ');
-    stdin.echoMode = false;
-    final password = stdin.readLineSync() ?? '';
-    stdin.echoMode = true;
-    print('');
+    // Prefer env var for CI/CD non-interactive use
+    String? password = Platform.environment['HEDGE_MASTER_PASSWORD'];
+
+    if (password == null || password.isEmpty) {
+      stderr.write('🔑 Enter master password: ');
+      stdin.echoMode = false;
+      password = stdin.readLineSync() ?? '';
+      stdin.echoMode = true;
+      stderr.writeln('');
+
+      if (password.isEmpty) {
+        stderr.writeln('❌ Password required');
+        return null;
+      }
+    } else {
+      stderr.writeln('🔑 Using password from HEDGE_MASTER_PASSWORD environment variable');
+    }
 
     final vault = await VaultLoader.loadVault(vaultPath, password);
     if (vault == null) {
-      print('❌ Incorrect password');
+      stderr.writeln('❌ Incorrect password');
       return null;
     }
 
-    // 创建会话（5 分钟）
     _currentSession = CliSession(
       tokenId: 'standalone-${DateTime.now().millisecondsSinceEpoch}',
       issuedAt: DateTime.now(),
-      expiresAt: DateTime.now().add(Duration(minutes: 5)),
+      expiresAt: DateTime.now().add(const Duration(minutes: 5)),
       mode: AuthMode.password,
     );
     await SessionStorage.saveSession(_currentSession!);
-
     _vault = vault;
     return vault;
   }
 
   Future<VaultItem?> getItem(String query) async {
     if (_currentSession?.mode == AuthMode.biometric) {
-      // IPC 模式：通过 Desktop App 获取
+      if (!_ipcClient.isConnected) await _ipcClient.connect();
       final result = await _ipcClient.getPassword(_currentSession!.tokenId, query);
       if (result == null) return null;
       return VaultItem.fromJson(result);
     } else {
-      // 独立模式：本地搜索
       if (_vault == null) return null;
       final matches = _vault!.items.where((item) => item.matches(query)).toList();
-      if (matches.isEmpty) return null;
       if (matches.length > 1) {
         print('⚠️  Multiple items found. Please be more specific.');
         return null;
       }
-      return matches.first;
+      return matches.isEmpty ? null : matches.first;
     }
   }
 
   Future<List<VaultItem>> listItems() async {
     if (_currentSession?.mode == AuthMode.biometric) {
+      if (!_ipcClient.isConnected) await _ipcClient.connect();
       final result = await _ipcClient.listItems(_currentSession!.tokenId);
-      if (result == null) return [];
-      return result.map((json) => VaultItem.fromJson(json)).toList();
+      return result?.map((json) => VaultItem.fromJson(json)).toList() ?? [];
     } else {
       return _vault?.items ?? [];
     }

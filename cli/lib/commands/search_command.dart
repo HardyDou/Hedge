@@ -5,8 +5,8 @@ class SearchCommand {
 
   SearchCommand(this.authManager);
 
-  Future<int> execute(String query) async {
-    final vault = await authManager.authenticate();
+  Future<int> execute(String query, {bool forceStandalone = false}) async {
+    final vault = await authManager.authenticate(forceStandalone: forceStandalone);
     if (vault == null) return 1;
 
     final items = await authManager.listItems();
