@@ -1,12 +1,11 @@
 import 'dart:io';
 import 'package:args/args.dart';
+import 'package:hedge_cli/version.dart';
 import '../lib/auth/auth_manager.dart';
 import '../lib/commands/get_command.dart';
 import '../lib/commands/list_command.dart';
 import '../lib/commands/search_command.dart';
 import '../lib/commands/lock_command.dart';
-
-const version = '1.9.0';
 
 void main(List<String> arguments) async {
   final parser = ArgParser()
