@@ -127,6 +127,58 @@ jobs:
           name: macos
           path: hedge-macos.zip
 
+  build-cli:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: macos-latest
+            artifact: hedge-cli-macos-arm64
+            output: hedge
+          - os: ubuntu-latest
+            artifact: hedge-cli-linux-x64
+            output: hedge
+          - os: windows-latest
+            artifact: hedge-cli-windows-x64.exe
+            output: hedge.exe
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+
+      - name: Build CLI
+        run: |
+          cd cli
+          dart pub get
+          dart compile exe bin/hedge.dart -o ${{ matrix.output }}
+
+      - name: Package CLI Artifact
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          tar -czf hedge-cli-linux-x64.tar.gz ${{ matrix.output }}
+
+      - name: Package CLI Artifact (macOS)
+        if: matrix.os == 'macos-latest'
+        run: |
+          tar -czf hedge-cli-macos-arm64.tar.gz ${{ matrix.output }}
+
+      - name: Package CLI Artifact (Windows)
+        if: matrix.os == 'windows-latest'
+        run: |
+          powershell Compress-Archive -Path ${{ matrix.output }} -DestinationPath hedge-cli-windows-x64.zip
+
+      - name: Upload CLI Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact }}
+          path: |
+            ${{ matrix.os == 'ubuntu-latest' && 'hedge-cli-linux-x64.tar.gz' || '' }}
+            ${{ matrix.os == 'macos-latest' && 'hedge-cli-macos-arm64.tar.gz' || '' }}
+            ${{ matrix.os == 'windows-latest' && 'hedge-cli-windows-x64.zip' || '' }}
+
   release:
     needs: [build-android, build-linux, build-windows, build-macos]
     runs-on: ubuntu-latest
