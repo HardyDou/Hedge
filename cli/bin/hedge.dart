@@ -173,13 +173,24 @@ Future<void> _runNativeMessaging() async {
           } else if (session == null || session.isExpired) {
             response = _nmError('Vault not unlocked. Please unlock Hedge first.');
           } else {
-            if (!ipcClient.isConnected) await ipcClient.connect();
-            final url = params['url'] as String? ?? '';
-            final result = await ipcClient.getPassword(session.tokenId, url);
-            if (result != null) {
-              response = {'success': true, 'data': result};
+            final url = params['url'] as String?;
+            if (url == null || url.isEmpty) {
+              response = _nmError('URL is required');
+            } else if (!ipcClient.isConnected) {
+              await ipcClient.connect();
+              final result = await ipcClient.getPassword(session.tokenId, url);
+              if (result != null) {
+                response = {'success': true, 'data': result};
+              } else {
+                response = _nmError('No matching item found for "$url"');
+              }
             } else {
-              response = _nmError('No matching item found for "$url"');
+              final result = await ipcClient.getPassword(session.tokenId, url);
+              if (result != null) {
+                response = {'success': true, 'data': result};
+              } else {
+                response = _nmError('No matching item found for "$url"');
+              }
             }
           }
           break;

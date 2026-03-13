@@ -130,11 +130,6 @@ class ConfigCommand {
       return await _configureWebDavInteractive();
     }
 
-    if (url == null || user == null || pass == null) {
-      print('Error: --url, --user, and --password are required');
-      return 1;
-    }
-
     final config = WebDavConfig(
       serverUrl: url,
       username: user,
@@ -212,11 +207,9 @@ class ConfigCommand {
   }
 
   String _maskPassword(String url) {
-    // 简单掩码处理
-    if (url.contains('@')) {
-      // 处理 http://user:pass@host 格式
-      final uri = Uri.tryParse(url);
-      if (uri != null && uri.userInfo.isNotEmpty) {
+    try {
+      final uri = Uri.parse(url);
+      if (uri.hasAuthority && uri.userInfo.isNotEmpty) {
         final userInfo = uri.userInfo.split(':');
         if (userInfo.length >= 2) {
           return url.replaceFirst(
@@ -225,8 +218,8 @@ class ConfigCommand {
           );
         }
       }
-    }
-    return url;
+    } catch (_) {}
+    return '[URL with credentials hidden]';
   }
 
   void _printHelp() {

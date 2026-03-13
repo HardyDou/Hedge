@@ -132,18 +132,23 @@ class WebDavSyncService {
   }
 
   /// 获取远程 vault 修改时间
-  /// 注意：webdav_client 的 Resource 类型不直接提供 modified 时间
-  /// 这里简单返回 null，后续可以改进
   Future<DateTime?> getRemoteModifiedTime() async {
     if (_client == null || _config == null) return null;
 
     try {
-      // 简单检查远程文件是否存在
-      await _client!.read(_config!.remotePath);
-      // 文件存在，返回当前时间（保守估计）
+      final props = await _client!.propfind(
+        _config!.remotePath,
+        ['getlastmodified'],
+        depth: 0,
+      );
+      if (props != null && props.isNotEmpty) {
+        final lastModified = props[0].getlastmodified;
+        if (lastModified != null) {
+          return lastModified;
+        }
+      }
       return DateTime.now();
     } catch (e) {
-      // 远程文件不存在
       return null;
     }
   }

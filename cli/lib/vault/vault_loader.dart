@@ -25,7 +25,18 @@ class VaultLoader {
       } catch (_) {}
     }
 
-    // 3. 统一默认路径 ~/.hedge/vault.db（macOS/Linux/Windows）
+    // 3. Linux 旧路径迁移兼容 (~/.local/share/hedge/vault.db)
+    if (Platform.isLinux) {
+      final home = Platform.environment['HOME'];
+      if (home != null) {
+        final oldLinuxPath = '$home/.local/share/hedge/vault.db';
+        if (await File(oldLinuxPath).exists()) {
+          return oldLinuxPath;
+        }
+      }
+    }
+
+    // 4. 统一默认路径 ~/.hedge/vault.db（macOS/Linux/Windows）
     final home = Platform.environment['HOME'] ?? Platform.environment['USERPROFILE'];
     if (home != null) {
       final defaultPath = '$home/.hedge/vault.db';
