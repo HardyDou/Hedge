@@ -1,6 +1,8 @@
 import 'dart:io';
 import '../services/config_service.dart';
 import '../services/keychain_service.dart';
+import '../services/shared_config_reader.dart';
+import '../ipc/ipc_client.dart';
 
 /// hedge config - CLI 配置管理命令
 class ConfigCommand {
@@ -48,7 +50,40 @@ class ConfigCommand {
       return 0;
     }
 
-    // 2. Keychain
+    // 2. IPC（从 Desktop App 获取）
+    if (IpcClient.isDesktopAppRunning()) {
+      try {
+        final ipc = IpcClient();
+        if (await ipc.connect()) {
+          final ipcConfig = await ipc.getWebdavConfig();
+          await ipc.disconnect();
+
+          if (ipcConfig != null) {
+            final serverUrl = ipcConfig['server_url'] as String?;
+            final username = ipcConfig['username'] as String?;
+            if (serverUrl != null && username != null) {
+              print('  Source: Desktop App (IPC)');
+              print('  URL: ${_maskPassword(serverUrl)}');
+              print('  User: $username');
+              print('  Path: ${ipcConfig['remote_path'] ?? 'Hedge/vault.db'}');
+              return 0;
+            }
+          }
+        }
+      } catch (_) {}
+    }
+
+    // 3. 共享加密配置文件
+    final sharedConfig = await SharedConfigReader.readWebdavConfig();
+    if (sharedConfig != null) {
+      print('  Source: Shared encrypted file (~/.hedge/shared-config.enc)');
+      print('  URL: ${_maskPassword(sharedConfig['serverUrl']!)}');
+      print('  User: ${sharedConfig['username']}');
+      print('  Path: ${sharedConfig['remotePath'] ?? 'Hedge/vault.db'}');
+      return 0;
+    }
+
+    // 4. Keychain
     if (await KeychainService.isAvailable()) {
       final serverUrl = await KeychainService.read('webdav_server_url');
       if (serverUrl != null) {
@@ -62,7 +97,7 @@ class ConfigCommand {
       }
     }
 
-    // 3. CLI 配置文件
+    // 5. CLI 配置文件
     final cliConfig = await ConfigService.loadWebDavConfig();
     if (cliConfig != null) {
       print('  Source: CLI config file (~/.hedge/cli-config.json)');
