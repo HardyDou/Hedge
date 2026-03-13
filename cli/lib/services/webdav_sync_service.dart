@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 import 'package:webdav_client/webdav_client.dart' as webdav;
 import 'package:dio/dio.dart';
@@ -142,9 +143,10 @@ class WebDavSyncService {
           : '${_config!.serverUrl}/${_config!.remotePath}';
 
       final dio = Dio();
-      dio.options.basicAuth = Base64Encoder().convert(
+      final credentials = base64Encode(
         '${_config!.username}:${_config!.password}'.codeUnits,
       );
+      dio.options.headers['Authorization'] = 'Basic $credentials';
 
       final response = await dio.head(url);
       final lastModified = response.headers.value('last-modified');
