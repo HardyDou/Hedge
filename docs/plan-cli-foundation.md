@@ -8,6 +8,164 @@
 
 ---
 
+## ✅ 已完成功能清单
+
+### 核心架构
+- [x] CLI 项目结构（`cli/` 目录）
+- [x] `CliSession` 模型（不透明令牌）
+- [x] `SessionStorage`（加密文件存储）
+- [x] `IpcTransport` 抽象层
+- [x] Unix Socket 传输（macOS/Linux）
+- [x] `IpcClient`（连接 Desktop App）
+
+### Desktop App IPC Server
+- [x] `IpcServerService` 实现
+- [x] JSON-RPC 2.0 协议处理
+- [x] 会话令牌验证（`SessionRegistry`）
+- [x] "vault locked" 事件推送
+
+### CLI 命令
+- [x] `hedge get <item>` - 获取密码
+- [x] `hedge list` - 列出所有条目
+- [x] `hedge search <query>` - 搜索
+- [x] `hedge lock` - 锁定会话
+- [x] `--no-app` 强制独立模式
+- [x] `--no-copy` 输出到 stdout
+- [x] `--field` 指定字段
+
+### 认证模式
+- [x] IPC 模式（生物识别）
+- [x] 独立模式（主密码）
+- [x] 自动检测模式
+- [x] 会话复用
+
+### 安全
+- [x] 令牌加密存储（AES-256-GCM + 设备特征派生）
+- [x] 文件权限 0600
+- [x] IPC socket 权限限制
+- [x] 主密码输入隐藏
+
+---
+
+## ⏳ 待完成功能清单
+
+### 高优先级
+- [ ] **Keychain 支持（跨平台）**
+  - [ ] macOS: `security` 命令
+  - [ ] Linux: `secret-tool` / D-Bus
+  - [ ] Windows: `cmdkey` / PowerShell
+  - [ ] 存储主密码（避免每次输入）
+  - [ ] 存储 WebDAV 配置
+
+- [ ] **`hedge init` 命令**
+  - [ ] 创建新 vault
+  - [ ] 支持 `--path` 指定路径
+  - [ ] 询问是否启用 Touch ID
+  - [ ] 询问是否保存密码到 Keychain
+
+- [ ] **首次启动优化**
+  - [ ] Desktop App 检测 vault 存在但 Keychain 无密码时，引导用户解锁一次
+  - [ ] 错误码 `2002`（vault 不存在）友好提示
+
+### 中优先级
+- [ ] `hedge unlock` 命令（显式解锁）
+- [ ] Shell 补全（bash, zsh, fish）
+- [ ] 配置文件支持（`~/.hedge/config.yaml`）
+
+### 低优先级
+- [ ] 写操作命令（`add`, `edit`, `delete`）
+- [ ] Daemon 模式
+- [ ] 国际化（中英文）
+
+### 平台扩展
+- [ ] Linux 完整支持
+- [ ] Windows 完整支持
+
+---
+
+## 🔐 Keychain 跨平台实现方案
+
+### macOS
+```bash
+# 写入
+security add-generic-password -s "hedge-master-password" -w "$PASSWORD"
+
+# 读取
+security find-generic-password -s "hedge-master-password" -w
+
+# 删除
+security delete-generic-password -s "hedge-master-password"
+```
+
+### Linux (GNOME Keyring / Secret Service)
+```bash
+# 写入
+secret-tool store --label="Hedge Master Password" master_password "$PASSWORD"
+
+# 读取
+secret-tool lookup master_password
+
+# 删除
+secret-tool clear master_password
+```
+
+### Windows (Credential Manager)
+```powershell
+# 写入
+cmdkey /generic:"Hedge Master Password" /user:"hedge" /pass:"$PASSWORD"
+
+# 读取
+powershell -Command "[System.Runtime.InteropServices.Marshal]::PtrToStringAuto([System.Runtime.InteropServices.Marshal]::SecureStringToBSTR((ConvertTo-SecureString (Get-StoredCredential -Target 'Hedge Master Password' -AsPlainText).Password -AsSecureString)))"
+
+# 删除
+cmdkey /delete:"Hedge Master Password"
+```
+
+---
+
+## 📖 用户故事（CLI 初始化场景）
+
+### 场景 1：首次使用 CLI（无 Desktop App）
+```bash
+$ hedge list
+⚠️  No vault found. Use 'hedge init' to create one.
+
+$ hedge init
+🔐 Create master password: ********
+🔐 Confirm password: ********
+✓ Vault created at ~/Library/Mobile Documents/com~apple~CloudDocs/Hedge/vault.db
+
+$ hedge list
+🔑 Enter master password: ********
+✓ Authenticated
+
+Vault Items (0):
+  (empty)
+```
+
+### 场景 2：Desktop App 已存在，CLI 首次使用
+```bash
+$ hedge list
+✓ Authenticated via Touch ID
+
+Vault Items (23):
+  • AWS Console
+  • GitHub
+  ...
+```
+
+### 场景 3：未安装 Desktop App，使用 --no-app
+```bash
+$ hedge list --no-app
+🔑 Enter master password: ********
+✓ Authenticated
+
+Vault Items (23):
+  ...
+```
+
+---
+
 ## 👤 用户画像
 
 **李明** - 32岁，全栈开发者
@@ -1108,11 +1266,23 @@ if (!supportedVersions.contains(vaultFormatVersion)) {
 ## 🚀 平台支持
 
 ### MVP (v1.9.0)
-- ✅ macOS（优先）
+- ✅ macOS（CLI + Desktop App IPC 模式）
+- ✅ macOS（CLI 独立模式）
 
-### 未来 (v2.0.0)
-- ⏳ Linux
-- ⏳ Windows
+### v1.9.x（即将支持）
+- ⏳ Linux（CLI + Desktop App IPC 模式）
+- ⏳ Linux（CLI 独立模式）
+- ⏳ Windows（CLI + Desktop App IPC 模式）
+- ⏳ Windows（CLI 独立模式）
+
+### 功能矩阵
+| 功能 | macOS | Linux | Windows |
+|------|-------|-------|---------|
+| `hedge get/list/search` (IPC) | ✅ | ⏳ | ⏳ |
+| `hedge get/list/search` (独立) | ✅ | ⏳ | ⏳ |
+| Keychain 存储 | ✅ | ⏳ | ⏳ |
+| WebDAV 配置读取 | ⏳ | ⏳ | ⏳ |
+| Touch ID / 生物识别 | ✅ | N/A | N/A |
 
 ---
 
@@ -1144,6 +1314,15 @@ A: 支持。每个 CLI 进程可以有独立的会话令牌（Desktop App 的 `S
 
 **Q5: 浏览器插件如何使用 CLI？**
 A: 浏览器插件通过 Native Messaging 调用 CLI，CLI 通过 IPC 访问 Desktop App 的 vault。
+
+**Q6: CLI 可以不依赖 Desktop App 创建 vault 吗？**
+A: 可以。使用 `hedge init` 命令创建新 vault，支持指定路径。
+
+**Q7: CLI 可以存储主密码吗？**
+A: 可以。macOS 使用 Keychain，Linux 使用 GNOME Keyring / secret-tool，Windows 使用 Credential Manager。存储后无需每次输入密码。
+
+**Q8: --no-app 模式和独立模式有什么区别？**
+A: `--no-app` 是显式强制使用主密码模式；独立模式是当 Desktop App 不可用时的自动降级。两者效果相同。
 
 ---
 

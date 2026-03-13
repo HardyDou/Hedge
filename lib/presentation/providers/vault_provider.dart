@@ -214,6 +214,15 @@ Future<void> checkInitialStatus() async {
         filteredVaultItems: [], // Initialize empty, will be populated on unlock/setup
       );
 
+      // 启动 IPC Server（桌面平台）- 无论 vault 是否存在都启动
+      if (_ipcServer != null) {
+        try {
+          await _ipcServer!.start();
+        } catch (e) {
+          debugPrint('[Vault] IPC Server start failed: $e');
+        }
+      }
+
       // 显示同步状态
       print('[Vault] Sync mode: ${state.syncMode.name}');
       if (iCloudAvailable && state.syncMode == SyncMode.icloud) {
