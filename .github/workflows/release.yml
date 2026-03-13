@@ -242,8 +242,13 @@ jobs:
       - name: Update formula
         run: |
           VERSION="${{ steps.sha.outputs.version }}"
+          # Update version
           sed -i "s/version \".*\"/version \"${VERSION}\"/" homebrew-tap/Formula/hedge.rb
+          # Update macOS arm64 URL and sha256
+          sed -i "s|download/v[^\/]*/hedge-cli-macos-arm64|download/v${VERSION}/hedge-cli-macos-arm64|g" homebrew-tap/Formula/hedge.rb
           sed -i "/hedge-cli-macos-arm64/{n;s/sha256 \".*\"/sha256 \"${{ steps.sha.outputs.sha_macos }}\"/}" homebrew-tap/Formula/hedge.rb
+          # Update Linux URL and sha256
+          sed -i "s|download/v[^\/]*/hedge-cli-linux-x64|download/v${VERSION}/hedge-cli-linux-x64|g" homebrew-tap/Formula/hedge.rb
           sed -i "/hedge-cli-linux-x64/{n;s/sha256 \".*\"/sha256 \"${{ steps.sha.outputs.sha_linux }}\"/}" homebrew-tap/Formula/hedge.rb
 
       - name: Commit and push
