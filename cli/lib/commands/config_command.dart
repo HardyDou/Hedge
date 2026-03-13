@@ -4,7 +4,10 @@ import '../services/keychain_service.dart';
 
 /// hedge config - CLI 配置管理命令
 class ConfigCommand {
-  Future<int> execute(List<String> args) async {
+  /// 执行配置命令
+  /// [args] 命令参数列表
+  /// [options] 额外的选项（从 ArgParser 解析的）
+  Future<int> execute(List<String> args, {Map<String, dynamic>? options}) async {
     if (args.isEmpty || args.contains('--help') || args.contains('-h')) {
       _printHelp();
       return 0;
@@ -17,7 +20,7 @@ class ConfigCommand {
         return await _showConfig();
 
       case 'webdav':
-        return await _configureWebDav(args.skip(1).toList());
+        return await _configureWebDav(args.skip(1).toList(), options: options);
 
       case 'delete':
         return await _deleteConfig();
@@ -74,17 +77,23 @@ class ConfigCommand {
     return 0;
   }
 
-  Future<int> _configureWebDav(List<String> args) async {
-    if (args.isEmpty) {
-      // 交互式配置
+  Future<int> _configureWebDav(List<String> args, {Map<String, dynamic>? options}) async {
+    // 优先使用 options（从 ArgParser 解析）
+    String? url = options?['url'] as String?;
+    String? user = options?['user'] as String?;
+    String? pass = options?['password'] as String?;
+    String? path = options?['path'] as String?;
+
+    // 如果 options 中没有，从 args 中解析
+    if (url == null) url = args.contains('--url') ? _getArgValue(args, '--url') : null;
+    if (user == null) user = args.contains('--user') ? _getArgValue(args, '--user') : null;
+    if (pass == null) pass = args.contains('--password') ? _getArgValue(args, '--password') : null;
+    if (path == null) path = args.contains('--path') ? _getArgValue(args, '--path') : null;
+
+    // 如果都没有提供，进入交互式配置
+    if (url == null || user == null || pass == null) {
       return await _configureWebDavInteractive();
     }
-
-    // 非交互式配置（环境变量）
-    final url = args.contains('--url') ? _getArgValue(args, '--url') : null;
-    final user = args.contains('--user') ? _getArgValue(args, '--user') : null;
-    final pass = args.contains('--password') ? _getArgValue(args, '--password') : null;
-    final path = args.contains('--path') ? _getArgValue(args, '--path') : null;
 
     if (url == null || user == null || pass == null) {
       print('Error: --url, --user, and --password are required');

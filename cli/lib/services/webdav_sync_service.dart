@@ -2,7 +2,9 @@ import 'dart:io';
 import 'package:webdav_client/webdav_client.dart' as webdav;
 import 'keychain_service.dart';
 import 'config_service.dart';
+import 'shared_config_reader.dart';
 import '../vault/vault_loader.dart';
+import '../ipc/ipc_client.dart';
 
 /// WebDAV 同步服务
 class WebDavSyncService {
@@ -11,8 +13,9 @@ class WebDavSyncService {
 
   /// 加载 WebDAV 配置（按优先级）
   /// 1. 环境变量
-  /// 2. Keychain（与 Desktop App 共享）
-  /// 3. CLI 配置文件
+  /// 2. IPC（从 Desktop App 获取）
+  /// 3. Keychain（与 Desktop App 共享）
+  /// 4. CLI 配置文件
   Future<WebDavConfig?> loadConfig() async {
     // 1. 环境变量（最高优先级）
     final envUrl = Platform.environment['HEDGE_WEBDAV_URL'];
@@ -29,7 +32,37 @@ class WebDavSyncService {
       );
     }
 
-    // 2. Keychain（与 Desktop App 共享）
+    // 2. IPC（从 Desktop App 获取）
+    if (IpcClient.isDesktopAppRunning()) {
+      try {
+        final ipc = IpcClient();
+        if (await ipc.connect()) {
+          final ipcConfig = await ipc.getWebdavConfig();
+          await ipc.disconnect();
+
+          if (ipcConfig != null) {
+            final serverUrl = ipcConfig['server_url'] as String?;
+            final username = ipcConfig['username'] as String?;
+            final password = ipcConfig['password'] as String?;
+            final remotePath = ipcConfig['remote_path'] as String?;
+
+            if (serverUrl != null && username != null && password != null) {
+              print('✓ Using WebDAV config from Desktop App (IPC)');
+              return WebDavConfig(
+                serverUrl: serverUrl,
+                username: username,
+                password: password,
+                remotePath: remotePath ?? 'Hedge/vault.db',
+              );
+            }
+          }
+        }
+      } catch (e) {
+        print('⚠️  Failed to get config from IPC: $e');
+      }
+    }
+
+    // 3. Keychain（与 Desktop App 共享）
     if (await KeychainService.isAvailable()) {
       try {
         final serverUrl = await KeychainService.read('webdav_server_url');
@@ -51,7 +84,19 @@ class WebDavSyncService {
       }
     }
 
-    // 3. CLI 配置文件
+    // 4. CLI 共享加密配置文件（Desktop App 写入）
+    final sharedConfig = await SharedConfigReader.readWebdavConfig();
+    if (sharedConfig != null) {
+      print('✓ Using WebDAV config from shared encrypted file');
+      return WebDavConfig(
+        serverUrl: sharedConfig['serverUrl']!,
+        username: sharedConfig['username']!,
+        password: sharedConfig['password']!,
+        remotePath: sharedConfig['remotePath'] ?? 'Hedge/vault.db',
+      );
+    }
+
+    // 5. CLI 配置文件（用户手动配置）
     final cliConfig = await ConfigService.loadWebDavConfig();
     if (cliConfig != null) {
       print('✓ Using WebDAV config from CLI config file');

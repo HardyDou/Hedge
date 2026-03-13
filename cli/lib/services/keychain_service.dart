@@ -14,14 +14,15 @@ class KeychainService {
   }
 
   /// macOS: 使用 security 命令读取 Keychain
-  /// flutter_secure_storage 的服务名格式: flutter_secure_storage.<key>
+  /// flutter_secure_storage 使用 app bundle ID 作为服务名
   static Future<String?> _readFromMacOSKeychain(String key) async {
     try {
       // flutter_secure_storage 使用 bundle ID 作为服务名
-      // 尝试两种常见格式
+      // 尝试多种可能的服务名格式
       for (final serviceName in [
-        'flutter_secure_storage',
-        'com.hedgehog.hedge',
+        'com.hardydou.hedge',           // 当前 app bundle ID
+        'com.hedgehog.hedge',           // 旧 bundle ID
+        'flutter_secure_storage',        // 默认服务名
       ]) {
         final result = await Process.run('security', [
           'find-generic-password',

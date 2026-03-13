@@ -29,7 +29,12 @@ void main(List<String> arguments) async {
     // Sync options
     ..addFlag('status', help: 'Show sync status')
     ..addFlag('force-upload', help: 'Force upload to remote')
-    ..addFlag('force-download', help: 'Force download from remote');
+    ..addFlag('force-download', help: 'Force download from remote')
+    // Config options
+    ..addOption('url', help: 'WebDAV server URL')
+    ..addOption('user', help: 'WebDAV username')
+    ..addOption('password', help: 'WebDAV password')
+    ..addOption('path', help: 'WebDAV remote path');
 
   try {
     final results = parser.parse(arguments);
@@ -118,7 +123,15 @@ void main(List<String> arguments) async {
 
         case 'config':
           final configCmd = ConfigCommand();
-          exitCode = await configCmd.execute(results.rest.skip(1).toList());
+          exitCode = await configCmd.execute(
+            results.rest.skip(1).toList(),
+            options: {
+              'url': results['url'],
+              'user': results['user'],
+              'password': results['password'],
+              'path': results['path'],
+            },
+          );
           break;
 
         default:
