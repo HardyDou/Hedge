@@ -18,12 +18,14 @@ class IpcServerService {
   final Vault? Function() getCurrentVault;
   final bool Function() isVaultUnlocked;
   final Future<bool> Function() requestUnlockForCli;
+  final Future<Map<String, String>?> Function()? getWebdavConfig;
 
   IpcServerService({
     required this.authenticateWithBiometrics,
     required this.getCurrentVault,
     required this.isVaultUnlocked,
     required this.requestUnlockForCli,
+    this.getWebdavConfig,
   });
 
   String get _socketPath => '/tmp/hedge-ipc.sock';
@@ -134,6 +136,10 @@ class IpcServerService {
 
       case 'revoke_token':
         response = _handleRevokeToken(id, params);
+        break;
+
+      case 'get_webdav_config':
+        response = await _handleGetWebdavConfig(id);
         break;
 
       default:
@@ -267,6 +273,35 @@ class IpcServerService {
       _sessionRegistry.revokeSession(token);
     }
     return _buildResponse(id, {'result': 'ok'});
+  }
+
+  /// 获取 WebDAV 配置（从 Desktop App 的 flutter_secure_storage）
+  Future<Map<String, dynamic>> _handleGetWebdavConfig(dynamic id) async {
+    if (getWebdavConfig != null) {
+      try {
+        final config = await getWebdavConfig!();
+        if (config != null) {
+          return _buildResponse(id, {
+            'result': {
+              'server_url': config['server_url'],
+              'username': config['username'],
+              'password': config['password'],
+              'remote_path': config['remote_path'],
+            }
+          });
+        }
+      } catch (e) {
+        debugPrint('[IPC] Failed to get WebDAV config: $e');
+      }
+    }
+    return _buildResponse(id, {
+      'result': {
+        'server_url': null,
+        'username': null,
+        'password': null,
+        'remote_path': null,
+      }
+    });
   }
 
   Map<String, dynamic> _buildResponse(dynamic id, Map<String, dynamic> data) {

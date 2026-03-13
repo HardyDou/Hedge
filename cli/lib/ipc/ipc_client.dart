@@ -109,6 +109,17 @@ class IpcClient {
     } catch (_) {}
   }
 
+  /// 获取 WebDAV 配置（从 Desktop App）
+  Future<Map<String, dynamic>?> getWebdavConfig() async {
+    try {
+      final response = await _call('get_webdav_config', {});
+      if (response.containsKey('error')) return null;
+      return response['result'] as Map<String, dynamic>?;
+    } catch (_) {
+      return null;
+    }
+  }
+
   Future<Map<String, dynamic>> _call(
       String method, Map<String, dynamic> params, {Duration? timeout}) async {
     if (_transport == null || !_transport!.isConnected) {

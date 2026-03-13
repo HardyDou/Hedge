@@ -1,10 +1,10 @@
 import 'dart:ui';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:hedge/core/shared_secure_storage.dart';
 
 class LocaleNotifier extends StateNotifier<Locale?> {
-  final _storage = const FlutterSecureStorage();
+  final _storage = sharedSecureStorage;
 
   LocaleNotifier() : super(null) {
     _loadLocale();

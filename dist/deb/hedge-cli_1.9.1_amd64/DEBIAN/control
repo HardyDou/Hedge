@@ -1,0 +1,11 @@
+Package: hedge-cli
+Version: 1.9.1
+Section: utils
+Priority: optional
+Architecture: amd64
+Maintainer: Hedge Team <hello@hedge.app>
+Description: Secure, local-first password manager CLI
+ Hedge CLI lets you access your Hedge vault from the terminal.
+ Requires the Hedge desktop app to be running for IPC access,
+ or can read vault files directly with a master password.
+Homepage: https://github.com/yourusername/hedge

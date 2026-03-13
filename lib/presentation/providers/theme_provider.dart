@@ -1,11 +1,11 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:hedge/core/shared_secure_storage.dart';
 
 enum ThemeModeOption { system, dark, light }
 
 class ThemeNotifier extends StateNotifier<ThemeModeOption> {
-  final _storage = const FlutterSecureStorage();
+  final _storage = sharedSecureStorage;
 
   ThemeNotifier() : super(ThemeModeOption.system) {
     _loadTheme();

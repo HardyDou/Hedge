@@ -1,21 +1,40 @@
 import 'dart:io';
+import 'dart:convert';
 import 'package:args/args.dart';
-import 'package:hedge_cli/version.dart';
+import '../lib/version.dart';
 import '../lib/auth/auth_manager.dart';
 import '../lib/commands/get_command.dart';
 import '../lib/commands/list_command.dart';
 import '../lib/commands/search_command.dart';
 import '../lib/commands/lock_command.dart';
+import '../lib/commands/unlock_command.dart';
+import '../lib/commands/sync_command.dart';
+import '../lib/commands/config_command.dart';
+import '../lib/ipc/ipc_client.dart';
+import '../lib/session/session_storage.dart';
 
 void main(List<String> arguments) async {
-  final parser = ArgParser()
+  final parser = ArgParser(allowTrailingOptions: true)
     ..addFlag('help', abbr: 'h', negatable: false, help: 'Show help')
     ..addFlag('version', abbr: 'v', negatable: false, help: 'Show version')
     ..addFlag('no-app', negatable: false,
         help: 'Force standalone mode (skip Desktop App, use master password). '
               'Set HEDGE_MASTER_PASSWORD env var for non-interactive use.')
     ..addFlag('no-copy', negatable: false, help: 'Output to stdout instead of clipboard')
-    ..addOption('field', help: 'Field to get (username, password, url, notes)');
+    ..addFlag('output-token', negatable: false, help: 'Output session token (for unlock command)')
+    ..addFlag('native-messaging', negatable: false,
+        help: 'Run in Native Messaging mode (for browser extension)')
+    ..addFlag('verbose', abbr: 'V', negatable: false, help: 'Enable verbose output')
+    ..addOption('field', help: 'Field to get (username, password, url, notes)')
+    // Sync options
+    ..addFlag('status', help: 'Show sync status')
+    ..addFlag('force-upload', help: 'Force upload to remote')
+    ..addFlag('force-download', help: 'Force download from remote')
+    // Config options
+    ..addOption('url', help: 'WebDAV server URL')
+    ..addOption('user', help: 'WebDAV username')
+    ..addOption('password', help: 'WebDAV password')
+    ..addOption('path', help: 'WebDAV remote path');
 
   try {
     final results = parser.parse(arguments);
@@ -27,6 +46,12 @@ void main(List<String> arguments) async {
 
     if (results['version'] as bool) {
       print('hedge CLI v$version');
+      exit(0);
+    }
+
+    // Native Messaging mode (browser extension)
+    if (results['native-messaging'] as bool) {
+      await _runNativeMessaging();
       exit(0);
     }
 
@@ -79,9 +104,39 @@ void main(List<String> arguments) async {
           exitCode = await lockCmd.execute();
           break;
 
+        case 'unlock':
+          final unlockCmd = UnlockCommand(authManager);
+          exitCode = await unlockCmd.execute(
+            forceStandalone: results['no-app'] as bool,
+            outputToken: results['output-token'] as bool,
+          );
+          break;
+
+        case 'sync':
+          final syncCmd = SyncCommand();
+          exitCode = await syncCmd.execute(
+            showStatus: results['status'] as bool? ?? false,
+            forceUpload: results['force-upload'] as bool? ?? false,
+            forceDownload: results['force-download'] as bool? ?? false,
+          );
+          break;
+
+        case 'config':
+          final configCmd = ConfigCommand();
+          exitCode = await configCmd.execute(
+            results.rest.skip(1).toList(),
+            options: {
+              'url': results['url'],
+              'user': results['user'],
+              'password': results['password'],
+              'path': results['path'],
+            },
+          );
+          break;
+
         default:
           _printHelp(parser);
-          exitCode = 1;
+          exitCode = command.isEmpty ? 0 : 1;
       }
 
       await authManager.dispose();
@@ -98,6 +153,120 @@ void main(List<String> arguments) async {
   }
 }
 
+/// Native Messaging mode: stdin/stdout JSON communication (Chrome Native Messaging protocol)
+/// Format: [4-byte length LE][JSON payload]
+Future<void> _runNativeMessaging() async {
+  final ipcClient = IpcClient();
+  final session = await SessionStorage.loadSession();
+
+  await for (final request in _readNativeMessages()) {
+    Map<String, dynamic> response;
+
+    try {
+      final method = request['method'] as String?;
+      final params = request['params'] as Map<String, dynamic>? ?? {};
+
+      switch (method) {
+        case 'get_password':
+          if (!IpcClient.isDesktopAppRunning()) {
+            response = _nmError('Desktop App not running. Please open Hedge.');
+          } else if (session == null || session.isExpired) {
+            response = _nmError('Vault not unlocked. Please unlock Hedge first.');
+          } else {
+            final url = params['url'] as String?;
+            if (url == null || url.isEmpty) {
+              response = _nmError('URL is required');
+            } else if (!ipcClient.isConnected) {
+              await ipcClient.connect();
+              final result = await ipcClient.getPassword(session.tokenId, url);
+              if (result != null) {
+                response = {'success': true, 'data': result};
+              } else {
+                response = _nmError('No matching item found for "$url"');
+              }
+            } else {
+              final result = await ipcClient.getPassword(session.tokenId, url);
+              if (result != null) {
+                response = {'success': true, 'data': result};
+              } else {
+                response = _nmError('No matching item found for "$url"');
+              }
+            }
+          }
+          break;
+
+        case 'list_items':
+          if (!IpcClient.isDesktopAppRunning()) {
+            response = _nmError('Desktop App not running. Please open Hedge.');
+          } else if (session == null || session.isExpired) {
+            response = _nmError('Vault not unlocked. Please unlock Hedge first.');
+          } else {
+            if (!ipcClient.isConnected) await ipcClient.connect();
+            final items = await ipcClient.listItems(session.tokenId);
+            if (items != null) {
+              response = {'success': true, 'items': items};
+            } else {
+              response = _nmError('Failed to list items');
+            }
+          }
+          break;
+
+        case 'ping':
+          response = {'success': true, 'version': version};
+          break;
+
+        default:
+          response = _nmError('Unknown method: $method');
+      }
+    } catch (e) {
+      response = _nmError('Internal error: $e');
+    }
+
+    _writeNativeMessage(response);
+  }
+
+  await ipcClient.disconnect();
+}
+
+Map<String, dynamic> _nmError(String message) => {'success': false, 'error': message};
+
+Stream<Map<String, dynamic>> _readNativeMessages() async* {
+  final input = stdin;
+  final buffer = <int>[];
+
+  await for (final chunk in input) {
+    buffer.addAll(chunk);
+
+    while (buffer.length >= 4) {
+      // Little-endian 4-byte length prefix (Chrome Native Messaging)
+      final length = buffer[0] | (buffer[1] << 8) | (buffer[2] << 16) | (buffer[3] << 24);
+
+      if (buffer.length < 4 + length) break;
+
+      final payload = buffer.sublist(4, 4 + length);
+      buffer.removeRange(0, 4 + length);
+
+      try {
+        final json = jsonDecode(utf8.decode(payload)) as Map<String, dynamic>;
+        yield json;
+      } catch (_) {}
+    }
+  }
+}
+
+void _writeNativeMessage(Map<String, dynamic> message) {
+  final payload = utf8.encode(jsonEncode(message));
+  final length = payload.length;
+  final header = [
+    length & 0xFF,
+    (length >> 8) & 0xFF,
+    (length >> 16) & 0xFF,
+    (length >> 24) & 0xFF,
+  ];
+  stdout.add(header);
+  stdout.add(payload);
+}
+
 void _printHelp(ArgParser parser) {
   print('''
 Hedge Password Manager CLI v$version
@@ -109,6 +278,9 @@ Commands:
   list             List all vault items
   search <query>   Search vault items
   lock             Lock CLI session
+  unlock           Unlock CLI session (creates session token)
+  sync             Sync vault via WebDAV
+  config           Manage CLI configuration
 
 Options:
 ${parser.usage}
@@ -116,6 +288,10 @@ ${parser.usage}
 Environment Variables:
   HEDGE_VAULT_PATH          Path to vault file (overrides auto-discovery)
   HEDGE_MASTER_PASSWORD     Master password for --no-app mode (CI/CD use)
+  HEDGE_WEBDAV_URL          WebDAV server URL
+  HEDGE_WEBDAV_USERNAME     WebDAV username
+  HEDGE_WEBDAV_PASSWORD     WebDAV password
+  HEDGE_WEBDAV_PATH         WebDAV remote path (default: Hedge/vault.db)
 
 Examples:
   hedge get github
@@ -123,6 +299,11 @@ Examples:
   hedge list
   hedge search google
   hedge lock
+  hedge unlock
+  hedge sync
+  hedge sync --status
+  hedge config show
+  hedge config webdav
 
   # CI/CD usage
   export HEDGE_MASTER_PASSWORD="your-password"

@@ -1,0 +1,7 @@
+Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Upstream-Name: hedge-cli
+Source: https://github.com/yourusername/hedge
+
+Files: *
+Copyright: 2026 Hedge Team
+License: MIT

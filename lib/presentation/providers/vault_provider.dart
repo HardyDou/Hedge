@@ -1,5 +1,4 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:local_auth/local_auth.dart';
 import 'package:hedge/src/dart/vault.dart';
 import 'package:hedge/platform/sync_service_factory.dart';
@@ -13,6 +12,7 @@ import 'package:hedge/domain/services/importer/import_strategy.dart';
 import 'package:hedge/domain/services/sort_service.dart';
 import 'package:hedge/domain/models/sync_config.dart';
 import 'package:hedge/domain/services/ipc_server_service.dart';
+import 'package:hedge/core/shared_secure_storage.dart';
 import 'package:hedge/l10n/generated/app_localizations.dart';
 import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
@@ -102,7 +102,7 @@ class VaultState {
 
 
 class VaultNotifier extends StateNotifier<VaultState> {
-  final _storage = const FlutterSecureStorage();
+  final _storage = sharedSecureStorage;
   final _localAuth = LocalAuthentication();
   SyncService _syncService = SyncServiceFactory.getService();
   StreamSubscription? _syncSubscription;
@@ -177,6 +177,7 @@ class VaultNotifier extends StateNotifier<VaultState> {
         // 直接触发 Touch ID 解锁，无需 app 到前台
         return await unlockWithBiometrics();
       },
+      getWebdavConfig: getWebdavConfigForIpc,
     );
   }
 
@@ -303,13 +304,24 @@ Future<void> checkInitialStatus() async {
   }
 
   static Future<String> _getDefaultVaultPath() async {
+    // 统一使用 ~/.hedge/vault.db（桌面端）或 iCloud Drive（移动端）
+    final home = Platform.environment['HOME'] ?? Platform.environment['USERPROFILE'];
+    if (home != null) {
+      // 桌面端: 使用 ~/.hedge/vault.db
+      if (Platform.isMacOS || Platform.isLinux || Platform.isWindows) {
+        final hedgeDir = Directory('$home/.hedge');
+        if (!await hedgeDir.exists()) {
+          await hedgeDir.create(recursive: true);
+        }
+        return '$home/.hedge/vault.db';
+      }
+    }
+
     // iOS/macOS: 优先使用 iCloud Drive
     if (Platform.isIOS || Platform.isMacOS) {
       final iCloudPath = await _getICloudDrivePath();
       if (iCloudPath != null) {
         return '$iCloudPath/vault.db';
-      } else {
-        print('[Vault] iCloud Drive not available, using local storage');
       }
     }
 
@@ -849,12 +861,20 @@ Future<void> deleteSelectedItems() async {
     await _storage.write(key: 'sync_mode', value: mode.name);
 
     if (mode == SyncMode.webdav && webdavConfig != null) {
-      // 保存 WebDAV 配置
+      // 保存 WebDAV 配置到 Keychain
       final config = webdavConfig.toJson();
       await _storage.write(key: 'webdav_server_url', value: config['serverUrl']);
       await _storage.write(key: 'webdav_username', value: config['username']);
       await _storage.write(key: 'webdav_password', value: config['password']);
       await _storage.write(key: 'webdav_remote_path', value: config['remotePath']);
+
+      // 同时保存到 CLI 共享加密文件（供 CLI 使用）
+      await saveWebdavConfigForCli({
+        'serverUrl': config['serverUrl']!,
+        'username': config['username']!,
+        'password': config['password']!,
+        'remotePath': config['remotePath'] ?? 'Hedge/vault.db',
+      });
     }
 
     state = state.copyWith(syncMode: mode, webdavConfig: webdavConfig);
@@ -945,10 +965,36 @@ Future<void> deleteSelectedItems() async {
           password: password,
           remotePath: remotePath ?? 'Hedge/vault.db',
         );
+
+        // 迁移旧用户的配置到 CLI 共享文件
+        await saveWebdavConfigForCli({
+          'serverUrl': serverUrl,
+          'username': username,
+          'password': password,
+          'remotePath': remotePath ?? 'Hedge/vault.db',
+        });
       }
     }
 
     state = state.copyWith(syncMode: mode, webdavConfig: webdavConfig);
+  }
+
+  /// 获取 WebDAV 配置（供 IPC Server 使用）
+  Future<Map<String, String>?> getWebdavConfigForIpc() async {
+    final serverUrl = await _storage.read(key: 'webdav_server_url');
+    final username = await _storage.read(key: 'webdav_username');
+    final password = await _storage.read(key: 'webdav_password');
+    final remotePath = await _storage.read(key: 'webdav_remote_path');
+
+    if (serverUrl != null && username != null && password != null) {
+      return {
+        'server_url': serverUrl,
+        'username': username,
+        'password': password,
+        'remote_path': remotePath ?? 'Hedge/vault.db',
+      };
+    }
+    return null;
   }
 
   List<VaultItem> getSortedItems() {
