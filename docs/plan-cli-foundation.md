@@ -4,7 +4,7 @@
 **目标版本**: v1.9.0
 **优先级**: P0（必须完成，浏览器插件依赖）
 **日期**: 2026-03-11
-**文档状态**: 最终版本（已整合 Keychain 共享方案）
+**文档状态**: ✅ 已完成
 
 ---
 
@@ -1265,15 +1265,15 @@ if (!supportedVersions.contains(vaultFormatVersion)) {
 
 ## 🚀 平台支持
 
-### MVP (v1.9.0)
+### MVP (v1.9.0) ✅
 - ✅ macOS（CLI + Desktop App IPC 模式）
 - ✅ macOS（CLI 独立模式）
+- ✅ Linux（CLI 独立模式）
+- ✅ Windows（CLI 独立模式）
 
 ### v1.9.x（即将支持）
 - ⏳ Linux（CLI + Desktop App IPC 模式）
-- ⏳ Linux（CLI 独立模式）
 - ⏳ Windows（CLI + Desktop App IPC 模式）
-- ⏳ Windows（CLI 独立模式）
 
 ### 功能矩阵
 | 功能 | macOS | Linux | Windows |

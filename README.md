@@ -22,6 +22,8 @@ Your passwords, your cloud, your control.
 - **Biometric Unlock** - Face ID / Touch ID / Fingerprint support
 - **Cross-Platform** - iOS, Android, macOS, Linux, Windows
 - **TOTP/2FA** - Built-in authenticator, no extra app needed
+- **Password Generator** - Configurable strength, history tracking
+- **CLI** - Terminal access with Touch ID support
 - **Desktop Quick Panel** - System tray resident, hover to show details
 
 ---
@@ -87,12 +89,31 @@ flutter run -d android
 - ✅ 6-digit code + 30s countdown
 - ✅ One-tap copy
 
+### Password Generator (v1.8.0)
+- ✅ Configurable length (8-64 characters)
+- ✅ Toggle character types (uppercase, lowercase, digits, symbols)
+- ✅ Exclude ambiguous characters option
+- ✅ Real-time password strength indicator
+- ✅ One-tap generate and fill
+- ✅ Remember user preferences
+- ✅ Password history (keep last 10 versions)
+
 ### Sync
 - ✅ Local storage
 - ✅ iCloud Drive (iOS/macOS)
 - ✅ WebDAV (all platforms)
   - Supports Nutstore, Nextcloud, Synology NAS
 - ✅ Conflict detection & backup
+
+### CLI (v1.9.0)
+- ✅ `hedge get <item>` - Get password
+- ✅ `hedge list` - List all items
+- ✅ `hedge search <query>` - Search
+- ✅ `hedge lock` - Lock session
+- ✅ Biometric authentication (Touch ID/Face ID)
+- ✅ Master password fallback (--no-app mode)
+- ✅ Encrypted token storage
+- ✅ macOS/Linux/Windows support
 
 ### User Experience
 - ✅ 100% Cupertino design
@@ -149,9 +170,9 @@ lib/
 
 ## 📅 Roadmap
 
-- ✅ **v1.7.0** (Current) - TOTP/2FA support
-- 🎯 **v1.8.0** (2026-04) - Password generator + strength checker + history
-- 🎯 **v1.9.0** (2026-06) - Browser extension + security audit
+- ✅ **v1.7.0** - TOTP/2FA support + Windows
+- ✅ **v1.8.0** - Password generator + strength checker + history
+- 🎯 **v1.9.0** (Current) - CLI + Browser extension
 - 🎯 **v2.0.0** (2026-09) - Folder system + batch operations
 
 Detailed plan: See `docs/产品规划.md`

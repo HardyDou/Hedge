@@ -119,7 +119,35 @@ flutter test
 
 ---
 
-## 6. 参考资源
+## 6. 版本发布约定
+
+### 发布前必须更新的文件
+当发布新版本时，必须同步更新以下文件：
+
+| 文件 | 更新内容 |
+|------|---------|
+| `CHANGELOG.md` | 添加新版本 entry，列出新增/修改/修复内容 |
+| `README.md` | 更新 Roadmap，标记已完成版本为 ✅ |
+| `docs/产品规划.md` | 更新版本状态，更新优先级矩阵 |
+| `docs/plan-*.md` | 更新对应的计划文档状态为 ✅ 已完成 |
+| `AGENTS.md` | 更新"最后更新"日期 |
+
+### 版本号规范
+- **主版本号 (x.0.0)**: 重大功能或架构变更
+- **次版本号 (1.x.0)**: 新功能
+- **修订号 (1.0.x)**: Bug 修复
+
+### 提交信息规范
+```
+feat: 新功能描述
+fix: 修复描述
+docs: 文档更新
+chore: 构建/工具链变更
+```
+
+---
+
+## 7. 参考资源
 
 ### 官方文档
 - [Flutter 官方文档](https://flutter.dev/docs)
@@ -127,12 +155,13 @@ flutter test
 - [Riverpod 文档](https://riverpod.dev/)
 
 ### 项目文档
-- `docs/Plan.md` - 产品路线图
+- `docs/产品规划.md` - 产品路线图
 - `docs/PRD.md` - 产品需求 + UI/UX 规范
 - `docs/Architecture.md` - 技术架构 + 实现细节
-- `docs/plan-*.md` - 排期计划
+- `docs/plan-cli-foundation.md` - CLI 计划
+- `docs/plan-pwd-autogen.md` - 密码生成器计划
 
 ---
 
-**最后更新**: 2026-03-10
+**最后更新**: 2026-03-13
 **维护者**: Hedge Team

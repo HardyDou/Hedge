@@ -5,6 +5,45 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.9.0] - 2026-03-13
+
+### Added
+- **CLI**: Command-line interface for terminal access
+  - `hedge get <item>` - Get password
+  - `hedge list` - List all items
+  - `hedge search <query>` - Search items
+  - `hedge lock` - Lock session
+- **CLI**: Biometric authentication (Touch ID/Face ID) via Desktop App IPC
+- **CLI**: Master password fallback with `--no-app` flag
+- **CLI**: Encrypted session token storage
+- **CLI**: Cross-platform support (macOS/Linux/Windows)
+- **Desktop**: IPC server for CLI communication
+- **Desktop**: Start IPC server on app launch (regardless of vault existence)
+
+### Changed
+- **Build**: Simplified CLI-only releases for macOS
+
+### Fixed
+- **Desktop**: IPC server not starting on fresh app launch
+
+## [1.8.0] - 2026-03-13
+
+### Added
+- **Password Generator**: Configurable length (8-64 characters)
+- **Password Generator**: Toggle character types (uppercase, lowercase, digits, symbols)
+- **Password Generator**: Exclude ambiguous characters option (0, O, l, 1, I)
+- **Password Generator**: Real-time password strength indicator (weak/medium/strong/very strong)
+- **Password Generator**: One-tap generate and fill
+- **Password Generator**: Remember user preferences
+- **Password History**: Keep last 10 password versions
+- **Password History**: View historical passwords with timestamps
+- **Password History**: Restore to historical version
+- **Security**: Color-coded strength indicator with improvement suggestions
+
+### Changed
+- **UI**: Migrated password generator to Toggle mode (vs slider mode)
+- **UI**: Simplified configuration for better UX
+
 ## [1.9.1] - 2026-03-12
 
 ### Added
