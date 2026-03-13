@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:webdav_client/webdav_client.dart' as webdav;
+import 'package:dio/dio.dart';
 import 'keychain_service.dart';
 import 'config_service.dart';
 import 'shared_config_reader.dart';
@@ -133,19 +134,23 @@ class WebDavSyncService {
 
   /// 获取远程 vault 修改时间
   Future<DateTime?> getRemoteModifiedTime() async {
-    if (_client == null || _config == null) return null;
+    if (_config == null) return null;
 
     try {
-      final props = await _client!.propfind(
-        _config!.remotePath,
-        ['getlastmodified'],
-        depth: 0,
+      final url = _config!.serverUrl.endsWith('/')
+          ? '${_config!.serverUrl}${_config!.remotePath}'
+          : '${_config!.serverUrl}/${_config!.remotePath}';
+
+      final dio = Dio();
+      dio.options.basicAuth = Base64Encoder().convert(
+        '${_config!.username}:${_config!.password}'.codeUnits,
       );
-      if (props != null && props.isNotEmpty) {
-        final lastModified = props[0].getlastmodified;
-        if (lastModified != null) {
-          return lastModified;
-        }
+
+      final response = await dio.head(url);
+      final lastModified = response.headers.value('last-modified');
+
+      if (lastModified != null) {
+        return HttpDate.parse(lastModified);
       }
       return DateTime.now();
     } catch (e) {
