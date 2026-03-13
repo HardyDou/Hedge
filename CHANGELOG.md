@@ -11,8 +11,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **CLI**: Remove dead code in config command
 - **CLI**: Add Linux old path migration compatibility (~/.local/share/hedge)
 - **CLI**: Improve password masking edge cases
-- **CLI**: Use PROPFIND for actual remote modification time (smart sync)
+- **CLI**: Use HTTP HEAD request to get actual remote modification time (smart sync)
 - **CLI**: Validate URL parameter in native messaging
+
+### Technical
+- Added `dio` dependency for HTTP HEAD request (webdav_client doesn't support PROPFIND)
 
 ## [1.9.1] - 2026-03-13
 
