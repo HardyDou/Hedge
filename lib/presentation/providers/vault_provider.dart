@@ -295,13 +295,24 @@ Future<void> checkInitialStatus() async {
   }
 
   static Future<String> _getDefaultVaultPath() async {
+    // 统一使用 ~/.hedge/vault.db（桌面端）或 iCloud Drive（移动端）
+    final home = Platform.environment['HOME'] ?? Platform.environment['USERPROFILE'];
+    if (home != null) {
+      // 桌面端: 使用 ~/.hedge/vault.db
+      if (Platform.isMacOS || Platform.isLinux || Platform.isWindows) {
+        final hedgeDir = Directory('$home/.hedge');
+        if (!await hedgeDir.exists()) {
+          await hedgeDir.create(recursive: true);
+        }
+        return '$home/.hedge/vault.db';
+      }
+    }
+
     // iOS/macOS: 优先使用 iCloud Drive
     if (Platform.isIOS || Platform.isMacOS) {
       final iCloudPath = await _getICloudDrivePath();
       if (iCloudPath != null) {
         return '$iCloudPath/vault.db';
-      } else {
-        print('[Vault] iCloud Drive not available, using local storage');
       }
     }
 
