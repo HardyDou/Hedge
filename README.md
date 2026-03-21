@@ -43,22 +43,72 @@ Your passwords, your cloud, your control.
 
 ## 🚀 Quick Start
 
-### Requirements
+### 🤖 For AI Agent
 
+AI agents can automatically install and use Hedge CLI.
+
+**Install Skill:**
+```bash
+npx skills add HardyDou/hedge-cli-skill
+```
+
+**Use (Agent does automatically):**
+- "Get my GitHub password" → `hedge get github`
+- "List all passwords" → `hedge list`
+- "Search for AWS" → `hedge search aws`
+
+---
+
+### 👤 For Human
+
+Install Hedge CLI to manage passwords from terminal.
+
+**macOS:**
+```bash
+brew install HardyDou/hedge
+```
+
+**Linux:**
+```bash
+brew install HardyDou/hedge
+```
+
+**Usage:**
+```bash
+# Get password (copies to clipboard)
+hedge get github
+
+# List all items
+hedge list
+
+# Search
+hedge search aws
+
+# Sync via WebDAV
+hedge sync
+
+# Lock session
+hedge lock
+```
+
+---
+
+### 💻 For Developer
+
+**Requirements:**
 - Flutter 3.x
 - Xcode 15+ (iOS/macOS)
 - Android Studio (Android)
 
-### Build & Run
-
+**Build & Run:**
 ```bash
 # Install dependencies
 flutter pub get
 
-# Generate code (JSON serialization, etc.)
+# Generate code
 flutter pub run build_runner build --delete-conflicting-outputs
 
-# Generate localization files
+# Generate localization
 flutter gen-l10n
 
 # Run on macOS
@@ -70,6 +120,9 @@ flutter run -d iphonesimulator
 # Run on Android
 flutter run -d android
 ```
+
+**Contributing:**
+See [AGENTS.md](./AGENTS.md) for development guidelines.
 
 ---
 
@@ -281,22 +334,72 @@ MIT License
 
 ## 🚀 快速开始
 
-### 环境要求
+### 🤖 AI Agent 使用
 
+AI 代理可自动安装并使用 Hedge CLI。
+
+**安装 Skill:**
+```bash
+npx skills add HardyDou/hedge-cli-skill
+```
+
+**使用方式（代理自动完成）：**
+- "获取我的 GitHub 密码" → `hedge get github`
+- "列出所有密码" → `hedge list`
+- "搜索 AWS" → `hedge search aws`
+
+---
+
+### 👤 用户使用
+
+通过终端管理密码。
+
+**macOS:**
+```bash
+brew install HardyDou/hedge
+```
+
+**Linux:**
+```bash
+brew install HardyDou/hedge
+```
+
+**使用方式:**
+```bash
+# 获取密码（复制到剪贴板）
+hedge get github
+
+# 列出所有项
+hedge list
+
+# 搜索
+hedge search aws
+
+# WebDAV 同步
+hedge sync
+
+# 锁定会话
+hedge lock
+```
+
+---
+
+### 💻 开发者贡献
+
+**环境要求：**
 - Flutter 3.x
 - Xcode 15+ (iOS/macOS)
 - Android Studio (Android)
 
-### 构建运行
-
+**构建运行：**
 ```bash
 # 安装依赖
 flutter pub get
 
-# 生成代码（JSON 序列化等）
+# 生成代码
 flutter pub run build_runner build --delete-conflicting-outputs
 
-# 生成国际化文件
+# 生成国际化
 flutter gen-l10n
 
 # 运行 macOS
@@ -308,6 +411,9 @@ flutter run -d iphonesimulator
 # 运行 Android
 flutter run -d android
 ```
+
+**贡献指南：**
+请参阅 [AGENTS.md](./AGENTS.md) 开发规范。
 
 ---
 
