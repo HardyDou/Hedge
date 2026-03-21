@@ -45,17 +45,39 @@ Your passwords, your cloud, your control.
 
 ### 🤖 For AI Agent
 
-AI agents can automatically install and use Hedge CLI.
+**告诉你的 Agent:**
 
-**Install Skill:**
+> Please read https://github.com/HardyDou/hedge-cli-skill/blob/main/SKILL.md and install it
+
+或直接告诉 agent：
+
 ```bash
 npx skills add HardyDou/hedge-cli-skill
 ```
 
-**Use (Agent does automatically):**
+**Then you can ask:**
 - "Get my GitHub password" → `hedge get github`
 - "List all passwords" → `hedge list`
 - "Search for AWS" → `hedge search aws`
+
+---
+
+### 🤖 AI Agent 使用
+
+**告诉你的 Agent:**
+
+> 请阅读 https://github.com/HardyDou/hedge-cli-skill/blob/main/SKILL.md 并安装它
+
+或直接告诉 agent：
+
+```bash
+npx skills add HardyDou/hedge-cli-skill
+```
+
+Agent 会自动安装 skill 和 CLI，然后你可以：
+- "获取我的 GitHub 密码" → `hedge get github`
+- "列出所有密码" → `hedge list`
+- "搜索 AWS" → `hedge search aws`
 
 ---
 
