@@ -131,7 +131,7 @@ Hedge includes a Claude Code skill. **Agent handles everything automatically** -
 - "Sync my vault" → Done!
 
 **Publish to skills.sh:**
-Push to GitHub → `npx skills add <org>/hedge@hedge-cli`
+Push to GitHub → `npx skills add <org>/hedge-cli-skill`
 
 ### User Experience
 - ✅ 100% Cupertino design
@@ -346,7 +346,7 @@ cd cli && dart pub get && dart compile exe bin/hedge.dart -o ../build/hedge
 **通过 skills.sh 安装（推荐）：**
 ```bash
 # 发布到 GitHub 后
-npx skills add <owner>/hedge@hedge-cli
+npx skills add <owner>/hedge-cli-skill
 ```
 
 **或手动链接：**
