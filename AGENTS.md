@@ -173,15 +173,10 @@ chore: 构建/工具链变更
 npx skills add HardyDou/hedge-cli-skill
 ```
 
-### 构建 CLI（首次需要）
-
-如果 CLI 未构建，自动构建：
+### 安装 CLI（通过 Homebrew）
 
 ```bash
-cd /path/to/hedge
-cd cli
-dart pub get
-dart compile exe bin/hedge.dart -o ../build/hedge
+brew install HardyDou/hedge
 ```
 
 ### 使用方式
