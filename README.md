@@ -361,8 +361,8 @@ ln -s /path/to/hedge/skills/hedge-cli ~/.claude/skills/hedge-cli
 - "同步我的密码库" → `hedge sync`
 
 **发布到 skills.sh：**
-推送到 GitHub 后，用户可通过以下命令安装：
-`npx skills add <你的组织>/hedge@hedge-cli`
+推送后，任何人可安装：
+`npx skills add <你的组织>/hedge-cli-skill`
 
 ### 用户体验
 - ✅ 100% Cupertino 设计
