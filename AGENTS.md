@@ -163,5 +163,45 @@ chore: 构建/工具链变更
 
 ---
 
-**最后更新**: 2026-03-13
+## 8. Hedge CLI Skill (密码管理)
+
+当需要操作 Hedge 密码库时，使用 hedge-cli skill。
+
+### 安装 Skill
+
+```bash
+npx skills add HardyDou/hedge-cli-skill
+```
+
+### 构建 CLI（首次需要）
+
+如果 CLI 未构建，自动构建：
+
+```bash
+cd /path/to/hedge
+cd cli
+dart pub get
+dart compile exe bin/hedge.dart -o ../build/hedge
+```
+
+### 使用方式
+
+用户说"获取密码"时，Agent 自动执行：
+
+| 用户请求 | Agent 执行 |
+|---------|-----------|
+| "获取 GitHub 密码" | `hedge get github` |
+| "列出所有密码" | `hedge list` |
+| "搜索 AWS" | `hedge search aws` |
+| "同步密码库" | `hedge sync` |
+| "锁定" | `hedge lock` |
+
+### 认证
+
+- **生物识别**（默认）：需要 Desktop App 运行，使用 Touch ID/Face ID
+- **独立模式**：`--no-app` + `HEDGE_MASTER_PASSWORD` 环境变量
+
+---
+
+**最后更新**: 2026-03-21
 **维护者**: Hedge Team
