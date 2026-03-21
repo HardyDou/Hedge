@@ -115,6 +115,24 @@ flutter run -d android
 - ✅ Encrypted token storage
 - ✅ macOS/Linux/Windows support
 
+### 🤖 Claude Code Skill (Fully Automated)
+
+Hedge includes a Claude Code skill. **Agent handles everything automatically** - no user action needed.
+
+**What Agent does automatically:**
+1. Install this skill (symlink or npx skills add)
+2. Build Hedge CLI (`dart compile exe`)
+3. Execute commands and handle authentication
+
+**User just says:**
+- "Get my GitHub password" → Done!
+- "List all passwords" → Done!
+- "Search for AWS" → Done!
+- "Sync my vault" → Done!
+
+**Publish to skills.sh:**
+Push to GitHub → `npx skills add <org>/hedge@hedge-cli`
+
 ### User Experience
 - ✅ 100% Cupertino design
 - ✅ Dark mode (follows system)
@@ -315,6 +333,36 @@ flutter run -d android
 - ✅ WebDAV（所有平台）
   - 支持坚果云、Nextcloud、Synology NAS
 - ✅ 冲突检测与备份
+
+### 🤖 Claude Code Skill
+
+Hedge 内置 Claude Code skill，支持 AI 代理集成。
+
+**先构建 CLI:**
+```bash
+cd cli && dart pub get && dart compile exe bin/hedge.dart -o ../build/hedge
+```
+
+**通过 skills.sh 安装（推荐）：**
+```bash
+# 发布到 GitHub 后
+npx skills add <owner>/hedge@hedge-cli
+```
+
+**或手动链接：**
+```bash
+ln -s /path/to/hedge/skills/hedge-cli ~/.claude/skills/hedge-cli
+```
+
+**AI Agent 使用方式：**
+- "获取我的 GitHub 密码" → `hedge get github`
+- "列出所有密码" → `hedge list`
+- "搜索 AWS" → `hedge search aws`
+- "同步我的密码库" → `hedge sync`
+
+**发布到 skills.sh：**
+推送到 GitHub 后，用户可通过以下命令安装：
+`npx skills add <你的组织>/hedge@hedge-cli`
 
 ### 用户体验
 - ✅ 100% Cupertino 设计
